@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="sidebar(activeMenu)">
+    <div class="sidebar d-none d-lg-flex flex-column p-4 text-white position-fixed">
+        <div class="d-flex align-items-center mb-4">
+            <i class="bi bi-compass fs-3 text-primary"></i>
+            <span class="ms-2 fw-bold fs-5">사록 어드민</span>
+        </div>
+        <nav class="nav flex-column gap-1">
+            <a th:href="@{/}" class="nav-link rounded-3" th:classappend="${activeMenu}=='dashboard' ? ' active'" ><i class="bi bi-speedometer2 me-2"></i>대시보드</a>
+            <a th:href="@{/dex}" class="nav-link rounded-3" th:classappend="${activeMenu}=='dex' ? ' active'" ><i class="bi bi-journal-richtext me-2"></i>도감</a>
+            <a th:href="@{/reports}" class="nav-link rounded-3" th:classappend="${activeMenu}=='reports' ? ' active'" ><i class="bi bi-flag me-2"></i>신고</a>
+            <a th:href="@{/collections}" class="nav-link rounded-3" th:classappend="${activeMenu}=='collections' ? ' active'" ><i class="bi bi-collection me-2"></i>새록</a>
+            <a th:href="@{/comments}" class="nav-link rounded-3" th:classappend="${activeMenu}=='comments' ? ' active'" ><i class="bi bi-chat-text me-2"></i>댓글</a>
+            <a th:href="@{/users}" class="nav-link rounded-3" th:classappend="${activeMenu}=='users' ? ' active'" ><i class="bi bi-people me-2"></i>사용자</a>
+            <a th:href="@{/notifications/compose}" class="nav-link rounded-3" th:classappend="${activeMenu}=='notifications' ? ' active'" ><i class="bi bi-megaphone me-2"></i>시스템 알림</a>
+        </nav>
+        <div class="mt-auto pt-4 small text-white-50">
+            <div>버전 0.1.0</div>
+            <div>© 2025 Saerok</div>
+        </div>
+    </div>
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarOffcanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">사록 어드민</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <nav class="nav flex-column gap-2">
+                <a th:href="@{/}" class="nav-link" th:classappend="${activeMenu}=='dashboard' ? ' active fw-semibold text-primary'">
+                    <i class="bi bi-speedometer2 me-2"></i>대시보드</a>
+                <a th:href="@{/dex}" class="nav-link" th:classappend="${activeMenu}=='dex' ? ' active fw-semibold text-primary'">
+                    <i class="bi bi-journal-richtext me-2"></i>도감</a>
+                <a th:href="@{/reports}" class="nav-link" th:classappend="${activeMenu}=='reports' ? ' active fw-semibold text-primary'">
+                    <i class="bi bi-flag me-2"></i>신고</a>
+                <a th:href="@{/collections}" class="nav-link" th:classappend="${activeMenu}=='collections' ? ' active fw-semibold text-primary'">
+                    <i class="bi bi-collection me-2"></i>새록</a>
+                <a th:href="@{/comments}" class="nav-link" th:classappend="${activeMenu}=='comments' ? ' active fw-semibold text-primary'">
+                    <i class="bi bi-chat-text me-2"></i>댓글</a>
+                <a th:href="@{/users}" class="nav-link" th:classappend="${activeMenu}=='users' ? ' active fw-semibold text-primary'">
+                    <i class="bi bi-people me-2"></i>사용자</a>
+                <a th:href="@{/notifications/compose}" class="nav-link" th:classappend="${activeMenu}=='notifications' ? ' active fw-semibold text-primary'">
+                    <i class="bi bi-megaphone me-2"></i>시스템 알림</a>
+            </nav>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="breadcrumbs(items)" aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb mb-0 small text-muted">
+        <li class="breadcrumb-item" th:each="breadcrumb : ${items}" th:classappend="${breadcrumb.active()} ? ' active fw-semibold text-primary'">
+            <a th:if="${!breadcrumb.active()}" th:href="${breadcrumb.href()}" th:text="${breadcrumb.label()}"></a>
+            <span th:if="${breadcrumb.active()}" th:text="${breadcrumb.label()}"></span>
+        </li>
+    </ol>
+</nav>
+</body>
+</html>

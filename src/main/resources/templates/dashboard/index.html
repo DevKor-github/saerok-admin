@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${pageTitle} + ' | 사록 어드민'">대시보드</title>
+</head>
+<body>
+<th:block th:replace="layout/base :: layout(~{::title}, ${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})">
+    <title th:text="${pageTitle} + ' | 사록 어드민'">대시보드</title>
+    <th:block th:fragment="content">
+        <section class="row g-4 mb-4">
+            <div class="col-12 col-xl-3 col-md-6" th:each="metric : ${metrics}">
+                <div class="card card-shadow-sm h-100 border-0">
+                    <div class="card-body d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="text-muted text-uppercase small fw-semibold" th:text="${metric.label()}">오늘 신고</div>
+                            <div class="display-6 fw-bold mt-2" th:text="${metric.value()}">18건</div>
+                            <div class="text-muted small" th:text="${metric.subtitle()}">지난주 대비 +12%</div>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-4 p-3">
+                            <i class="bi fs-2" th:classappend="' ' + ${metric.icon()}"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="row g-4">
+            <div class="col-12 col-xl-6">
+                <div class="card card-shadow-sm border-0 h-100">
+                    <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="h6 mb-0 fw-semibold">최근 신고</h2>
+                            <p class="text-muted small mb-0">가장 최근 접수된 신고 5건</p>
+                        </div>
+                        <a th:href="@{/reports}" class="btn btn-sm btn-outline-primary">전체 보기</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>유형</th>
+                                <th>대상</th>
+                                <th>사유</th>
+                                <th>상태</th>
+                                <th>시간</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="report : ${recentReports}">
+                                <td class="fw-semibold" th:text="${'#' + report.id()}">#1024</td>
+                                <td><span class="badge rounded-pill text-bg-light" th:text="${report.type()}">댓글</span></td>
+                                <td th:text="${report.targetId()}">C-481</td>
+                                <td th:text="${report.reason()}">욕설 포함</td>
+                                <td>
+                                    <span class="badge" th:classappend="${report.status()} == '처리완료' ? ' text-bg-success' : (${report.status()} == '대기' ? ' text-bg-warning' : ' text-bg-info')"
+                                          th:text="${report.status()}">검토중</span>
+                                </td>
+                                <td th:text="${#temporals.format(report.createdAt(), 'MM.dd HH:mm')}">06.01 14:30</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-xl-6">
+                <div class="card card-shadow-sm border-0 h-100">
+                    <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="h6 mb-0 fw-semibold">최근 도감 등록</h2>
+                            <p class="text-muted small mb-0">검토 완료 및 업데이트된 항목</p>
+                        </div>
+                        <a th:href="@{/dex}" class="btn btn-sm btn-outline-primary">도감 관리</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>이름</th>
+                                <th>영문명</th>
+                                <th>수정일</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="dex : ${recentDexEntries}">
+                                <td class="fw-semibold" th:text="${'#' + dex.id()}">#401</td>
+                                <td th:text="${dex.koreanName()}">해오라기</td>
+                                <td class="text-muted" th:text="${dex.englishName()}">Striated Heron</td>
+                                <td th:text="${#temporals.format(dex.updatedAt(), 'yyyy.MM.dd')}">2024.06.01</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </th:block>
+</th:block>
+</body>
+</html>
