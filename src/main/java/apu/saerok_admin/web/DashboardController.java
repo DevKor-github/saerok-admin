@@ -1,5 +1,6 @@
 package apu.saerok_admin.web;
 
+import apu.saerok_admin.infra.ServiceHealthClient;
 import apu.saerok_admin.web.view.Breadcrumb;
 import apu.saerok_admin.web.view.DashboardMetric;
 import apu.saerok_admin.web.view.RecentDexEntry;
@@ -14,12 +15,19 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class DashboardController {
 
+    private final ServiceHealthClient serviceHealthClient;
+
+    public DashboardController(ServiceHealthClient serviceHealthClient) {
+        this.serviceHealthClient = serviceHealthClient;
+    }
+
     @GetMapping("/")
     public String dashboard(Model model) {
         model.addAttribute("pageTitle", "대시보드");
         model.addAttribute("activeMenu", "dashboard");
         model.addAttribute("breadcrumbs", List.of(Breadcrumb.active("대시보드")));
         model.addAttribute("toastMessages", List.of());
+        model.addAttribute("serviceHealth", serviceHealthClient.checkHealth());
         model.addAttribute("metrics", List.of(
                 new DashboardMetric("오늘 신고", "18건", "bi-flag", "danger", "지난주 대비 +12%"),
                 new DashboardMetric("미처리 신고", "7건", "bi-exclamation-triangle", "warning", "48시간 초과 2건"),

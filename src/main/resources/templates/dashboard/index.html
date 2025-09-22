@@ -2,6 +2,22 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
       th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
 <th:block th:fragment="content">
+        <section class="row g-4 mb-4" th:if="${serviceHealth != null}">
+            <div class="col-12">
+                <div class="alert d-flex align-items-center mb-0"
+                     th:classappend="${serviceHealth.alive()} ? ' alert-success' : ' alert-danger'">
+                    <i class="bi fs-4"
+                       th:classappend="${serviceHealth.alive()} ? ' bi-check-circle-fill' : ' bi-exclamation-octagon-fill'"></i>
+                    <div class="ms-3">
+                        <h2 class="h6 mb-1 fw-semibold">서비스 서버 상태</h2>
+                        <p class="mb-1" th:text="${serviceHealth.message()}">서버가 정상 응답했습니다.</p>
+                        <p class="mb-0 text-muted small"
+                           th:text="${#temporals.format(serviceHealth.checkedAt(), 'yyyy.MM.dd HH:mm:ss')}"
+                        >2024.06.01 12:00:00</p>
+                    </div>
+                </div>
+            </div>
+        </section>
         <section class="row g-4 mb-4">
             <div class="col-12 col-xl-3 col-md-6" th:each="metric : ${metrics}">
                 <div class="card card-shadow-sm h-100 border-0">
