@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<th:block th:fragment="layout(title, pageTitle, activeMenu, breadcrumbs, content)">
-    <head th:replace="fragments/_head :: head(~{::title})">
-        <title th:text="${pageTitle} + ' | 사록 어드민'">사록 어드민</title>
-    </head>
+<th:block th:fragment="layout(pageTitle, activeMenu, breadcrumbs, content)">
+    <head th:replace="~{fragments/_head :: head(${pageTitle})}"></head>
     <body>
     <div class="d-flex">
         <div th:replace="fragments/_sidebar :: sidebar(${activeMenu})"></div>
@@ -18,7 +16,7 @@
             </main>
         </div>
     </div>
-    <div th:replace="fragments/_toast :: toast(${toastMessages})"></div>
+    <div th:replace="~{fragments/_toast :: toast(${toastMessages})}"></div>
     </body>
 </th:block>
 </html>

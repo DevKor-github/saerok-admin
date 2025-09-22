@@ -1,12 +1,7 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>시스템 알림 발송</title>
-</head>
-<body>
-<th:block th:replace="layout/base :: layout(~{::title}, ${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})">
-    <title>시스템 알림 발송</title>
-    <th:block th:fragment="content">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
         <div class="row g-4">
             <div class="col-12 col-xl-8">
                 <div class="card card-shadow-sm border-0">
@@ -128,9 +123,7 @@
                 </div>
             </div>
         </div>
-    </th:block>
-</th:block>
-<script>
+    <script>
     const scheduleToggle = document.getElementById('scheduleToggle');
     const scheduleDate = document.getElementById('scheduleDate');
     const scheduleTime = document.getElementById('scheduleTime');
@@ -141,6 +134,6 @@
             if (scheduleTime) scheduleTime.disabled = !enabled;
         });
     }
-</script>
-</body>
+    </script>
+</th:block>
 </html>

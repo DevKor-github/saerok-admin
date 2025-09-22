@@ -1,12 +1,7 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>도감 작성</title>
-</head>
-<body>
-<th:block th:replace="layout/base :: layout(~{::title}, ${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})">
-    <title>도감 작성</title>
-    <th:block th:fragment="content">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
         <form class="row g-4" novalidate>
             <div class="col-12 col-xl-8">
                 <div class="card card-shadow-sm border-0 mb-4">
@@ -106,9 +101,7 @@
                 </div>
             </div>
         </form>
-    </th:block>
-</th:block>
-<script>
+    <script>
     function syncRarityButtons() {
         document.querySelectorAll('.btn-check').forEach(function (radio) {
             const label = document.querySelector('label[for="' + radio.id + '"]');
@@ -121,6 +114,6 @@
         input.addEventListener('change', syncRarityButtons);
     });
     syncRarityButtons();
-</script>
-</body>
+    </script>
+</th:block>
 </html>
