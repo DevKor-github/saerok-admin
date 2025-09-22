@@ -7,4 +7,4 @@ cd "$(dirname "$0")"
 docker compose \
   -f deploy/docker-compose.yml \
   -f deploy/docker-compose.override.yml \
-  up -d
+  up --build -d
