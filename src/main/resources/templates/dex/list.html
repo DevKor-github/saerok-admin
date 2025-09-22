@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>도감 관리</title>
+</head>
+<body>
+<th:block th:replace="layout/base :: layout(~{::title}, ${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})">
+    <title>도감 관리</title>
+    <th:block th:fragment="content">
+        <div class="card card-shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <form class="row g-3 align-items-end" method="get">
+                    <div class="col-md-4">
+                        <label for="query" class="form-label small text-uppercase text-muted">검색어</label>
+                        <input type="search" id="query" name="q" class="form-control" placeholder="이름 또는 학명"
+                               th:value="${query}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="rarity" class="form-label small text-uppercase text-muted">희귀도</label>
+                        <select id="rarity" name="rarity" class="form-select">
+                            <option th:each="option : ${rarityOptions}" th:value="${option == '전체' ? '' : option}"
+                                    th:selected="${option == rarityFilter || (rarityFilter == null && option == '전체')}"
+                                    th:text="${option}">전체</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="habitat" class="form-label small text-uppercase text-muted">서식지</label>
+                        <select id="habitat" name="habitat" class="form-select">
+                            <option th:each="option : ${habitatOptions}" th:value="${option == '전체' ? '' : option}"
+                                    th:selected="${option == habitatFilter || (habitatFilter == null && option == '전체')}"
+                                    th:text="${option}">전체</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="stayType" class="form-label small text-uppercase text-muted">체류 형태</label>
+                        <select id="stayType" name="stayType" class="form-select">
+                            <option th:each="option : ${stayOptions}" th:value="${option == '전체' ? '' : option}"
+                                    th:selected="${option == stayFilter || (stayFilter == null && option == '전체')}"
+                                    th:text="${option}">전체</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">검색</button>
+                        <a th:href="@{/dex}" class="btn btn-outline-secondary">초기화</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <p class="mb-0 text-muted">총 <strong th:text="${totalElements}">146</strong>건 · <strong th:text="${page}">1</strong>/<span th:text="${totalPages}">8</span> 페이지</p>
+            <a th:href="@{/dex/new}" class="btn btn-primary"><i class="bi bi-plus-lg me-2"></i>도감 등록</a>
+        </div>
+        <div class="card card-shadow-sm border-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">이름</th>
+                        <th scope="col">학명</th>
+                        <th scope="col">서식지/체류</th>
+                        <th scope="col">희귀도</th>
+                        <th scope="col">태그</th>
+                        <th scope="col" class="text-end">수정일</th>
+                        <th scope="col" class="text-end">액션</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="entry : ${entries}" data-entry-id="" th:data-entry-id="${entry.id()}" th:data-entry-name="${entry.koreanName()}">
+                        <td class="fw-semibold" th:text="${'#' + entry.id()}">#401</td>
+                        <td>
+                            <div class="fw-semibold" th:text="${entry.koreanName()}">해오라기</div>
+                            <div class="text-muted small" th:text="${entry.englishName()}">Striated Heron</div>
+                        </td>
+                        <td th:text="${entry.scientificName()}">Butorides striata</td>
+                        <td>
+                            <span class="badge text-bg-light" th:text="${entry.habitat()}">하천</span>
+                            <span class="badge text-bg-secondary ms-1" th:text="${entry.stayType()}">철새</span>
+                        </td>
+                        <td>
+                            <span class="badge" th:classappend="${entry.rarity()} == 'EPIC' ? ' text-bg-primary' : (${entry.rarity()} == 'RARE' ? ' text-bg-danger' : (${entry.rarity()} == 'UNCOMMON' ? ' text-bg-info' : ' text-bg-success'))"
+                                  th:text="${entry.rarity()}">RARE</span>
+                        </td>
+                        <td>
+                            <span class="badge text-bg-light me-1" th:each="tag : ${entry.tags()}" th:text="${tag}">태그</span>
+                        </td>
+                        <td class="text-end" th:text="${#temporals.format(entry.updatedAt(), 'yyyy.MM.dd HH:mm')}">2024.06.01 14:20</td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a th:href="@{'/dex/' + ${entry.id()}}" class="btn btn-outline-secondary">상세</a>
+                                <a th:href="@{'/dex/' + ${entry.id()} + '/edit'}" class="btn btn-outline-primary">수정</a>
+                                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteDexModal"
+                                        th:attr="data-entry='#' + ${entry.id()} + ' ' + ${entry.koreanName()}">삭제</button>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer bg-white border-0 py-3">
+                <nav>
+                    <ul class="pagination justify-content-end mb-0">
+                        <li class="page-item" th:classappend="${page == 1} ? ' disabled'">
+                            <a class="page-link" th:href="@{/dex(page=${page-1 < 1 ? 1 : page-1}, size=${size}, q=${query}, rarity=${rarityFilter}, habitat=${habitatFilter}, stayType=${stayFilter})}">이전</a>
+                        </li>
+                        <li class="page-item" th:each="pageNum : ${#numbers.sequence(1, totalPages)}" th:classappend="${pageNum} == ${page} ? ' active'">
+                            <a class="page-link" th:text="${pageNum}" th:href="@{/dex(page=${pageNum}, size=${size}, q=${query}, rarity=${rarityFilter}, habitat=${habitatFilter}, stayType=${stayFilter})}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${page == totalPages} ? ' disabled'">
+                            <a class="page-link" th:href="@{/dex(page=${page+1 > totalPages ? totalPages : page+1}, size=${size}, q=${query}, rarity=${rarityFilter}, habitat=${habitatFilter}, stayType=${stayFilter})}">다음</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+        <div class="modal fade" id="deleteDexModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">도감 삭제</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-0"><strong id="deleteDexTarget">선택한 도감</strong> 항목을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-toast-target="toastDexDeleted">삭제</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </th:block>
+</th:block>
+<script>
+    const deleteDexModal = document.getElementById('deleteDexModal');
+    if (deleteDexModal) {
+        deleteDexModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const targetName = button ? button.getAttribute('data-entry') : '';
+            const label = deleteDexModal.querySelector('#deleteDexTarget');
+            if (label) {
+                label.textContent = targetName || '선택한 도감';
+            }
+        });
+    }
+</script>
+</body>
+</html>

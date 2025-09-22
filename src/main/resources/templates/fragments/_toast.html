@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="toast(messages)" class="toast-container position-fixed bottom-0 end-0 p-4" style="z-index: 1080;">
+    <div th:each="toast : ${messages}" class="toast align-items-center border-0 shadow"
+         role="alert" th:id="${toast.id()}" th:data-bs-autohide="${toast.autohide()}"
+         th:attr="data-show-on-load=${false}" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex" th:classappend="${toast.variant()} != null ? ' text-bg-' + ${toast.variant()} : ' text-bg-light'">
+            <div class="toast-body">
+                <div class="fw-semibold mb-1" th:text="${toast.title()}">완료</div>
+                <div th:text="${toast.body()}">처리가 완료되었습니다.</div>
+            </div>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.toast').forEach(function (toastEl) {
+            if (toastEl.dataset.showOnLoad === 'true') {
+                new bootstrap.Toast(toastEl).show();
+            }
+        });
+        document.querySelectorAll('[data-toast-target]').forEach(function (trigger) {
+            trigger.addEventListener('click', function () {
+                var targetId = trigger.getAttribute('data-toast-target');
+                if (targetId) {
+                    var toastElement = document.getElementById(targetId);
+                    if (toastElement) {
+                        new bootstrap.Toast(toastElement).show();
+                    }
+                }
+            });
+        });
+        document.querySelectorAll('[data-bs-dismiss="modal"][data-toast-target]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var targetId = btn.getAttribute('data-toast-target');
+                if (targetId) {
+                    setTimeout(function () {
+                        var toastElement = document.getElementById(targetId);
+                        if (toastElement) {
+                            new bootstrap.Toast(toastElement).show();
+                        }
+                    }, 300);
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>

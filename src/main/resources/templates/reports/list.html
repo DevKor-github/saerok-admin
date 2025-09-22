@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>신고 관리</title>
+</head>
+<body>
+<th:block th:replace="layout/base :: layout(~{::title}, ${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})">
+    <title>신고 관리</title>
+    <th:block th:fragment="content">
+        <div class="card card-shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <form class="row g-3 align-items-end" method="get">
+                    <div class="col-md-4">
+                        <label class="form-label small text-uppercase text-muted" for="reportQuery">검색어</label>
+                        <input type="search" class="form-control" id="reportQuery" name="q" placeholder="사유 또는 대상 ID" th:value="${query}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-uppercase text-muted" for="reportType">유형</label>
+                        <select class="form-select" id="reportType" name="type">
+                            <option th:each="option : ${typeOptions}" th:value="${option == '전체' ? '' : option}"
+                                    th:selected="${option == typeFilter || (typeFilter == null && option == '전체')}"
+                                    th:text="${option}">전체</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-uppercase text-muted" for="reportStatus">상태</label>
+                        <select class="form-select" id="reportStatus" name="status">
+                            <option th:each="option : ${statusOptions}" th:value="${option == '전체' ? '' : option}"
+                                    th:selected="${option == statusFilter || (statusFilter == null && option == '전체')}"
+                                    th:text="${option}">전체</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">검색</button>
+                        <a th:href="@{/reports}" class="btn btn-outline-secondary">초기화</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="card card-shadow-sm border-0">
+            <div class="table-responsive">
+                <table class="table align-middle table-hover">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>유형</th>
+                        <th>대상</th>
+                        <th>사유</th>
+                        <th>상태</th>
+                        <th>접수일</th>
+                        <th class="text-end">액션</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="report : ${reports}" th:data-report="${'#' + report.id()}" th:data-status="${report.status()}" th:data-target="${report.targetId()}">
+                        <td class="fw-semibold" th:text="${'#' + report.id()}">#2042</td>
+                        <td><span class="badge text-bg-light" th:text="${report.type()}">새록</span></td>
+                        <td th:text="${report.targetId()}">P-872</td>
+                        <td>
+                            <div class="fw-semibold" th:text="${report.reason()}">허위 정보</div>
+                            <div class="text-muted small">자세한 내용은 상세 페이지에서 확인</div>
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill"
+                                  th:classappend="${report.status()} == '처리완료' ? ' text-bg-success' : (${report.status()} == '검토중' ? ' text-bg-info' : (${report.status()} == '대기' ? ' text-bg-warning' : ' text-bg-secondary'))"
+                                  th:text="${report.status()}">검토중</span>
+                        </td>
+                        <td th:text="${#temporals.format(report.createdAt(), 'yyyy.MM.dd HH:mm')}">2024.06.01 10:20</td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a th:href="@{'/reports/' + ${report.id()}}" class="btn btn-outline-secondary">상세</a>
+                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#processReportModal"
+                                        th:attr="data-report='#' + ${report.id()}">처리</button>
+                                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteReportModal"
+                                        th:attr="data-report='#' + ${report.id()} + ' ' + ${report.targetId()}">삭제</button>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer bg-white border-0 py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted small">총 <strong th:text="${totalElements}">232</strong>건 · <strong th:text="${page}">1</strong>/<span th:text="${totalPages}">12</span> 페이지</span>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item" th:classappend="${page == 1} ? ' disabled'">
+                            <a class="page-link" th:href="@{/reports(page=${page-1 < 1 ? 1 : page-1}, size=${size}, q=${query}, status=${statusFilter}, type=${typeFilter})}">이전</a>
+                        </li>
+                        <li class="page-item" th:each="pageNum : ${#numbers.sequence(1, totalPages)}" th:classappend="${pageNum} == ${page} ? ' active'">
+                            <a class="page-link" th:text="${pageNum}" th:href="@{/reports(page=${pageNum}, size=${size}, q=${query}, status=${statusFilter}, type=${typeFilter})}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${page == totalPages} ? ' disabled'">
+                            <a class="page-link" th:href="@{/reports(page=${page+1 > totalPages ? totalPages : page+1}, size=${size}, q=${query}, status=${statusFilter}, type=${typeFilter})}">다음</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="processReportModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">신고 처리</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-3">신고 <strong id="processReportId">#2042</strong>의 상태를 변경합니다.</p>
+                        <select class="form-select" id="processReportStatus">
+                            <option value="대기">대기</option>
+                            <option value="검토중">검토중</option>
+                            <option value="처리완료">처리완료</option>
+                            <option value="반려">반려</option>
+                        </select>
+                        <div class="form-text">상태 변경 시 신고자에게 자동으로 알림이 발송됩니다.</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" data-toast-target="toastReportUpdated">저장</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="deleteReportModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">신고 삭제</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong id="deleteReportId">#2042</strong> 신고를 삭제하시겠습니까? 관련 기록은 유지됩니다.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-toast-target="toastReportDeleted">삭제</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </th:block>
+</th:block>
+<script>
+    const processModal = document.getElementById('processReportModal');
+    if (processModal) {
+        processModal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const reportId = button ? button.getAttribute('data-report') : '';
+            processModal.querySelector('#processReportId').textContent = reportId;
+        });
+    }
+    const deleteModal = document.getElementById('deleteReportModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const target = button ? button.getAttribute('data-report') : '';
+            deleteModal.querySelector('#deleteReportId').textContent = target;
+        });
+    }
+</script>
+</body>
+</html>

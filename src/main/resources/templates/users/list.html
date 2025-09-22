@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>사용자 관리</title>
+</head>
+<body>
+<th:block th:replace="layout/base :: layout(~{::title}, ${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})">
+    <title>사용자 관리</title>
+    <th:block th:fragment="content">
+        <div class="card card-shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <form class="row g-3 align-items-end" method="get">
+                    <div class="col-md-4">
+                        <label class="form-label small text-uppercase text-muted" for="userQuery">검색어</label>
+                        <input type="search" class="form-control" id="userQuery" name="q" placeholder="닉네임 또는 이메일" th:value="${query}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-uppercase text-muted" for="userStatus">상태</label>
+                        <select class="form-select" id="userStatus" name="status">
+                            <option th:each="option : ${statusOptions}" th:value="${option == '전체' ? '' : option}"
+                                    th:selected="${option == statusFilter || (statusFilter == null && option == '전체')}"
+                                    th:text="${option}">전체</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">검색</button>
+                        <a th:href="@{/users}" class="btn btn-outline-secondary">초기화</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="card card-shadow-sm border-0">
+            <div class="table-responsive">
+                <table class="table align-middle table-hover">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>닉네임</th>
+                        <th>이메일</th>
+                        <th>가입일</th>
+                        <th>상태</th>
+                        <th>작성/신고</th>
+                        <th class="text-end">액션</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="user : ${users}" th:data-user="${user.nickname()}">
+                        <td class="fw-semibold" th:text="${'#' + user.id()}">#501</td>
+                        <td th:text="${user.nickname()}">솔바람</td>
+                        <td th:text="${user.email()}">sol@saerok.app</td>
+                        <td th:text="${#temporals.format(user.joinedAt(), 'yyyy.MM.dd')}">2024.01.02</td>
+                        <td>
+                            <span class="badge" th:classappend="${user.status()} == '정상' ? ' text-bg-success' : (${user.status()} == '휴면' ? ' text-bg-secondary' : ' text-bg-danger')"
+                                  th:text="${user.status()}">정상</span>
+                        </td>
+                        <td>
+                            <span class="badge text-bg-light">작성 <span th:text="${user.postCount()}">48</span></span>
+                            <span class="badge text-bg-light ms-1">신고 <span th:text="${user.reportCount()}">2</span></span>
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a th:href="@{'/users/' + ${user.id()}}" class="btn btn-outline-secondary">상세</a>
+                                <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#userStatusModal"
+                                        th:attr="data-user='사용자 ' + ${user.nickname()}">상태 변경</button>
+                                <button class="btn btn-outline-success" type="button" data-bs-toggle="modal" data-bs-target="#userNotifyModal"
+                                        th:attr="data-user='사용자 ' + ${user.nickname()}">알림 발송</button>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer bg-white border-0 py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted small">총 <strong th:text="${totalElements}">512</strong>명 · <strong th:text="${page}">1</strong>/<span th:text="${totalPages}">14</span> 페이지</span>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item" th:classappend="${page == 1} ? ' disabled'">
+                            <a class="page-link" th:href="@{/users(page=${page-1 < 1 ? 1 : page-1}, size=${size}, q=${query}, status=${statusFilter})}">이전</a>
+                        </li>
+                        <li class="page-item" th:each="pageNum : ${#numbers.sequence(1, totalPages)}" th:classappend="${pageNum} == ${page} ? ' active'">
+                            <a class="page-link" th:text="${pageNum}" th:href="@{/users(page=${pageNum}, size=${size}, q=${query}, status=${statusFilter})}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${page == totalPages} ? ' disabled'">
+                            <a class="page-link" th:href="@{/users(page=${page+1 > totalPages ? totalPages : page+1}, size=${size}, q=${query}, status=${statusFilter})}">다음</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="userStatusModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">사용자 상태 변경</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong id="userStatusTarget">사용자</strong>의 상태를 조정합니다.</p>
+                        <select class="form-select">
+                            <option value="정상">정상</option>
+                            <option value="휴면">휴면</option>
+                            <option value="차단">차단</option>
+                        </select>
+                        <div class="mt-3">
+                            <label class="form-label">조치 메모</label>
+                            <textarea class="form-control" rows="3" placeholder="사유를 입력하세요."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" data-toast-target="toastUserAction">저장</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="userNotifyModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">사용자 알림 발송</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong id="userNotifyTarget">사용자</strong>에게 보낼 메시지를 작성하세요.</p>
+                        <div class="mb-3">
+                            <label class="form-label">제목</label>
+                            <input type="text" class="form-control" placeholder="알림 제목">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">내용</label>
+                            <textarea class="form-control" rows="4" placeholder="알림 본문"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-success" data-bs-dismiss="modal" data-toast-target="toastUserNotify">발송</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </th:block>
+</th:block>
+<script>
+    const userStatusModal = document.getElementById('userStatusModal');
+    if (userStatusModal) {
+        userStatusModal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const target = button ? button.getAttribute('data-user') : '사용자';
+            userStatusModal.querySelector('#userStatusTarget').textContent = target;
+        });
+    }
+    const userNotifyModal = document.getElementById('userNotifyModal');
+    if (userNotifyModal) {
+        userNotifyModal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const target = button ? button.getAttribute('data-user') : '사용자';
+            userNotifyModal.querySelector('#userNotifyTarget').textContent = target;
+        });
+    }
+</script>
+</body>
+</html>

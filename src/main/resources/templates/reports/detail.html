@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>신고 상세</title>
+</head>
+<body>
+<th:block th:replace="layout/base :: layout(~{::title}, ${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})">
+    <title>신고 상세</title>
+    <th:block th:fragment="content">
+        <div class="row g-4">
+            <div class="col-12 col-lg-8">
+                <div class="card card-shadow-sm border-0 mb-4">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div>
+                                <span class="badge rounded-pill bg-light text-dark me-2" th:text="${detail.type()}">새록</span>
+                                <span class="badge rounded-pill" th:classappend="${detail.status()} == '처리완료' ? ' text-bg-success' : (${detail.status()} == '검토중' ? ' text-bg-info' : (${detail.status()} == '대기' ? ' text-bg-warning' : ' text-bg-secondary'))"
+                                      th:text="${detail.status()}">검토중</span>
+                            </div>
+                            <div class="small text-muted">접수 <span th:text="${#temporals.format(detail.createdAt(), 'yyyy.MM.dd HH:mm')}">2024.06.01</span></div>
+                        </div>
+                        <h2 class="h4 fw-semibold" th:text="${detail.reason()}">허위 정보를 의도적으로 게시한 것으로 보입니다.</h2>
+                        <p class="text-muted">신고자 <strong th:text="${detail.reporter()}">별빛감시단</strong></p>
+                        <p class="mb-0" th:text="${detail.targetSummary()}">P-872 | 초여름 갈대밭 일지</p>
+                    </div>
+                </div>
+                <div class="card card-shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="h6 mb-0 fw-semibold">신고 상세 내용</h3>
+                            <p class="text-muted small mb-0">신고자가 작성한 설명과 첨부 파일</p>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#processReportModal">상태 변경</button>
+                    </div>
+                    <div class="card-body">
+                        <p class="lh-lg" th:text="${detail.reason()}">설명</p>
+                        <div class="mt-4">
+                            <h4 class="h6 fw-semibold">첨부 자료</h4>
+                            <div class="d-flex flex-wrap gap-3">
+                                <a class="text-decoration-none" th:each="attachment : ${detail.attachments()}" th:href="${attachment}" target="_blank">
+                                    <div class="ratio ratio-4x3 rounded" th:style="${'background:url(' + attachment + ') center/cover no-repeat'}"></div>
+                                    <span class="small d-block mt-1 text-muted">미리보기</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card card-shadow-sm border-0">
+                    <div class="card-header bg-white border-0">
+                        <h3 class="h6 mb-0 fw-semibold">대상 콘텐츠</h3>
+                    </div>
+                    <div class="card-body">
+                        <h4 class="h5" th:text="${detail.previewTitle()}">초여름 갈대밭 일지</h4>
+                        <p class="text-muted">내용 요약</p>
+                        <div class="bg-light rounded-4 p-4" th:text="${detail.previewContent()}">콘텐츠 미리보기</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-4">
+                <div class="card card-shadow-sm border-0 mb-4">
+                    <div class="card-body">
+                        <h3 class="h6 fw-semibold mb-3">처리 옵션</h3>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#processReportModal">상태 업데이트</button>
+                            <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteReportModal">신고 삭제</button>
+                            <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#notifyReporterModal">신고자 알림</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card card-shadow-sm border-0">
+                    <div class="card-body">
+                        <h3 class="h6 fw-semibold mb-3">최근 처리 내역</h3>
+                        <ul class="list-unstyled small text-muted mb-0">
+                            <li class="mb-2"><i class="bi bi-clock-history me-2 text-primary"></i>2024.06.01 14:00 · 운영자 메모 추가</li>
+                            <li class="mb-2"><i class="bi bi-envelope me-2 text-success"></i>2024.06.01 13:40 · 신고자 알림 발송</li>
+                            <li><i class="bi bi-person-check me-2 text-info"></i>2024.06.01 12:20 · 담당자 배정</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="processReportModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">상태 업데이트</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>신고 <strong th:text="${'#' + detail.id()}">#2042</strong>의 상태를 변경합니다.</p>
+                        <select class="form-select">
+                            <option>대기</option>
+                            <option selected>검토중</option>
+                            <option>처리완료</option>
+                            <option>반려</option>
+                        </select>
+                        <div class="mt-3">
+                            <label class="form-label">운영자 메모</label>
+                            <textarea class="form-control" rows="3" placeholder="처리 메모를 남기세요."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" data-toast-target="toastReportUpdated">저장</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="deleteReportModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">신고 삭제</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong th:text="${'#' + detail.id()}">#2042</strong> 신고를 삭제하시겠습니까? 관련 이력은 유지됩니다.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-toast-target="toastReportDeleted">삭제</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="notifyReporterModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">신고자 알림</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>신고자 <strong th:text="${detail.reporter()}">별빛감시단</strong>에게 보낼 메시지를 작성하세요.</p>
+                        <textarea class="form-control" rows="4" placeholder="처리 결과를 입력하세요."></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-success" data-bs-dismiss="modal" data-toast-target="toastReportUpdated">알림 발송</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </th:block>
+</th:block>
+</body>
+</html>
