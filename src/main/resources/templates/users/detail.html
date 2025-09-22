@@ -1,12 +1,7 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>사용자 상세</title>
-</head>
-<body>
-<th:block th:replace="layout/base :: layout(~{::title}, ${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})">
-    <title>사용자 상세</title>
-    <th:block th:fragment="content">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
         <div class="row g-4">
             <div class="col-12 col-xl-4">
                 <div class="card card-shadow-sm border-0 mb-4">
@@ -132,6 +127,4 @@
             </div>
         </div>
     </th:block>
-</th:block>
-</body>
 </html>

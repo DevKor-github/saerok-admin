@@ -1,12 +1,7 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>사용자 관리</title>
-</head>
-<body>
-<th:block th:replace="layout/base :: layout(~{::title}, ${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})">
-    <title>사용자 관리</title>
-    <th:block th:fragment="content">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
         <div class="card card-shadow-sm border-0 mb-4">
             <div class="card-body">
                 <form class="row g-3 align-items-end" method="get">
@@ -139,25 +134,23 @@
                 </div>
             </div>
         </div>
-    </th:block>
+    <script>
+        const userStatusModal = document.getElementById('userStatusModal');
+        if (userStatusModal) {
+            userStatusModal.addEventListener('show.bs.modal', event => {
+                const button = event.relatedTarget;
+                const target = button ? button.getAttribute('data-user') : '사용자';
+                userStatusModal.querySelector('#userStatusTarget').textContent = target;
+            });
+        }
+        const userNotifyModal = document.getElementById('userNotifyModal');
+        if (userNotifyModal) {
+            userNotifyModal.addEventListener('show.bs.modal', event => {
+                const button = event.relatedTarget;
+                const target = button ? button.getAttribute('data-user') : '사용자';
+                userNotifyModal.querySelector('#userNotifyTarget').textContent = target;
+            });
+        }
+    </script>
 </th:block>
-<script>
-    const userStatusModal = document.getElementById('userStatusModal');
-    if (userStatusModal) {
-        userStatusModal.addEventListener('show.bs.modal', event => {
-            const button = event.relatedTarget;
-            const target = button ? button.getAttribute('data-user') : '사용자';
-            userStatusModal.querySelector('#userStatusTarget').textContent = target;
-        });
-    }
-    const userNotifyModal = document.getElementById('userNotifyModal');
-    if (userNotifyModal) {
-        userNotifyModal.addEventListener('show.bs.modal', event => {
-            const button = event.relatedTarget;
-            const target = button ? button.getAttribute('data-user') : '사용자';
-            userNotifyModal.querySelector('#userNotifyTarget').textContent = target;
-        });
-    }
-</script>
-</body>
 </html>

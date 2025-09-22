@@ -1,12 +1,7 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>신고 관리</title>
-</head>
-<body>
-<th:block th:replace="layout/base :: layout(~{::title}, ${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})">
-    <title>신고 관리</title>
-    <th:block th:fragment="content">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
         <div class="card card-shadow-sm border-0 mb-4">
             <div class="card-body">
                 <form class="row g-3 align-items-end" method="get">
@@ -138,9 +133,7 @@
                 </div>
             </div>
         </div>
-    </th:block>
-</th:block>
-<script>
+    <script>
     const processModal = document.getElementById('processReportModal');
     if (processModal) {
         processModal.addEventListener('show.bs.modal', event => {
@@ -157,6 +150,6 @@
             deleteModal.querySelector('#deleteReportId').textContent = target;
         });
     }
-</script>
-</body>
+    </script>
+</th:block>
 </html>
