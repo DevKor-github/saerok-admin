@@ -32,7 +32,7 @@ public class BackendAuthClient {
         KakaoLoginPayload payload = new KakaoLoginPayload(authorizationCode);
         log.info("Requesting Kakao login from backend with authorization code length {}", authorizationCode == null ? 0 : authorizationCode.length());
         ResponseEntity<BackendAccessTokenResponse> response = authRestClient.post()
-                .uri("/auth/kakao/login")
+                .uri(uriBuilder -> uriBuilder.pathSegment("auth", "kakao", "login").build())
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(payload)
                 .retrieve()
@@ -45,7 +45,7 @@ public class BackendAuthClient {
         AppleLoginPayload payload = new AppleLoginPayload(authorizationCode);
         log.info("Requesting Apple login from backend with authorization code length {}", authorizationCode == null ? 0 : authorizationCode.length());
         ResponseEntity<BackendAccessTokenResponse> response = authRestClient.post()
-                .uri("/auth/apple/login")
+                .uri(uriBuilder -> uriBuilder.pathSegment("auth", "apple", "login").build())
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(payload)
                 .retrieve()
@@ -56,7 +56,7 @@ public class BackendAuthClient {
 
     public LoginSuccess refreshAccessToken() {
         RestClient.RequestHeadersSpec<?> requestSpec = authRestClient.post()
-                .uri("/auth/refresh");
+                .uri(uriBuilder -> uriBuilder.pathSegment("auth", "refresh").build());
         extractRefreshCookie().ifPresent(cookie -> requestSpec.header(HttpHeaders.COOKIE, cookie));
         ResponseEntity<BackendAccessTokenResponse> response = requestSpec.retrieve()
                 .toEntity(BackendAccessTokenResponse.class);
