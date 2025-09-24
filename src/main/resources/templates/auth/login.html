@@ -13,48 +13,31 @@
         </div>
         <div class="alert alert-danger d-flex align-items-start" role="alert" th:if="${param.error}">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <div>로그인 정보가 올바르지 않습니다. 다시 시도해주세요.</div>
+            <div th:switch="${param.error[0]}">
+                <span th:case="'state'">보안 검증에 실패했습니다. 다시 로그인해주세요.</span>
+                <span th:case="'callback'">필수 인증 정보가 누락되었습니다. 다시 시도해주세요.</span>
+                <span th:case="'session'">세션이 만료되었습니다. 다시 로그인해주세요.</span>
+                <span th:case="'login'">로그인 중 오류가 발생했습니다. 다시 시도해주세요.</span>
+                <span th:case="*">로그인에 실패했습니다. 다시 시도해주세요.</span>
+            </div>
         </div>
-        <form th:action="@{/}" method="get" class="needs-validation" novalidate>
-            <div class="mb-3">
-                <label for="email" class="form-label fw-semibold">이메일</label>
-                <input type="email" class="form-control form-control-lg" id="email" name="email" placeholder="admin@saerok.app" required>
-                <div class="invalid-feedback">이메일을 입력해주세요.</div>
-            </div>
-            <div class="mb-3">
-                <label for="password" class="form-label fw-semibold">비밀번호</label>
-                <input type="password" class="form-control form-control-lg" id="password" name="password" placeholder="••••••••" required>
-                <div class="invalid-feedback">비밀번호를 입력해주세요.</div>
-            </div>
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="remember">
-                    <label class="form-check-label" for="remember">로그인 상태 유지</label>
-                </div>
-                <a href="#" class="small text-decoration-none">비밀번호 재설정</a>
-            </div>
-            <div class="d-grid">
-                <button type="submit" class="btn btn-primary btn-lg">로그인</button>
-            </div>
-        </form>
+        <div class="d-grid gap-3">
+            <a th:href="${kakaoAuthUrl}" class="btn btn-lg w-100 d-flex align-items-center justify-content-center gap-2" role="button"
+               style="background-color: #FEE500; color: #191600;" aria-label="카카오 계정으로 로그인">
+                <img src="https://t1.kakaocdn.net/kakaocorp/kakaocorp/admin/contents_social/kakao_symbol.png" alt="카카오 심볼" width="20" height="20">
+                <span class="fw-semibold">카카오로 로그인</span>
+            </a>
+            <a th:href="${appleAuthUrl}" class="btn btn-lg w-100 d-flex align-items-center justify-content-center gap-2"
+               style="background-color: #000000; color: #ffffff;" role="button" aria-label="Sign in with Apple">
+                <i class="bi bi-apple fs-4" aria-hidden="true"></i>
+                <span class="fw-semibold">Sign in with Apple</span>
+            </a>
+        </div>
+        <p class="text-muted small mt-4 mb-0 text-center">로그인을 진행하면 새록 운영을 위한 개인정보 처리에 동의하게 됩니다.</p>
     </div>
     <div class="card-footer text-center small text-muted bg-white border-0 pb-4">
         © 2025 Saerok Ops Team
     </div>
 </div>
-<script>
-    (() => {
-        const forms = document.querySelectorAll('.needs-validation');
-        Array.from(forms).forEach(form => {
-            form.addEventListener('submit', event => {
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
-                form.classList.add('was-validated');
-            }, false);
-        });
-    })();
-</script>
 </body>
 </html>
