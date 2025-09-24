@@ -8,6 +8,8 @@ import apu.saerok_admin.security.OAuthStateManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import java.util.function.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -20,6 +22,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 @Controller
 public class AuthController {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     private final SocialLoginProperties socialLoginProperties;
     private final OAuthStateManager oAuthStateManager;
@@ -41,6 +45,7 @@ public class AuthController {
     @GetMapping("/login")
     public String login(Model model, HttpSession session) {
         String state = oAuthStateManager.createState(session);
+        log.debug("Created OAuth state token for session {}", session.getId());
         model.addAttribute("pageTitle", "로그인");
         model.addAttribute("kakaoAuthUrl", buildKakaoAuthorizeUrl(state));
         model.addAttribute("appleAuthUrl", buildAppleAuthorizeUrl(state));
@@ -75,17 +80,23 @@ public class AuthController {
             Function<String, BackendAuthClient.LoginSuccess> loginFunction
     ) {
         if (!StringUtils.hasText(code) || !StringUtils.hasText(state)) {
+            log.warn("OAuth callback received without required parameters. codePresent={}, statePresent={}",
+                    StringUtils.hasText(code), StringUtils.hasText(state));
             return "redirect:/login?error=callback";
         }
         if (!oAuthStateManager.consumeState(session, state)) {
+            log.warn("State validation failed for session {} and state {}", session.getId(), state);
             return "redirect:/login?error=state";
         }
         try {
+            log.info("Processing social login with session {}", session.getId());
             BackendAuthClient.LoginSuccess loginSuccess = loginFunction.apply(code);
+            log.info("Social login succeeded for session {}. Writing access token and refresh cookies.", session.getId());
             loginSessionManager.establishSession(request, new LoginSession(loginSuccess.accessToken()));
             loginSessionManager.writeRefreshCookiesToResponse(loginSuccess.refreshCookies());
             return "redirect:/";
         } catch (RestClientException | IllegalStateException exception) {
+            log.error("Failed to complete social login due to backend error: {}", exception.getMessage(), exception);
             loginSessionManager.clearSession(request);
             return "redirect:/login?error=login";
         }
