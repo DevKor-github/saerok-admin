@@ -5,6 +5,7 @@ cd "$(dirname "$0")"
 
 # 기본 compose + override 오버레이로 띄우기 (로컬 개발용)
 docker compose \
+  -p saerok-admin \
   -f deploy/docker-compose.yml \
   -f deploy/docker-compose.override.yml \
   up --build -d
