@@ -99,7 +99,7 @@ public class AuthController {
                 .queryParam("redirect_uri", kakao.redirectUri())
                 .queryParam("state", state)
                 .queryParam("scope", "account_email")
-                .build(true)
+                .encode()
                 .toUriString();
     }
 
@@ -112,7 +112,7 @@ public class AuthController {
                 .queryParam("scope", "openid email name")
                 .queryParam("response_mode", "form_post")
                 .queryParam("state", state)
-                .build(true)
+                .encode()
                 .toUriString();
     }
 }
