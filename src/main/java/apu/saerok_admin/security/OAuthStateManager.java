@@ -19,6 +19,9 @@ public class OAuthStateManager {
     }
 
     public boolean consumeState(HttpSession session, String providedState) {
+        if (session == null) {
+            return false;
+        }
         Object stored = session.getAttribute(ATTRIBUTE_NAME);
         session.removeAttribute(ATTRIBUTE_NAME);
         if (!(stored instanceof String storedState)) {

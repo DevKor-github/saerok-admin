@@ -90,6 +90,20 @@ class AuthControllerTest {
     }
 
     @Test
+    void socialCallbackWithoutExistingSessionRedirectsToSessionError() throws Exception {
+        mockMvc.perform(
+                        org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/auth/callback/kakao")
+                                .param("code", "auth-code")
+                                .param("state", "expected-state")
+                )
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isFound())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl("/login?error=session"));
+
+        verifyNoInteractions(backendAuthClient);
+        verifyNoInteractions(loginSessionManager);
+    }
+
+    @Test
     void appleCallbackAcceptsFormPost() throws Exception {
         session.setAttribute(OAuthStateManager.ATTRIBUTE_NAME, "state-token");
         List<String> cookies = List.of("refreshToken=xyz; Path=/; HttpOnly");
