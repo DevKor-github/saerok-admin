@@ -3,7 +3,6 @@ package apu.saerok_admin.infra;
 import apu.saerok_admin.config.SocialLoginProperties;
 import java.time.Clock;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,5 +33,3 @@ public class SaerokApiClientConfig {
     }
 }
 
-@ConfigurationProperties(prefix = "saerok.api")
-record SaerokApiProps(String baseUrl) {}

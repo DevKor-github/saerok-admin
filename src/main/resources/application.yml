@@ -16,3 +16,4 @@ oauth:
 saerok:
   api:
     base-url: ${SAEROK_API_BASE_URL:http://localhost:8080/api/v1}
+    prefix: ${SAEROK_API_PREFIX:/api/v1}
