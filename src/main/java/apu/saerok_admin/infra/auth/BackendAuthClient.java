@@ -1,5 +1,6 @@
 package apu.saerok_admin.infra.auth;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -16,23 +17,32 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.util.UriBuilder;
+
+import apu.saerok_admin.infra.SaerokApiProps;
 
 @Component
 public class BackendAuthClient {
 
     private static final Logger log = LoggerFactory.getLogger(BackendAuthClient.class);
+    private static final String ADMIN_CHANNEL = "admin";
 
     private final RestClient authRestClient;
+    private final List<String> missingPrefixSegments;
 
-    public BackendAuthClient(@Qualifier("saerokAuthRestClient") RestClient authRestClient) {
+    public BackendAuthClient(
+            @Qualifier("saerokAuthRestClient") RestClient authRestClient,
+            SaerokApiProps saerokApiProps
+    ) {
         this.authRestClient = authRestClient;
+        this.missingPrefixSegments = saerokApiProps.missingPrefixSegments();
     }
 
     public LoginSuccess kakaoLogin(String authorizationCode) {
-        KakaoLoginPayload payload = new KakaoLoginPayload(authorizationCode);
+        KakaoLoginPayload payload = new KakaoLoginPayload(authorizationCode, ADMIN_CHANNEL);
         log.info("Requesting Kakao login from backend with authorization code length {}", authorizationCode == null ? 0 : authorizationCode.length());
         ResponseEntity<BackendAccessTokenResponse> response = authRestClient.post()
-                .uri(uriBuilder -> uriBuilder.pathSegment("auth", "kakao", "login").build())
+                .uri(uriBuilder -> buildUri(uriBuilder, "auth", "kakao", "login"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(payload)
                 .retrieve()
@@ -45,7 +55,7 @@ public class BackendAuthClient {
         AppleLoginPayload payload = new AppleLoginPayload(authorizationCode);
         log.info("Requesting Apple login from backend with authorization code length {}", authorizationCode == null ? 0 : authorizationCode.length());
         ResponseEntity<BackendAccessTokenResponse> response = authRestClient.post()
-                .uri(uriBuilder -> uriBuilder.pathSegment("auth", "apple", "login").build())
+                .uri(uriBuilder -> buildUri(uriBuilder, "auth", "apple", "login"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(payload)
                 .retrieve()
@@ -56,7 +66,7 @@ public class BackendAuthClient {
 
     public LoginSuccess refreshAccessToken() {
         RestClient.RequestHeadersSpec<?> requestSpec = authRestClient.post()
-                .uri(uriBuilder -> uriBuilder.pathSegment("auth", "refresh").build());
+                .uri(uriBuilder -> buildUri(uriBuilder, "auth", "refresh"));
         extractRefreshCookie().ifPresent(cookie -> requestSpec.header(HttpHeaders.COOKIE, cookie));
         ResponseEntity<BackendAccessTokenResponse> response = requestSpec.retrieve()
                 .toEntity(BackendAccessTokenResponse.class);
@@ -94,7 +104,15 @@ public class BackendAuthClient {
         return new LoginSuccess(body.accessToken(), cookies);
     }
 
-    private record KakaoLoginPayload(String authorizationCode) {
+    private URI buildUri(UriBuilder builder, String... segments) {
+        if (!missingPrefixSegments.isEmpty()) {
+            builder.pathSegment(missingPrefixSegments.toArray(String[]::new));
+        }
+        builder.pathSegment(segments);
+        return builder.build();
+    }
+
+    private record KakaoLoginPayload(String authorizationCode, String channel) {
     }
 
     private record AppleLoginPayload(String authorizationCode) {

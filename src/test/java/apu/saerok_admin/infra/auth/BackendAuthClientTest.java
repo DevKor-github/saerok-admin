@@ -16,6 +16,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
+import apu.saerok_admin.infra.SaerokApiProps;
+
 class BackendAuthClientTest {
 
     private WireMockServer wireMockServer;
@@ -25,11 +27,12 @@ class BackendAuthClientTest {
     void setUp() {
         wireMockServer = new WireMockServer(WireMockConfiguration.options().dynamicPort());
         wireMockServer.start();
+        String baseUrl = "http://localhost:" + wireMockServer.port() + "/api/v1";
         RestClient restClient = RestClient.builder()
-                .baseUrl("http://localhost:" + wireMockServer.port() + "/api/v1")
+                .baseUrl(baseUrl)
                 .requestFactory(new SimpleClientHttpRequestFactory())
                 .build();
-        backendAuthClient = new BackendAuthClient(restClient);
+        backendAuthClient = new BackendAuthClient(restClient, new SaerokApiProps(baseUrl, "/api/v1"));
     }
 
     @AfterEach
@@ -41,7 +44,8 @@ class BackendAuthClientTest {
     void kakaoLoginSendsRequestIncludingApiPrefix() {
         wireMockServer.stubFor(post(urlEqualTo("/api/v1/auth/kakao/login"))
                 .withRequestBody(equalToJson("{" +
-                        "\"authorizationCode\":\"auth-code\"" +
+                        "\"authorizationCode\":\"auth-code\"," +
+                        "\"channel\":\"admin\"" +
                         "}"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
@@ -56,6 +60,34 @@ class BackendAuthClientTest {
         assertThat(loginSuccess.accessToken()).isEqualTo("backend-token");
         assertThat(loginSuccess.refreshCookies()).contains("refreshToken=abc; Path=/; HttpOnly");
 
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/api/v1/auth/kakao/login")));
+    }
+
+    @Test
+    void kakaoLoginAddsMissingPrefixWhenBaseUrlOmitsIt() {
+        RestClient restClient = RestClient.builder()
+                .baseUrl("http://localhost:" + wireMockServer.port())
+                .requestFactory(new SimpleClientHttpRequestFactory())
+                .build();
+        BackendAuthClient client = new BackendAuthClient(restClient, new SaerokApiProps(
+                "http://localhost:" + wireMockServer.port(),
+                "/api/v1"
+        ));
+        wireMockServer.stubFor(post(urlEqualTo("/api/v1/auth/kakao/login"))
+                .withRequestBody(equalToJson("{" +
+                        "\"authorizationCode\":\"auth-code\"," +
+                        "\"channel\":\"admin\"" +
+                        "}"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                        .withBody("{" +
+                                "\"accessToken\":\"backend-token\"," +
+                                "\"signupStatus\":\"COMPLETED\"" +
+                                "}")));
+
+        BackendAuthClient.LoginSuccess loginSuccess = client.kakaoLogin("auth-code");
+
+        assertThat(loginSuccess.accessToken()).isEqualTo("backend-token");
         wireMockServer.verify(postRequestedFor(urlEqualTo("/api/v1/auth/kakao/login")));
     }
 }

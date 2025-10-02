@@ -6,10 +6,12 @@ import apu.saerok_admin.security.LoginSession;
 import apu.saerok_admin.security.LoginSessionManager;
 import apu.saerok_admin.security.OAuthStateManager;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -42,13 +44,39 @@ public class AuthController {
         this.loginSessionManager = loginSessionManager;
     }
 
-    @GetMapping("/login")
-    public String login(Model model, HttpSession session) {
-        String state = oAuthStateManager.createState(session);
-        log.debug("Created OAuth state token for session {}", session.getId());
+    @RequestMapping(value = "/login", method = {RequestMethod.GET, RequestMethod.HEAD})
+    public String login(HttpServletRequest request, HttpServletResponse response, Model model) {
         model.addAttribute("pageTitle", "로그인");
-        model.addAttribute("kakaoAuthUrl", buildKakaoAuthorizeUrl(state));
-        model.addAttribute("appleAuthUrl", buildAppleAuthorizeUrl(state));
+
+        String state;
+        if (HttpMethod.HEAD.matches(request.getMethod())) {
+            response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+            response.setHeader("Pragma", "no-cache");
+            response.setDateHeader("Expires", 0);
+
+            HttpSession existingSession = request.getSession(false);
+            if (existingSession != null) {
+                state = (String) existingSession.getAttribute(OAuthStateManager.ATTRIBUTE_NAME);
+                log.debug("HEAD /login request reusing OAuth state token for session {}", existingSession.getId());
+            } else {
+                state = null;
+                log.debug("HEAD /login request without existing session; skipping OAuth state token creation.");
+            }
+        } else {
+            HttpSession session = request.getSession(true);
+            String existingState = (String) session.getAttribute(OAuthStateManager.ATTRIBUTE_NAME);
+            if (existingState == null) {
+                state = oAuthStateManager.createState(session);
+                log.debug("Created new OAuth state token for session {}", session.getId());
+            } else {
+                state = existingState;
+                log.debug("Reusing existing OAuth state token for session {}", session.getId());
+            }
+        }
+
+        String effectiveState = state != null ? state : "";
+        model.addAttribute("kakaoAuthUrl", buildKakaoAuthorizeUrl(effectiveState));
+        model.addAttribute("appleAuthUrl", buildAppleAuthorizeUrl(effectiveState));
         return "auth/login";
     }
 
@@ -111,7 +139,7 @@ public class AuthController {
                 .queryParam("client_id", kakao.clientId())
                 .queryParam("redirect_uri", kakao.redirectUri())
                 .queryParam("state", state)
-                .queryParam("scope", "account_email")
+                .queryParam("scope", "openid account_email")
                 .encode()
                 .toUriString();
     }
