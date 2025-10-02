@@ -139,7 +139,7 @@ public class AuthController {
                 .queryParam("client_id", kakao.clientId())
                 .queryParam("redirect_uri", kakao.redirectUri())
                 .queryParam("state", state)
-                .queryParam("scope", "account_email")
+                .queryParam("scope", "openid account_email")
                 .encode()
                 .toUriString();
     }
