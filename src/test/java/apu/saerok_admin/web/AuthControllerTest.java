@@ -16,6 +16,7 @@ import apu.saerok_admin.security.LoginSessionManager;
 import apu.saerok_admin.security.OAuthStateManager;
 import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,9 +28,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.client.RestClientResponseException;
 
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -93,6 +96,33 @@ class AuthControllerTest {
 
         verifyNoInteractions(backendAuthClient);
         verify(loginSessionManager, never()).establishSession(any(HttpServletRequest.class), any(LoginSession.class));
+    }
+
+    @Test
+    void kakaoCallbackWithBackendErrorMessagePropagatesToLoginPage() throws Exception {
+        session.setAttribute(OAuthStateManager.ATTRIBUTE_NAME, "expected-state");
+        RestClientResponseException backendException = new RestClientResponseException(
+                "Backend error",
+                400,
+                "Bad Request",
+                new HttpHeaders(),
+                "{\"status\":400,\"message\":\"백엔드에서 온 오류\"}".getBytes(StandardCharsets.UTF_8),
+                StandardCharsets.UTF_8
+        );
+        given(backendAuthClient.kakaoLogin("auth-code")).willThrow(backendException);
+
+        mockMvc.perform(
+                        org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/auth/callback/kakao")
+                                .param("code", "auth-code")
+                                .param("state", "expected-state")
+                                .session(session)
+                )
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isFound())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl(
+                        "/login?error=login&message=%EB%B0%B1%EC%97%94%EB%93%9C%EC%97%90%EC%84%9C%20%EC%98%A8%20%EC%98%A4%EB%A5%98"
+                ));
+
+        verify(loginSessionManager).clearSession(any(HttpServletRequest.class));
     }
 
     @Test

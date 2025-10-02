@@ -5,9 +5,12 @@ import apu.saerok_admin.infra.auth.BackendAuthClient;
 import apu.saerok_admin.security.LoginSession;
 import apu.saerok_admin.security.LoginSessionManager;
 import apu.saerok_admin.security.OAuthStateManager;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import java.util.Optional;
 import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Controller
@@ -31,17 +35,20 @@ public class AuthController {
     private final OAuthStateManager oAuthStateManager;
     private final BackendAuthClient backendAuthClient;
     private final LoginSessionManager loginSessionManager;
+    private final ObjectMapper objectMapper;
 
     public AuthController(
             SocialLoginProperties socialLoginProperties,
             OAuthStateManager oAuthStateManager,
             BackendAuthClient backendAuthClient,
-            LoginSessionManager loginSessionManager
+            LoginSessionManager loginSessionManager,
+            ObjectMapper objectMapper
     ) {
         this.socialLoginProperties = socialLoginProperties;
         this.oAuthStateManager = oAuthStateManager;
         this.backendAuthClient = backendAuthClient;
         this.loginSessionManager = loginSessionManager;
+        this.objectMapper = objectMapper;
     }
 
     @RequestMapping(value = "/login", method = {RequestMethod.GET, RequestMethod.HEAD})
@@ -128,8 +135,34 @@ public class AuthController {
         } catch (RestClientException | IllegalStateException exception) {
             log.error("Failed to complete social login due to backend error: {}", exception.getMessage(), exception);
             loginSessionManager.clearSession(request);
-            return "redirect:/login?error=login";
+            String backendMessage = extractBackendErrorMessage(exception).orElse(null);
+            UriComponentsBuilder redirectUriBuilder = UriComponentsBuilder.fromPath("/login")
+                    .queryParam("error", "login");
+            if (StringUtils.hasText(backendMessage)) {
+                redirectUriBuilder.queryParam("message", backendMessage);
+            }
+            return "redirect:" + redirectUriBuilder.toUriString();
         }
+    }
+
+    private Optional<String> extractBackendErrorMessage(Exception exception) {
+        if (exception instanceof RestClientResponseException responseException) {
+            String responseBody = responseException.getResponseBodyAsString();
+            if (StringUtils.hasText(responseBody)) {
+                try {
+                    BackendErrorResponse errorResponse = objectMapper.readValue(responseBody, BackendErrorResponse.class);
+                    if (StringUtils.hasText(errorResponse.message())) {
+                        return Optional.of(errorResponse.message());
+                    }
+                } catch (JsonProcessingException parsingException) {
+                    log.debug("Failed to parse backend error response body: {}", responseBody, parsingException);
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private record BackendErrorResponse(int status, String message) {
     }
 
     private String buildKakaoAuthorizeUrl(String state) {
