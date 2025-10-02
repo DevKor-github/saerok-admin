@@ -25,6 +25,7 @@ import apu.saerok_admin.infra.SaerokApiProps;
 public class BackendAuthClient {
 
     private static final Logger log = LoggerFactory.getLogger(BackendAuthClient.class);
+    private static final String ADMIN_CHANNEL = "admin";
 
     private final RestClient authRestClient;
     private final List<String> missingPrefixSegments;
@@ -38,7 +39,7 @@ public class BackendAuthClient {
     }
 
     public LoginSuccess kakaoLogin(String authorizationCode) {
-        KakaoLoginPayload payload = new KakaoLoginPayload(authorizationCode);
+        KakaoLoginPayload payload = new KakaoLoginPayload(authorizationCode, ADMIN_CHANNEL);
         log.info("Requesting Kakao login from backend with authorization code length {}", authorizationCode == null ? 0 : authorizationCode.length());
         ResponseEntity<BackendAccessTokenResponse> response = authRestClient.post()
                 .uri(uriBuilder -> buildUri(uriBuilder, "auth", "kakao", "login"))
@@ -111,7 +112,7 @@ public class BackendAuthClient {
         return builder.build();
     }
 
-    private record KakaoLoginPayload(String authorizationCode) {
+    private record KakaoLoginPayload(String authorizationCode, String channel) {
     }
 
     private record AppleLoginPayload(String authorizationCode) {

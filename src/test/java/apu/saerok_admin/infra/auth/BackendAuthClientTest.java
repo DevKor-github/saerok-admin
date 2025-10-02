@@ -44,7 +44,8 @@ class BackendAuthClientTest {
     void kakaoLoginSendsRequestIncludingApiPrefix() {
         wireMockServer.stubFor(post(urlEqualTo("/api/v1/auth/kakao/login"))
                 .withRequestBody(equalToJson("{" +
-                        "\"authorizationCode\":\"auth-code\"" +
+                        "\"authorizationCode\":\"auth-code\"," +
+                        "\"channel\":\"admin\"" +
                         "}"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
@@ -74,7 +75,8 @@ class BackendAuthClientTest {
         ));
         wireMockServer.stubFor(post(urlEqualTo("/api/v1/auth/kakao/login"))
                 .withRequestBody(equalToJson("{" +
-                        "\"authorizationCode\":\"auth-code\"" +
+                        "\"authorizationCode\":\"auth-code\"," +
+                        "\"channel\":\"admin\"" +
                         "}"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
