@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import apu.saerok_admin.config.SocialLoginProperties;
+import apu.saerok_admin.infra.CurrentAdminClient;
 import apu.saerok_admin.infra.auth.BackendAuthClient;
 import apu.saerok_admin.security.LoginSession;
 import apu.saerok_admin.security.LoginSessionManager;
@@ -16,6 +17,7 @@ import apu.saerok_admin.security.OAuthStateManager;
 import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -43,11 +45,15 @@ class AuthControllerTest {
     @MockBean
     private LoginSessionManager loginSessionManager;
 
+    @MockBean
+    private CurrentAdminClient currentAdminClient;
+
     private MockHttpSession session;
 
     @BeforeEach
     void setUp() {
         session = new MockHttpSession();
+        given(currentAdminClient.fetchCurrentAdminProfile()).willReturn(Optional.empty());
     }
 
     @Test
