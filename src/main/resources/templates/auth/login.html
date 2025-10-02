@@ -27,7 +27,7 @@
         <div class="d-grid gap-3">
             <a th:href="${kakaoAuthUrl}" class="btn btn-lg w-100 d-flex align-items-center justify-content-center gap-2" role="button"
                style="background-color: #FEE500; color: #191600;" aria-label="카카오 계정으로 로그인">
-                <img src="https://t1.kakaocdn.net/kakaocorp/kakaocorp/admin/contents_social/kakao_symbol.png" alt="카카오 심볼" width="20" height="20">
+                <img th:src="@{/images/kakao-symbol.svg}" src="/images/kakao-symbol.svg" alt="카카오 심볼" width="20" height="20">
                 <span class="fw-semibold">카카오로 로그인</span>
             </a>
             <a th:href="${appleAuthUrl}" class="btn btn-lg w-100 d-flex align-items-center justify-content-center gap-2"
