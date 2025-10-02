@@ -124,6 +124,27 @@ class AuthControllerTest {
         verify(loginSessionManager).writeRefreshCookiesToResponse(cookies);
     }
 
+    @Test
+    void headRequestDoesNotMutateSessionState() throws Exception {
+        mockMvc.perform(
+                        org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/login")
+                                .session(session)
+                )
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.view().name("auth/login"));
+
+        String state = (String) session.getAttribute(OAuthStateManager.ATTRIBUTE_NAME);
+        assertThat(state).isNotNull();
+
+        mockMvc.perform(
+                        org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head("/login")
+                                .session(session)
+                )
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk());
+
+        assertThat(session.getAttribute(OAuthStateManager.ATTRIBUTE_NAME)).isEqualTo(state);
+    }
+
     static class TestConfig {
 
         @Bean
