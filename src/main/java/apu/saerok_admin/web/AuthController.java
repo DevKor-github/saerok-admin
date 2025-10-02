@@ -56,29 +56,31 @@ public class AuthController {
     public String handleKakaoCallback(
             @RequestParam(name = "code", required = false) String code,
             @RequestParam(name = "state", required = false) String state,
-            HttpServletRequest request,
-            HttpSession session
+            HttpServletRequest request
     ) {
-        return handleSocialCallback(code, state, session, request, backendAuthClient::kakaoLogin);
+        return handleSocialCallback(request, code, state, backendAuthClient::kakaoLogin);
     }
 
     @RequestMapping(value = "/auth/callback/apple", method = {RequestMethod.POST, RequestMethod.GET})
     public String handleAppleCallback(
             @RequestParam(name = "code", required = false) String code,
             @RequestParam(name = "state", required = false) String state,
-            HttpServletRequest request,
-            HttpSession session
+            HttpServletRequest request
     ) {
-        return handleSocialCallback(code, state, session, request, backendAuthClient::appleLogin);
+        return handleSocialCallback(request, code, state, backendAuthClient::appleLogin);
     }
 
     private String handleSocialCallback(
+            HttpServletRequest request,
             String code,
             String state,
-            HttpSession session,
-            HttpServletRequest request,
             Function<String, BackendAuthClient.LoginSuccess> loginFunction
     ) {
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            log.warn("OAuth callback received without an existing session. Redirecting to login with session error.");
+            return "redirect:/login?error=session";
+        }
         if (!StringUtils.hasText(code) || !StringUtils.hasText(state)) {
             log.warn("OAuth callback received without required parameters. codePresent={}, statePresent={}",
                     StringUtils.hasText(code), StringUtils.hasText(state));
