@@ -6,6 +6,7 @@ import apu.saerok_admin.security.LoginSession;
 import apu.saerok_admin.security.LoginSessionManager;
 import apu.saerok_admin.security.OAuthStateManager;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.util.function.Function;
 import org.slf4j.Logger;
@@ -43,9 +44,11 @@ public class AuthController {
     }
 
     @GetMapping("/login")
-    public String login(Model model, HttpSession session) {
+    public String login(Model model, HttpSession session, HttpServletResponse response) {
         String state = oAuthStateManager.createState(session);
         log.debug("Created OAuth state token for session {}", session.getId());
+        response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
         model.addAttribute("pageTitle", "로그인");
         model.addAttribute("kakaoAuthUrl", buildKakaoAuthorizeUrl(state));
         model.addAttribute("appleAuthUrl", buildAppleAuthorizeUrl(state));
