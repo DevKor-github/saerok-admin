@@ -22,10 +22,10 @@
             </button>
             <div class="dropdown">
                 <a class="d-flex align-items-center text-decoration-none" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1" alt="관리자" class="rounded-circle" width="40" height="40">
+                    <img th:src="${currentAdminProfile.profileImageUrl()}" th:alt="${currentAdminProfile.nickname()}" src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1" alt="관리자" class="rounded-circle" width="40" height="40">
                     <div class="ms-2 text-start">
-                        <div class="fw-semibold">운영자</div>
-                        <small class="text-muted">admin@saerok.app</small>
+                        <div class="fw-semibold" th:text="${currentAdminProfile.nickname()}">운영자</div>
+                        <small class="text-muted" th:text="${currentAdminProfile.email()}">admin@saerok.app</small>
                     </div>
                     <i class="bi bi-chevron-down ms-2"></i>
                 </a>
