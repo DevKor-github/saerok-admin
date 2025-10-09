@@ -31,7 +31,7 @@
                     </div>
                     <div class="ms-auto d-flex align-items-center flex-gap-sm">
                         <span class="badge text-bg-primary-subtle text-primary"
-                              th:text="${#lists.isEmpty(selectedTypeParams)} ? '모두 보기' : selectedTypeParams.size() + '개 유형 선택'">모두 보기</span>
+                              th:text="${#lists.isEmpty(selectedTypeParams)} ? '모두 보기' : |${selectedTypeParams.size()}개 유형 선택|">모두 보기</span>
                         <button type="submit" class="btn btn-primary">필터 적용</button>
                     </div>
                 </form>
