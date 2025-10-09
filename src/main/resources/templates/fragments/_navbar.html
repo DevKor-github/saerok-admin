@@ -9,17 +9,7 @@
         <div class="flex-grow-1">
             <h2 class="h5 mb-0 fw-semibold" th:text="${pageTitle}">페이지 제목</h2>
         </div>
-        <form class="me-4 d-none d-lg-flex" role="search">
-            <div class="input-group input-group-sm">
-                <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search"></i></span>
-                <input type="search" class="form-control border-start-0" placeholder="검색">
-            </div>
-        </form>
         <div class="d-flex align-items-center gap-3">
-            <button class="btn btn-light btn-icon position-relative">
-                <i class="bi bi-bell"></i>
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">3</span>
-            </button>
             <div class="dropdown">
                 <a class="d-flex align-items-center text-decoration-none" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <img th:src="${currentAdminProfile.profileImageUrl()}" th:alt="${currentAdminProfile.nickname()}" src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1" alt="관리자" class="rounded-circle" width="40" height="40">
@@ -30,9 +20,6 @@
                     <i class="bi bi-chevron-down ms-2"></i>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end shadow">
-                    <li><a class="dropdown-item" href="#">프로필</a></li>
-                    <li><a class="dropdown-item" href="#">환경 설정</a></li>
-                    <li><hr class="dropdown-divider"></li>
                     <li>
                         <form th:action="@{/logout}" method="post">
                             <button type="submit" class="dropdown-item text-danger w-100">
