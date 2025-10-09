@@ -5,151 +5,103 @@
         <div class="card card-shadow-sm border-0 mb-4">
             <div class="card-body">
                 <form class="row g-3 align-items-end" method="get">
-                    <div class="col-md-4">
-                        <label class="form-label small text-uppercase text-muted" for="reportQuery">검색어</label>
-                        <input type="search" class="form-control" id="reportQuery" name="q" placeholder="사유 또는 대상 ID" th:value="${query}">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small text-uppercase text-muted" for="reportType">유형</label>
-                        <select class="form-select" id="reportType" name="type">
-                            <option th:each="option : ${typeOptions}" th:value="${option == '전체' ? '' : option}"
-                                    th:selected="${option == typeFilter || (typeFilter == null && option == '전체')}"
-                                    th:text="${option}">전체</option>
+                    <div class="col-sm-6 col-md-4 col-lg-3">
+                        <label class="form-label small text-uppercase text-muted" for="reportTypeFilter">유형</label>
+                        <select class="form-select" id="reportTypeFilter" name="type">
+                            <option th:each="option : ${typeOptions}" th:value="${option.value()}"
+                                    th:selected="${option.value() == typeFilter}" th:text="${option.label()}">전체</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label small text-uppercase text-muted" for="reportStatus">상태</label>
-                        <select class="form-select" id="reportStatus" name="status">
-                            <option th:each="option : ${statusOptions}" th:value="${option == '전체' ? '' : option}"
-                                    th:selected="${option == statusFilter || (statusFilter == null && option == '전체')}"
-                                    th:text="${option}">전체</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2 d-flex gap-2">
-                        <button type="submit" class="btn btn-primary flex-grow-1">검색</button>
-                        <a th:href="@{/reports}" class="btn btn-outline-secondary">초기화</a>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">필터 적용</button>
                     </div>
                 </form>
             </div>
         </div>
+
+        <div th:if="${flashMessage}" class="alert d-flex align-items-center"
+             th:classappend="${flashStatus} == 'success' ? ' alert-success' : ' alert-danger'">
+            <i class="bi" th:classappend="${flashStatus} == 'success' ? ' bi-check-circle-fill me-2' : ' bi-exclamation-triangle-fill me-2'"></i>
+            <span th:text="${flashMessage}">처리가 완료되었습니다.</span>
+        </div>
+
+        <div th:if="${loadErrorMessage}" class="alert alert-danger d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${loadErrorMessage}">신고 목록을 불러오지 못했습니다.</span>
+        </div>
+
         <div class="card card-shadow-sm border-0">
+            <div class="card-header bg-white border-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                    <h2 class="h6 mb-1 fw-semibold">신고 내역</h2>
+                    <p class="text-muted small mb-0">
+                        총 <strong th:text="${totalCount}">0</strong>건 · 현재 보기 <strong th:text="${filteredCount}">0</strong>건
+                        (<span th:text="'새록 ' + ${collectionCount} + '건'">새록 0건</span>
+                        · <span th:text="'댓글 ' + ${commentCount} + '건'">댓글 0건</span>)
+                    </p>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table class="table align-middle table-hover">
                     <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>유형</th>
+                        <th class="text-nowrap">신고 ID</th>
+                        <th class="text-nowrap">유형</th>
                         <th>대상</th>
-                        <th>사유</th>
-                        <th>상태</th>
-                        <th>접수일</th>
+                        <th class="text-nowrap">신고자</th>
+                        <th class="text-nowrap">피신고자</th>
+                        <th>내용</th>
+                        <th class="text-nowrap">접수일</th>
                         <th class="text-end">액션</th>
                     </tr>
                     </thead>
                     <tbody>
-                    <tr th:each="report : ${reports}" th:data-report="${'#' + report.id()}" th:data-status="${report.status()}" th:data-target="${report.targetId()}">
-                        <td class="fw-semibold" th:text="${'#' + report.id()}">#2042</td>
-                        <td><span class="badge text-bg-light" th:text="${report.type()}">새록</span></td>
-                        <td th:text="${report.targetId()}">P-872</td>
-                        <td>
-                            <div class="fw-semibold" th:text="${report.reason()}">허위 정보</div>
-                            <div class="text-muted small">자세한 내용은 상세 페이지에서 확인</div>
-                        </td>
+                    <tr th:if="${reports.isEmpty()}" class="text-center">
+                        <td colspan="8" class="py-5 text-muted">표시할 신고 내역이 없습니다.</td>
+                    </tr>
+                    <tr th:each="report : ${reports}">
+                        <td class="fw-semibold" th:text="${'#' + report.reportId()}">#1</td>
                         <td>
                             <span class="badge rounded-pill"
-                                  th:classappend="${report.status()} == '처리완료' ? ' text-bg-success' : (${report.status()} == '검토중' ? ' text-bg-info' : (${report.status()} == '대기' ? ' text-bg-warning' : ' text-bg-secondary'))"
-                                  th:text="${report.status()}">검토중</span>
+                                  th:classappend="' text-bg-' + ${report.type().badgeVariant()}"
+                                  th:text="${report.type().displayName()}">새록</span>
                         </td>
-                        <td th:text="${#temporals.format(report.createdAt(), 'yyyy.MM.dd HH:mm')}">2024.06.01 10:20</td>
+                        <td>
+                            <div class="fw-semibold" th:text="${report.targetSummary()}">컬렉션 #1</div>
+                        </td>
+                        <td>
+                            <div class="fw-semibold" th:text="${report.reporterNickname()}">신고자</div>
+                        </td>
+                        <td>
+                            <div class="fw-semibold" th:text="${report.reportedUserNickname()}">피신고자</div>
+                        </td>
+                        <td>
+                            <div th:if="${report.hasContentPreview()}" class="text-truncate" style="max-width: 260px;"
+                                 th:text="${report.contentPreview()}">내용 미리보기</div>
+                            <div th:if="${!report.hasContentPreview()}" class="text-muted small">내용 미리보기가 없습니다.</div>
+                        </td>
+                        <td th:text="${report.reportedAt() != null ? #temporals.format(report.reportedAt(), 'yyyy.MM.dd HH:mm') : '-'}">2024.01.01 12:00</td>
                         <td class="text-end">
-                            <div class="btn-group btn-group-sm">
-                                <a th:href="@{'/reports/' + ${report.id()}}" class="btn btn-outline-secondary">상세</a>
-                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#processReportModal"
-                                        th:attr="data-report='#' + ${report.id()}">처리</button>
-                                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteReportModal"
-                                        th:attr="data-report='#' + ${report.id()} + ' ' + ${report.targetId()}">삭제</button>
+                            <div class="d-flex justify-content-end flex-wrap gap-1">
+                                <a class="btn btn-sm btn-outline-secondary" th:href="@{${report.detailPath()}}">상세</a>
+                                <form th:action="@{${report.ignoreAction()}}" method="post" class="d-inline">
+                                    <input type="hidden" name="redirect" value="list">
+                                    <input type="hidden" name="returnType" th:value="${typeFilter}">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary"
+                                            th:attr="onclick='return confirm(''해당 신고를 무시 처리할까요?'')'">무시</button>
+                                </form>
+                                <form th:action="@{${report.deleteAction()}}" method="post" class="d-inline">
+                                    <input type="hidden" name="redirect" value="list">
+                                    <input type="hidden" name="returnType" th:value="${typeFilter}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            th:attr="onclick='return confirm(''신고 대상 콘텐츠를 삭제할까요?'')'">삭제</button>
+                                </form>
                             </div>
                         </td>
                     </tr>
                     </tbody>
                 </table>
             </div>
-            <div class="card-footer bg-white border-0 py-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="text-muted small">총 <strong th:text="${totalElements}">232</strong>건 · <strong th:text="${page}">1</strong>/<span th:text="${totalPages}">12</span> 페이지</span>
-                    <ul class="pagination pagination-sm mb-0">
-                        <li class="page-item" th:classappend="${page == 1} ? ' disabled'">
-                            <a class="page-link" th:href="@{/reports(page=${page-1 < 1 ? 1 : page-1}, size=${size}, q=${query}, status=${statusFilter}, type=${typeFilter})}">이전</a>
-                        </li>
-                        <li class="page-item" th:each="pageNum : ${#numbers.sequence(1, totalPages)}" th:classappend="${pageNum} == ${page} ? ' active'">
-                            <a class="page-link" th:text="${pageNum}" th:href="@{/reports(page=${pageNum}, size=${size}, q=${query}, status=${statusFilter}, type=${typeFilter})}">1</a>
-                        </li>
-                        <li class="page-item" th:classappend="${page == totalPages} ? ' disabled'">
-                            <a class="page-link" th:href="@{/reports(page=${page+1 > totalPages ? totalPages : page+1}, size=${size}, q=${query}, status=${statusFilter}, type=${typeFilter})}">다음</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
         </div>
-
-        <div class="modal fade" id="processReportModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">신고 처리</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p class="mb-3">신고 <strong id="processReportId">#2042</strong>의 상태를 변경합니다.</p>
-                        <select class="form-select" id="processReportStatus">
-                            <option value="대기">대기</option>
-                            <option value="검토중">검토중</option>
-                            <option value="처리완료">처리완료</option>
-                            <option value="반려">반려</option>
-                        </select>
-                        <div class="form-text">상태 변경 시 신고자에게 자동으로 알림이 발송됩니다.</div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" data-toast-target="toastReportUpdated">저장</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="modal fade" id="deleteReportModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">신고 삭제</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p><strong id="deleteReportId">#2042</strong> 신고를 삭제하시겠습니까? 관련 기록은 유지됩니다.</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
-                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-toast-target="toastReportDeleted">삭제</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    <script>
-    const processModal = document.getElementById('processReportModal');
-    if (processModal) {
-        processModal.addEventListener('show.bs.modal', event => {
-            const button = event.relatedTarget;
-            const reportId = button ? button.getAttribute('data-report') : '';
-            processModal.querySelector('#processReportId').textContent = reportId;
-        });
-    }
-    const deleteModal = document.getElementById('deleteReportModal');
-    if (deleteModal) {
-        deleteModal.addEventListener('show.bs.modal', event => {
-            const button = event.relatedTarget;
-            const target = button ? button.getAttribute('data-report') : '';
-            deleteModal.querySelector('#deleteReportId').textContent = target;
-        });
-    }
-    </script>
 </th:block>
 </html>
