@@ -2,9 +2,9 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
       th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
 <th:block th:fragment="content">
-        <div class="card card-shadow-sm border-0 mb-4">
-            <div class="card-body">
-                <form class="d-flex flex-wrap align-items-center gap-3" method="get">
+        <div class="card card-elevated mb-4">
+            <div class="card-body card-body-comfy">
+                <form class="d-flex flex-wrap align-items-center flex-gap-sm" method="get">
                     <div class="btn-group" role="group" aria-label="신고 유형 필터">
                         <input class="btn-check" type="checkbox" id="filter-collection" name="type" value="collection"
                                th:checked="${collectionFilterActive}">
@@ -18,53 +18,30 @@
             </div>
         </div>
 
-        <div th:if="${flashMessage}" class="alert d-flex align-items-center"
+        <div th:if="${flashMessage}" class="alert alert-elevated d-flex align-items-center"
              th:classappend="${flashStatus} == 'success' ? ' alert-success' : ' alert-danger'">
             <i class="bi" th:classappend="${flashStatus} == 'success' ? ' bi-check-circle-fill me-2' : ' bi-exclamation-triangle-fill me-2'"></i>
             <span th:text="${flashMessage}">처리가 완료되었습니다.</span>
         </div>
 
-        <div th:if="${loadErrorMessage}" class="alert alert-danger d-flex align-items-center">
+        <div th:if="${loadErrorMessage}" class="alert alert-danger alert-elevated d-flex align-items-center">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>
             <span th:text="${loadErrorMessage}">신고 목록을 불러오지 못했습니다.</span>
         </div>
 
-        <style>
-            .report-collection-thumb {
-                width: 72px;
-                height: 72px;
-                object-fit: cover;
-                border-radius: 1rem;
-            }
-
-            .tooltip-bubble .tooltip-inner {
-                background-color: #1f2937;
-                color: #ffffff;
-                border-radius: 0.75rem;
-                box-shadow: 0 8px 16px rgba(15, 23, 42, 0.18);
-                padding: 0.5rem 0.75rem;
-            }
-
-            .tooltip-bubble .tooltip-arrow::before {
-                border-width: 0.5rem 0.5rem 0;
-                border-top-color: #1f2937;
-                filter: drop-shadow(0 6px 6px rgba(15, 23, 42, 0.2));
-            }
-        </style>
-
-        <div class="card card-shadow-sm border-0">
-            <div class="card-header bg-white border-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div class="card card-elevated">
+            <div class="card-header card-header-tight d-flex flex-wrap justify-content-between align-items-center flex-gap-sm">
                 <div>
                     <h2 class="h6 mb-1 fw-semibold">신고 내역</h2>
-                    <p class="text-muted small mb-0">
+                    <p class="text-muted-soft small mb-0">
                         총 <strong th:text="${totalCount}">0</strong>건 · 현재 보기 <strong th:text="${filteredCount}">0</strong>건
                         (<span th:text="'새록 ' + ${collectionCount} + '건'">새록 0건</span>
                         · <span th:text="'댓글 ' + ${commentCount} + '건'">댓글 0건</span>)
                     </p>
                 </div>
             </div>
-            <div class="table-responsive">
-                <table class="table align-middle table-hover">
+            <div class="table-responsive table-shell">
+                <table class="table table-modern table-hover align-middle">
                     <thead>
                     <tr>
                         <th class="text-nowrap">신고</th>
@@ -76,7 +53,7 @@
                     </thead>
                     <tbody>
                     <tr th:if="${reports.isEmpty()}" class="text-center">
-                        <td colspan="6" class="py-5 text-muted">표시할 신고 내역이 없습니다.</td>
+                        <td colspan="6" class="table-empty-state">표시할 신고 내역이 없습니다.</td>
                     </tr>
                     <tr th:each="report : ${reports}">
                         <td class="text-nowrap">
@@ -95,10 +72,10 @@
                         <td>
                             <div class="d-flex align-items-start gap-3">
                                 <div th:if="${report.type().isCollection() and report.hasCollectionImage()}" class="flex-shrink-0">
-                                    <img th:src="${report.collectionImageUrl()}" alt="새록 미리보기" class="report-collection-thumb">
+                                    <img th:src="${report.collectionImageUrl()}" alt="새록 미리보기" class="media-thumb media-thumb--square-lg">
                                 </div>
                                 <div class="flex-grow-1">
-                                    <div th:if="${report.hasContentPreview()}" class="text-truncate" style="max-width: 260px;"
+                                    <div th:if="${report.hasContentPreview()}" class="text-truncate text-truncate-md"
                                          th:text="${report.contentPreview()}">내용 미리보기</div>
                                     <div th:if="${!report.hasContentPreview()}" class="text-muted small"
                                          th:text="${report.type().isCollection() ? '등록된 한 줄 평이 없습니다.' : '내용 미리보기가 없습니다.'}">

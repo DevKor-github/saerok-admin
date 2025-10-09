@@ -2,97 +2,22 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
       th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
 <th:block th:fragment="content">
-        <style>
-            .collection-image-thumbnail {
-                max-height: 320px;
-                object-fit: cover;
-                width: 100%;
-            }
-
-            .collection-image-modal {
-                position: fixed;
-                inset: 0;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 1080;
-            }
-
-            .collection-image-modal.d-none {
-                display: none !important;
-            }
-
-            .collection-image-modal .collection-image-backdrop {
-                position: absolute;
-                inset: 0;
-                background: rgba(0, 0, 0, 0.75);
-            }
-
-            .collection-image-modal .collection-image-dialog {
-                position: relative;
-                max-width: min(90vw, 1024px);
-                max-height: 90vh;
-            }
-
-            .collection-image-modal .collection-image-dialog img {
-                width: 100%;
-                height: auto;
-                max-height: 90vh;
-                object-fit: contain;
-            }
-
-            .collection-image-modal .btn-close {
-                position: absolute;
-                top: -16px;
-                right: -16px;
-                background-color: rgba(0, 0, 0, 0.6);
-                border-radius: 999px;
-                padding: 0.75rem;
-                opacity: 1;
-            }
-
-            .collection-note-highlight {
-                background: rgba(59, 130, 246, 0.08);
-                border: 1px solid rgba(59, 130, 246, 0.2);
-                border-radius: 1rem;
-                padding: 1.25rem;
-            }
-
-            .collection-note-highlight .note-label {
-                font-size: 0.75rem;
-                letter-spacing: 0.08em;
-                text-transform: uppercase;
-                color: #2563eb;
-                font-weight: 600;
-            }
-
-            .collection-one-line-note {
-                white-space: pre-line;
-                font-weight: 600;
-                font-size: 1rem;
-            }
-
-            .collection-detail-meta dl {
-                font-size: 0.9rem;
-            }
-        </style>
-
-        <div th:if="${flashMessage}" class="alert d-flex align-items-center"
+        <div th:if="${flashMessage}" class="alert alert-elevated d-flex align-items-center"
              th:classappend="${flashStatus} == 'success' ? ' alert-success' : ' alert-danger'">
             <i class="bi" th:classappend="${flashStatus} == 'success' ? ' bi-check-circle-fill me-2' : ' bi-exclamation-triangle-fill me-2'"></i>
             <span th:text="${flashMessage}">처리가 완료되었습니다.</span>
         </div>
         <div class="row g-4">
             <div class="col-12 col-lg-8">
-                <div class="card card-shadow-sm border-0 mb-4">
-                    <div class="card-body">
+                <div class="card card-elevated mb-4">
+                    <div class="card-body card-body-comfy">
                         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
                             <div>
                                 <span class="badge rounded-pill"
                                       th:classappend="' text-bg-' + ${detail.type().badgeVariant()}"
                                       th:text="${detail.type().displayName()}">새록</span>
                                 <h2 class="h4 fw-semibold mt-3" th:text="${'신고 #' + detail.reportId()}">신고 #1</h2>
-                                <p class="text-muted mb-0">
+                                <p class="text-muted-soft mb-0">
                                     접수 시각
                                     <span class="fw-semibold"
                                           th:text="${detail.reportedAt() != null ? #temporals.format(detail.reportedAt(), 'yyyy.MM.dd HH:mm') : '정보 없음'}">2024.01.01 12:00</span>
@@ -106,11 +31,11 @@
                     </div>
                 </div>
 
-                <div th:if="${detail.reportedComment() != null}" class="card card-shadow-sm border-0 mb-4">
-                    <div class="card-header bg-white border-0">
+                <div th:if="${detail.reportedComment() != null}" class="card card-elevated mb-4">
+                    <div class="card-header card-header-tight">
                         <h3 class="h6 mb-0 fw-semibold">신고된 댓글</h3>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body card-body-comfy">
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
                                 <div class="fw-semibold" th:text="${detail.reportedComment().nickname()}">작성자</div>
@@ -118,20 +43,20 @@
                             </div>
                             <div class="text-muted small" th:text="${detail.reportedComment().createdAt() != null ? #temporals.format(detail.reportedComment().createdAt(), 'yyyy.MM.dd HH:mm') : '-'}">2024.01.01 12:00</div>
                         </div>
-                        <div class="bg-light rounded-3 p-3 mt-3" th:text="${detail.reportedComment().content()}">댓글 내용</div>
+                        <div class="surface-muted rounded-lg p-3 mt-3" th:text="${detail.reportedComment().content()}">댓글 내용</div>
                     </div>
                 </div>
 
-                <div class="card card-shadow-sm border-0 mb-4" th:if="${detail.collection() != null}">
-                    <div class="card-header bg-white border-0">
+                <div class="card card-elevated mb-4" th:if="${detail.collection() != null}">
+                    <div class="card-header card-header-tight">
                         <h3 class="h6 mb-0 fw-semibold">새록 정보</h3>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body card-body-comfy">
                         <div th:if="${detail.collection().imageUrl() != null}" class="mb-3">
                             <button type="button" class="border-0 bg-transparent p-0 w-100"
                                     data-collection-image-trigger>
                                 <img th:src="${detail.collection().imageUrl()}" alt="새록 이미지"
-                                     class="img-fluid rounded-4 collection-image-thumbnail">
+                                     class="img-fluid collection-image-thumbnail">
                             </button>
                             <div class="text-end mt-2">
                                 <a class="small text-decoration-none" th:href="${detail.collection().imageUrl()}" target="_blank"
@@ -185,8 +110,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="card card-shadow-sm border-0">
-                    <div class="card-header bg-white border-0">
+                <div class="card card-elevated">
+                    <div class="card-header card-header-tight">
                         <h3 class="h6 mb-0 fw-semibold">댓글 목록</h3>
                     </div>
                     <div class="card-body p-0">
@@ -210,11 +135,11 @@
                 </div>
             </div>
             <div class="col-12 col-lg-4">
-                <div class="card card-shadow-sm border-0 mb-4">
-                    <div class="card-body">
+                <div class="card card-elevated mb-4">
+                    <div class="card-body card-body-comfy">
                         <h3 class="h6 fw-semibold mb-3">처리 옵션</h3>
-                        <div class="d-flex flex-wrap gap-2">
-                            <div class="d-flex flex-wrap gap-1">
+                        <div class="d-flex flex-wrap flex-gap-sm">
+                            <div class="d-flex flex-wrap flex-gap-sm">
                                 <a class="btn btn-outline-secondary d-inline-flex align-items-center gap-1"
                                    th:href="@{/reports}" data-bs-toggle="tooltip" data-bs-placement="top" title="목록 보기">
                                     <i class="bi bi-list"></i>
@@ -244,13 +169,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="card card-shadow-sm border-0" th:if="${detail.collection() != null}">
-                    <div class="card-body">
+                <div class="card card-elevated" th:if="${detail.collection() != null}">
+                    <div class="card-body card-body-comfy">
                         <h3 class="h6 fw-semibold mb-3">새록 작성자</h3>
                         <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-circle bg-light flex-shrink-0" style="width:64px; height:64px;"
-                                 th:classappend="${detail.collection().authorProfileImageUrl() == null} ? ' d-flex align-items-center justify-content-center text-muted'"
-                                 th:style="${detail.collection().authorProfileImageUrl() != null ? 'background:url(' + detail.collection().authorProfileImageUrl() + ') center/cover no-repeat' : ''}">
+                            <div class="profile-avatar flex-shrink-0"
+                                 th:style="${detail.collection().authorProfileImageUrl() != null} ? |--avatar-image: url('${detail.collection().authorProfileImageUrl()}')| : null">
                                 <i th:if="${detail.collection().authorProfileImageUrl() == null}" class="bi bi-person"></i>
                             </div>
                             <div>
@@ -268,7 +192,7 @@
             <div class="collection-image-backdrop" data-collection-image-close></div>
             <div class="collection-image-dialog">
                 <button type="button" class="btn-close btn-close-white" data-collection-image-close aria-label="닫기"></button>
-                <img th:src="${detail.collection().imageUrl()}" alt="새록 전체 이미지" class="img-fluid rounded-4">
+                <img th:src="${detail.collection().imageUrl()}" alt="새록 전체 이미지" class="img-fluid">
             </div>
         </div>
 
