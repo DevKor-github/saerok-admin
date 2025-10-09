@@ -91,7 +91,7 @@
                                         <input type="hidden" name="returnType" th:value="${typeParam}">
                                     </th:block>
                                     <button type="submit" class="btn btn-sm btn-outline-primary"
-                                            th:attr="onclick='return confirm(''해당 신고를 무시 처리할까요?'')'">무시</button>
+                                            th:onclick="|return confirm('해당 신고를 무시 처리할까요?');|">무시</button>
                                 </form>
                                 <form th:action="@{${report.deleteAction()}}" method="post" class="d-inline">
                                     <input type="hidden" name="redirect" value="list">
@@ -99,7 +99,7 @@
                                         <input type="hidden" name="returnType" th:value="${typeParam}">
                                     </th:block>
                                     <button type="submit" class="btn btn-sm btn-outline-danger"
-                                            th:attr="onclick='return confirm(''신고 대상 콘텐츠를 삭제할까요?'')'">삭제</button>
+                                            th:onclick="|return confirm('신고 대상 콘텐츠를 삭제할까요?');|">삭제</button>
                                 </form>
                             </div>
                         </td>

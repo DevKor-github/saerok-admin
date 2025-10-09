@@ -18,6 +18,10 @@
                 z-index: 1080;
             }
 
+            .collection-one-line-note {
+                white-space: pre-line;
+            }
+
             .collection-image-modal.d-none {
                 display: none !important;
             }
@@ -126,6 +130,11 @@
                                         <span class="text-muted ms-1"
                                               th:text="${detail.collection().accessLevel() != null ? '(' + detail.collection().accessLevel() + ')' : ''}">(PUBLIC)</span>
                                     </dd>
+                                    <dt class="col-sm-4 text-muted small">한 줄 평</dt>
+                                    <dd class="col-sm-8 collection-one-line-note text-break"
+                                        th:text="${#strings.hasText(detail.collection().note()) ? detail.collection().note() : '등록된 한 줄 평이 없습니다.'}">
+                                        등록된 한 줄 평이 없습니다.
+                                    </dd>
                                     <dt class="col-sm-4 text-muted small">좋아요/댓글</dt>
                                     <dd class="col-sm-8"
                                         th:text="${(detail.collection().likeCount() != null ? detail.collection().likeCount() : 0)} + ' / ' + (detail.collection().commentCount() != null ? detail.collection().commentCount() : 0)">0 / 0</dd>
@@ -146,11 +155,11 @@
                                     <dt class="col-sm-4 text-muted small">학명</dt>
                                     <dd class="col-sm-8" th:text="${detail.collection().birdScientificName() != null ? detail.collection().birdScientificName() : '-'}">-</dd>
                                     <dt class="col-sm-4 text-muted small">관찰 위치</dt>
-                                    <dd class="col-sm-8">
-                                        <div th:text="${detail.collection().locationAlias() != null ? detail.collection().locationAlias() : '-'}">서울숲</div>
-                                        <div class="text-muted small"
-                                             th:text="${detail.collection().address() != null ? detail.collection().address() : '-'}">주소</div>
-                                    </dd>
+                                    <dd class="col-sm-8 text-break"
+                                        th:text="${detail.collection().locationAlias() != null ? detail.collection().locationAlias() : '-'}">서울숲</dd>
+                                    <dt class="col-sm-4 text-muted small">주소</dt>
+                                    <dd class="col-sm-8 text-break text-muted"
+                                        th:text="${detail.collection().address() != null ? detail.collection().address() : '-'}">주소</dd>
                                     <dt class="col-sm-4 text-muted small">좌표</dt>
                                     <dd class="col-sm-8 text-muted"
                                         th:text="${detail.collection().latitude() != null && detail.collection().longitude() != null ? '(' + detail.collection().latitude() + ', ' + detail.collection().longitude() + ')' : '-'}">(0.0, 0.0)</dd>
@@ -195,12 +204,12 @@
                             <form th:action="@{${detail.ignoreAction()}}" method="post">
                                 <input type="hidden" name="redirect" value="detail">
                                 <button type="submit" class="btn btn-primary"
-                                        th:attr="onclick='return confirm(''해당 신고를 무시 처리할까요?'')'">신고 무시</button>
+                                        th:onclick="|return confirm('해당 신고를 무시 처리할까요?');|">신고 무시</button>
                             </form>
                             <form th:action="@{${detail.deleteAction()}}" method="post">
                                 <input type="hidden" name="redirect" value="detail">
                                 <button type="submit" class="btn btn-outline-danger"
-                                        th:attr="onclick='return confirm(''신고 대상 콘텐츠를 삭제할까요?'')'">대상 삭제</button>
+                                        th:onclick="|return confirm('신고 대상 콘텐츠를 삭제할까요?');|">대상 삭제</button>
                             </form>
                             <a class="btn btn-outline-secondary" th:href="@{/reports}">목록으로</a>
                         </div>

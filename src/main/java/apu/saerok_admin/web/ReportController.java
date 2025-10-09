@@ -502,7 +502,7 @@ public class ReportController {
     }
 
     private ReportedCollectionListResponse.Item findCollectionReportMetadata(long reportId) {
-        return Optional.of(adminReportClient.listCollectionReports())
+        return Optional.ofNullable(adminReportClient.listCollectionReports())
                 .map(ReportedCollectionListResponse::items)
                 .orElse(List.of())
                 .stream()
@@ -512,7 +512,7 @@ public class ReportController {
     }
 
     private ReportedCommentListResponse.Item findCommentReportMetadata(long reportId) {
-        return Optional.of(adminReportClient.listCommentReports())
+        return Optional.ofNullable(adminReportClient.listCommentReports())
                 .map(ReportedCommentListResponse::items)
                 .orElse(List.of())
                 .stream()
