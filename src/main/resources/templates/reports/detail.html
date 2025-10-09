@@ -213,18 +213,34 @@
                 <div class="card card-shadow-sm border-0 mb-4">
                     <div class="card-body">
                         <h3 class="h6 fw-semibold mb-3">처리 옵션</h3>
-                        <div class="d-grid gap-2">
-                            <form th:action="@{${detail.ignoreAction()}}" method="post">
+                        <div class="d-flex flex-wrap gap-2">
+                            <div class="d-flex flex-wrap gap-1">
+                                <a class="btn btn-outline-secondary d-inline-flex align-items-center gap-1"
+                                   th:href="@{/reports}" data-bs-toggle="tooltip" data-bs-placement="top" title="목록 보기">
+                                    <i class="bi bi-list"></i>
+                                    <span>목록 보기</span>
+                                </a>
+                                <form th:action="@{${detail.ignoreAction()}}" method="post" class="m-0">
+                                    <input type="hidden" name="redirect" value="detail">
+                                    <button type="submit"
+                                            class="btn btn-outline-primary d-inline-flex align-items-center gap-1"
+                                            th:onclick="|return confirm('해당 신고를 무시 처리할까요?');|"
+                                            data-bs-toggle="tooltip" data-bs-placement="top" title="신고 무시">
+                                        <i class="bi bi-slash-circle"></i>
+                                        <span>신고 무시</span>
+                                    </button>
+                                </form>
+                            </div>
+                            <form th:action="@{${detail.deleteAction()}}" method="post" class="m-0">
                                 <input type="hidden" name="redirect" value="detail">
-                                <button type="submit" class="btn btn-primary"
-                                        th:onclick="|return confirm('해당 신고를 무시 처리할까요?');|">신고 무시</button>
+                                <button type="submit"
+                                        class="btn btn-danger d-inline-flex align-items-center gap-1"
+                                        th:onclick="|return confirm('신고 대상 콘텐츠를 삭제할까요?');|"
+                                        data-bs-toggle="tooltip" data-bs-placement="top" title="콘텐츠 삭제">
+                                    <i class="bi bi-trash"></i>
+                                    <span>콘텐츠 삭제</span>
+                                </button>
                             </form>
-                            <form th:action="@{${detail.deleteAction()}}" method="post">
-                                <input type="hidden" name="redirect" value="detail">
-                                <button type="submit" class="btn btn-outline-danger"
-                                        th:onclick="|return confirm('신고 대상 콘텐츠를 삭제할까요?');|">대상 삭제</button>
-                            </form>
-                            <a class="btn btn-outline-secondary" th:href="@{/reports}">목록으로</a>
                         </div>
                     </div>
                 </div>
