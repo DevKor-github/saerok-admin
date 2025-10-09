@@ -61,7 +61,7 @@ public class ReportController {
                        Model model) {
         model.addAttribute("pageTitle", "신고 관리");
         model.addAttribute("activeMenu", "reports");
-        model.addAttribute("breadcrumbs", List.of(Breadcrumb.of("대시보드", "/"), Breadcrumb.active("신고")));
+        model.addAttribute("breadcrumbs", List.of(Breadcrumb.of("대시보드", "/"), Breadcrumb.active("신고 관리")));
         ensureToastMessages(model);
 
         List<String> normalizedTypes = normalizeTypeParams(types);
@@ -138,7 +138,7 @@ public class ReportController {
             model.addAttribute("detail", detail);
             model.addAttribute("breadcrumbs", List.of(
                     Breadcrumb.of("대시보드", "/"),
-                    Breadcrumb.of("신고", "/reports"),
+                    Breadcrumb.of("신고 관리", "/reports"),
                     Breadcrumb.active("새록 신고 #" + reportId)
             ));
             attachFlashDefaults(model);
@@ -173,7 +173,7 @@ public class ReportController {
             model.addAttribute("detail", detail);
             model.addAttribute("breadcrumbs", List.of(
                     Breadcrumb.of("대시보드", "/"),
-                    Breadcrumb.of("신고", "/reports"),
+                    Breadcrumb.of("신고 관리", "/reports"),
                     Breadcrumb.active("댓글 신고 #" + reportId)
             ));
             attachFlashDefaults(model);
