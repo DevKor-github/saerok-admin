@@ -10,7 +10,6 @@
                             <input class="btn-check" type="checkbox" id="filter-collection" name="type" value="collection"
                                    th:checked="${collectionFilterActive}">
                             <label class="btn btn-outline-primary d-inline-flex align-items-center gap-2"
-                                   th:classappend="${collectionFilterActive} ? ' active btn-primary text-white' : ''"
                                    for="filter-collection">
                                 <span class="fw-semibold">새록</span>
                                 <span class="badge text-bg-light text-primary"
@@ -21,7 +20,6 @@
                             <input class="btn-check" type="checkbox" id="filter-comment" name="type" value="comment"
                                    th:checked="${commentFilterActive}">
                             <label class="btn btn-outline-primary d-inline-flex align-items-center gap-2"
-                                   th:classappend="${commentFilterActive} ? ' active btn-primary text-white' : ''"
                                    for="filter-comment">
                                 <span class="fw-semibold">댓글</span>
                                 <span class="badge text-bg-light text-primary"
@@ -72,15 +70,9 @@
                                     <span class="badge rounded-pill"
                                           th:classappend="' text-bg-' + ${report.type().badgeVariant()}"
                                           th:text="${report.type().displayName()}">새록</span>
-                                    <span class="badge text-bg-warning-subtle text-warning"
-                                          th:text="${report.type().isCollection() ? '주의' : '보통'}">주의</span>
-                                    <span class="d-inline-flex align-items-center gap-1 small text-muted">
-                                        <span class="status-dot status-pending"></span>
-                                        <span>처리 대기</span>
-                                    </span>
                                 </div>
                                 <h3 class="h6 fw-semibold mt-3 mb-1"
-                                    th:text="${report.type().displayName() + ' 신고 #' + report.reportId()}">새록 신고 #1</h3>
+                                    th:text="${report.type().displayName() + ' 신고'}">새록 신고</h3>
                                 <p class="text-muted small mb-0" th:text="${report.targetSummary()}">새록 #1</p>
                             </div>
                             <div class="text-md-end">
@@ -105,7 +97,8 @@
                                 </div>
                             </div>
                             <div class="flex-grow-1">
-                                <div class="text-muted small mb-2">신고 내용 요약</div>
+                                <div class="text-muted small mb-2"
+                                     th:text="${report.type().isCollection() ? '한 줄 평' : '댓글 내용'}">신고 내용 요약</div>
                                 <div th:if="${report.hasContentPreview()}" class="text-break"
                                      th:text="${report.contentPreview()}">내용 미리보기</div>
                                 <div th:if="${!report.hasContentPreview()}" class="text-muted small"
