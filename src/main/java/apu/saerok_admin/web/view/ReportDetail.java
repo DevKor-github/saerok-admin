@@ -22,6 +22,7 @@ public record ReportDetail(
 
     public record Collection(
             long collectionId,
+            Long birdId,
             String birdKoreanName,
             String birdScientificName,
             LocalDate discoveredDate,
@@ -34,6 +35,8 @@ public record ReportDetail(
             String accessLevelLabel,
             Long likeCount,
             Long commentCount,
+            Boolean liked,
+            Boolean mine,
             Long authorId,
             String authorNickname,
             String authorProfileImageUrl,

@@ -19,4 +19,19 @@ public enum ReportType {
     public String badgeVariant() {
         return badgeVariant;
     }
+
+    public boolean isCollection() {
+        return this == COLLECTION;
+    }
+
+    public boolean isComment() {
+        return this == COMMENT;
+    }
+
+    public String targetNoun() {
+        return switch (this) {
+            case COLLECTION -> "새록";
+            case COMMENT -> "댓글";
+        };
+    }
 }

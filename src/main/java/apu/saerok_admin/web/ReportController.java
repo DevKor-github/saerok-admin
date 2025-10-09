@@ -11,14 +11,17 @@ import apu.saerok_admin.web.view.Breadcrumb;
 import apu.saerok_admin.web.view.ReportDetail;
 import apu.saerok_admin.web.view.ReportListItem;
 import apu.saerok_admin.web.view.ReportType;
-import apu.saerok_admin.web.view.SelectOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
@@ -54,38 +57,46 @@ public class ReportController {
     }
 
     @GetMapping
-    public String list(@RequestParam(name = "type", required = false, defaultValue = "all") String type,
+    public String list(@RequestParam(name = "type", required = false) List<String> types,
                        Model model) {
         model.addAttribute("pageTitle", "신고 관리");
         model.addAttribute("activeMenu", "reports");
         model.addAttribute("breadcrumbs", List.of(Breadcrumb.of("대시보드", "/"), Breadcrumb.active("신고")));
         ensureToastMessages(model);
 
-        String normalizedType = normalizeType(type);
-        model.addAttribute("typeFilter", normalizedType);
-        model.addAttribute("typeOptions", List.of(
-                new SelectOption("all", "전체"),
-                new SelectOption("collection", "새록"),
-                new SelectOption("comment", "댓글")
-        ));
+        List<String> normalizedTypes = normalizeTypeParams(types);
+        Set<ReportType> selectedTypes = toReportTypes(normalizedTypes);
+        boolean includeCollections = selectedTypes.isEmpty() || selectedTypes.contains(ReportType.COLLECTION);
+        boolean includeComments = selectedTypes.isEmpty() || selectedTypes.contains(ReportType.COMMENT);
+        model.addAttribute("collectionFilterActive", includeCollections);
+        model.addAttribute("commentFilterActive", includeComments);
+        model.addAttribute("selectedTypeParams", normalizedTypes);
 
         try {
-            List<ReportListItem> collectionReports = adminReportClient.listCollectionReports().items().stream()
-                    .map(this::toCollectionListItem)
+            List<ReportedCollectionListResponse.Item> rawCollectionReports = Optional.ofNullable(adminReportClient.listCollectionReports())
+                    .map(ReportedCollectionListResponse::items)
+                    .orElseGet(List::of);
+            List<ReportedCommentListResponse.Item> rawCommentReports = Optional.ofNullable(adminReportClient.listCommentReports())
+                    .map(ReportedCommentListResponse::items)
+                    .orElseGet(List::of);
+
+            Map<Long, String> collectionNotes = includeCollections ? loadCollectionNotes(rawCollectionReports) : Map.of();
+
+            List<ReportListItem> collectionReports = rawCollectionReports.stream()
+                    .map(item -> toCollectionListItem(item, collectionNotes.get(item.reportId())))
                     .toList();
-            List<ReportListItem> commentReports = adminReportClient.listCommentReports().items().stream()
+            List<ReportListItem> commentReports = rawCommentReports.stream()
                     .map(this::toCommentListItem)
                     .toList();
 
             List<ReportListItem> combined = Stream.concat(collectionReports.stream(), commentReports.stream())
                     .sorted(Comparator.comparing(ReportListItem::reportedAt, Comparator.nullsLast(Comparator.reverseOrder())))
-                    .toList();
+                    .collect(Collectors.toCollection(ArrayList::new));
 
             List<ReportListItem> filtered = combined;
-            if (!"all".equals(normalizedType)) {
-                ReportType filterType = TYPE_PARAM_MAP.get(normalizedType);
+            if (!selectedTypes.isEmpty()) {
                 filtered = combined.stream()
-                        .filter(item -> item.type() == filterType)
+                        .filter(item -> selectedTypes.contains(item.type()))
                         .toList();
             }
 
@@ -126,7 +137,7 @@ public class ReportController {
             model.addAttribute("breadcrumbs", List.of(
                     Breadcrumb.of("대시보드", "/"),
                     Breadcrumb.of("신고", "/reports"),
-                    Breadcrumb.active("컬렉션 신고 #" + reportId)
+                    Breadcrumb.active("새록 신고 #" + reportId)
             ));
             attachFlashDefaults(model);
             return "reports/detail";
@@ -182,14 +193,14 @@ public class ReportController {
     @PostMapping("/collections/{reportId}/ignore")
     public String ignoreCollection(@PathVariable long reportId,
                                    @RequestParam(name = "redirect", defaultValue = "list") String redirect,
-                                   @RequestParam(name = "returnType", required = false) String returnType,
+                                   @RequestParam(name = "returnType", required = false) List<String> returnTypes,
                                    RedirectAttributes redirectAttributes) {
         return performAction(() -> adminReportClient.ignoreCollectionReport(reportId),
                 reportId,
                 "신고 #" + reportId + "을(를) 무시 처리했습니다.",
                 "신고 #" + reportId + " 무시 처리에 실패했습니다.",
                 redirect,
-                returnType,
+                returnTypes,
                 "/reports/collections/" + reportId,
                 redirectAttributes);
     }
@@ -197,14 +208,14 @@ public class ReportController {
     @PostMapping("/collections/{reportId}/delete")
     public String deleteCollectionByReport(@PathVariable long reportId,
                                            @RequestParam(name = "redirect", defaultValue = "list") String redirect,
-                                           @RequestParam(name = "returnType", required = false) String returnType,
+                                           @RequestParam(name = "returnType", required = false) List<String> returnTypes,
                                            RedirectAttributes redirectAttributes) {
         return performAction(() -> adminReportClient.deleteCollectionByReport(reportId),
                 reportId,
                 "신고 대상 새록을 삭제했습니다.",
                 "신고 대상 새록 삭제에 실패했습니다.",
                 redirect,
-                returnType,
+                returnTypes,
                 "/reports/collections/" + reportId,
                 redirectAttributes);
     }
@@ -212,14 +223,14 @@ public class ReportController {
     @PostMapping("/comments/{reportId}/ignore")
     public String ignoreComment(@PathVariable long reportId,
                                 @RequestParam(name = "redirect", defaultValue = "list") String redirect,
-                                @RequestParam(name = "returnType", required = false) String returnType,
+                                @RequestParam(name = "returnType", required = false) List<String> returnTypes,
                                 RedirectAttributes redirectAttributes) {
         return performAction(() -> adminReportClient.ignoreCommentReport(reportId),
                 reportId,
                 "신고 #" + reportId + "을(를) 무시 처리했습니다.",
                 "신고 #" + reportId + " 무시 처리에 실패했습니다.",
                 redirect,
-                returnType,
+                returnTypes,
                 "/reports/comments/" + reportId,
                 redirectAttributes);
     }
@@ -227,14 +238,14 @@ public class ReportController {
     @PostMapping("/comments/{reportId}/delete")
     public String deleteCommentByReport(@PathVariable long reportId,
                                         @RequestParam(name = "redirect", defaultValue = "list") String redirect,
-                                        @RequestParam(name = "returnType", required = false) String returnType,
+                                        @RequestParam(name = "returnType", required = false) List<String> returnTypes,
                                         RedirectAttributes redirectAttributes) {
         return performAction(() -> adminReportClient.deleteCommentByReport(reportId),
                 reportId,
                 "신고 대상 댓글을 삭제했습니다.",
                 "신고 대상 댓글 삭제에 실패했습니다.",
                 redirect,
-                returnType,
+                returnTypes,
                 "/reports/comments/" + reportId,
                 redirectAttributes);
     }
@@ -244,7 +255,7 @@ public class ReportController {
                                  String successMessage,
                                  String failureMessage,
                                  String redirect,
-                                 String returnType,
+                                 List<String> returnTypes,
                                  String detailPath,
                                  RedirectAttributes redirectAttributes) {
         try {
@@ -262,43 +273,79 @@ public class ReportController {
             redirectAttributes.addFlashAttribute("flashMessage", failureMessage);
         }
 
-        return determineRedirectUrl(redirect, returnType, detailPath);
+        return determineRedirectUrl(redirect, returnTypes, detailPath);
     }
 
     private String determineRedirectUrl(String redirect,
-                                        String returnType,
+                                        List<String> returnTypes,
                                         String detailPath) {
         if ("detail".equalsIgnoreCase(redirect)) {
             return "redirect:" + detailPath;
         }
 
         StringBuilder url = new StringBuilder("redirect:/reports");
-        String normalizedReturnType = normalizeType(returnType);
-        if (StringUtils.hasText(normalizedReturnType) && !"all".equals(normalizedReturnType)) {
-            url.append("?type=").append(normalizedReturnType);
+        List<String> normalized = normalizeTypeParams(returnTypes);
+        if (!normalized.isEmpty() && normalized.size() < ReportType.values().length) {
+            String separator = "?";
+            for (String value : normalized) {
+                url.append(separator).append("type=").append(value);
+                separator = "&";
+            }
         }
         return url.toString();
     }
 
-    private String normalizeType(String type) {
-        if (!StringUtils.hasText(type)) {
-            return "all";
+    private List<String> normalizeTypeParams(List<String> types) {
+        if (types == null || types.isEmpty()) {
+            return List.of();
         }
-        String lowerCase = type.toLowerCase(Locale.ROOT);
-        if (TYPE_PARAM_MAP.containsKey(lowerCase)) {
-            return lowerCase;
+        LinkedHashSet<String> normalized = new LinkedHashSet<>();
+        for (String type : types) {
+            if (!StringUtils.hasText(type)) {
+                continue;
+            }
+            String lowerCase = type.toLowerCase(Locale.ROOT);
+            if ("all".equals(lowerCase)) {
+                return List.of();
+            }
+            ReportType reportType = TYPE_PARAM_MAP.get(lowerCase);
+            if (reportType != null) {
+                normalized.add(canonicalParam(reportType));
+            }
         }
-        return "all";
+        return List.copyOf(normalized);
     }
 
-    private ReportListItem toCollectionListItem(ReportedCollectionListResponse.Item item) {
+    private Set<ReportType> toReportTypes(List<String> normalized) {
+        if (normalized.isEmpty()) {
+            return EnumSet.noneOf(ReportType.class);
+        }
+        EnumSet<ReportType> result = EnumSet.noneOf(ReportType.class);
+        for (String value : normalized) {
+            ReportType type = TYPE_PARAM_MAP.get(value);
+            if (type != null) {
+                result.add(type);
+            }
+        }
+        return result;
+    }
+
+    private String canonicalParam(ReportType type) {
+        return switch (type) {
+            case COLLECTION -> "collection";
+            case COMMENT -> "comment";
+        };
+    }
+
+    private ReportListItem toCollectionListItem(ReportedCollectionListResponse.Item item, String note) {
         String detailPath = "/reports/collections/" + item.reportId();
+        String preview = abbreviate(note, 80);
         return new ReportListItem(
                 item.reportId(),
                 ReportType.COLLECTION,
                 item.reportedAt(),
-                "컬렉션 #" + item.collectionId(),
-                null,
+                "새록 #" + item.collectionId(),
+                preview,
                 item.reporter() != null ? item.reporter().nickname() : "-",
                 item.reportedUser() != null ? item.reportedUser().nickname() : "-",
                 detailPath,
@@ -314,7 +361,7 @@ public class ReportController {
                 item.reportId(),
                 ReportType.COMMENT,
                 item.reportedAt(),
-                "댓글 #" + item.commentId() + " (컬렉션 #" + item.collectionId() + ")",
+                "댓글 #" + item.commentId() + " (새록 #" + item.collectionId() + ")",
                 preview,
                 item.reporter() != null ? item.reporter().nickname() : "-",
                 item.reportedUser() != null ? item.reportedUser().nickname() : "-",
@@ -322,6 +369,27 @@ public class ReportController {
                 detailPath + "/ignore",
                 detailPath + "/delete"
         );
+    }
+
+    private Map<Long, String> loadCollectionNotes(List<ReportedCollectionListResponse.Item> reports) {
+        Map<Long, String> notes = new HashMap<>();
+        for (ReportedCollectionListResponse.Item item : reports) {
+            if (item == null || item.reportId() == null) {
+                continue;
+            }
+            try {
+                ReportedCollectionDetailResponse detail = adminReportClient.getCollectionReportDetail(item.reportId());
+                if (detail != null && detail.collection() != null) {
+                    notes.put(item.reportId(), detail.collection().note());
+                }
+            } catch (RestClientResponseException ex) {
+                log.warn("Failed to fetch collection note for report {}. status={}, body={}",
+                        item.reportId(), ex.getStatusCode(), ex.getResponseBodyAsString(), ex);
+            } catch (RestClientException | IllegalStateException ex) {
+                log.warn("Failed to fetch collection note for report {}.", item.reportId(), ex);
+            }
+        }
+        return notes;
     }
 
     private ReportDetail buildCollectionDetail(ReportedCollectionDetailResponse detailResponse,
@@ -390,11 +458,13 @@ public class ReportController {
         }
         String accessLevel = collection.accessLevel();
         String accessLevelLabel = toAccessLevelLabel(accessLevel);
+        CollectionDetailResponse.BirdInfo bird = collection.bird();
         CollectionDetailResponse.UserInfo user = collection.user();
         return new ReportDetail.Collection(
                 collection.collectionId(),
-                collection.bird() != null ? collection.bird().koreanName() : null,
-                collection.bird() != null ? collection.bird().scientificName() : null,
+                bird != null ? bird.birdId() : null,
+                bird != null ? bird.koreanName() : null,
+                bird != null ? bird.scientificName() : null,
                 collection.discoveredDate(),
                 collection.latitude(),
                 collection.longitude(),
@@ -405,6 +475,8 @@ public class ReportController {
                 accessLevelLabel,
                 collection.likeCount(),
                 collection.commentCount(),
+                collection.isLiked(),
+                collection.isMine(),
                 user != null ? user.userId() : null,
                 user != null ? user.nickname() : null,
                 user != null ? user.profileImageUrl() : null,

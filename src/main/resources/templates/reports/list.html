@@ -4,17 +4,16 @@
 <th:block th:fragment="content">
         <div class="card card-shadow-sm border-0 mb-4">
             <div class="card-body">
-                <form class="row g-3 align-items-end" method="get">
-                    <div class="col-sm-6 col-md-4 col-lg-3">
-                        <label class="form-label small text-uppercase text-muted" for="reportTypeFilter">유형</label>
-                        <select class="form-select" id="reportTypeFilter" name="type">
-                            <option th:each="option : ${typeOptions}" th:value="${option.value()}"
-                                    th:selected="${option.value() == typeFilter}" th:text="${option.label()}">전체</option>
-                        </select>
+                <form class="d-flex flex-wrap align-items-center gap-3" method="get">
+                    <div class="btn-group" role="group" aria-label="신고 유형 필터">
+                        <input class="btn-check" type="checkbox" id="filter-collection" name="type" value="collection"
+                               th:checked="${collectionFilterActive}">
+                        <label class="btn btn-outline-primary" for="filter-collection">새록</label>
+                        <input class="btn-check" type="checkbox" id="filter-comment" name="type" value="comment"
+                               th:checked="${commentFilterActive}">
+                        <label class="btn btn-outline-primary" for="filter-comment">댓글</label>
                     </div>
-                    <div class="col-auto">
-                        <button type="submit" class="btn btn-primary">필터 적용</button>
-                    </div>
+                    <button type="submit" class="btn btn-primary">필터 적용</button>
                 </form>
             </div>
         </div>
@@ -47,9 +46,7 @@
                     <tr>
                         <th class="text-nowrap">신고 ID</th>
                         <th class="text-nowrap">유형</th>
-                        <th>대상</th>
-                        <th class="text-nowrap">신고자</th>
-                        <th class="text-nowrap">피신고자</th>
+                        <th>신고 정보</th>
                         <th>내용</th>
                         <th class="text-nowrap">접수일</th>
                         <th class="text-end">액션</th>
@@ -57,7 +54,7 @@
                     </thead>
                     <tbody>
                     <tr th:if="${reports.isEmpty()}" class="text-center">
-                        <td colspan="8" class="py-5 text-muted">표시할 신고 내역이 없습니다.</td>
+                        <td colspan="6" class="py-5 text-muted">표시할 신고 내역이 없습니다.</td>
                     </tr>
                     <tr th:each="report : ${reports}">
                         <td class="fw-semibold" th:text="${'#' + report.reportId()}">#1</td>
@@ -67,18 +64,22 @@
                                   th:text="${report.type().displayName()}">새록</span>
                         </td>
                         <td>
-                            <div class="fw-semibold" th:text="${report.targetSummary()}">컬렉션 #1</div>
-                        </td>
-                        <td>
-                            <div class="fw-semibold" th:text="${report.reporterNickname()}">신고자</div>
-                        </td>
-                        <td>
-                            <div class="fw-semibold" th:text="${report.reportedUserNickname()}">피신고자</div>
+                            <div class="mb-1">
+                                <strong th:text="${report.reporterNickname()}">신고자</strong>
+                                <span>님이 </span>
+                                <strong th:text="${report.reportedUserNickname()}">피신고자</strong>
+                                <span th:text="${report.type().isCollection() ? '님의 새록을' : '님의 댓글을'}">님의 새록을</span>
+                                신고했습니다.
+                            </div>
+                            <div class="text-muted small" th:text="${report.targetSummary()}">새록 #1</div>
                         </td>
                         <td>
                             <div th:if="${report.hasContentPreview()}" class="text-truncate" style="max-width: 260px;"
                                  th:text="${report.contentPreview()}">내용 미리보기</div>
-                            <div th:if="${!report.hasContentPreview()}" class="text-muted small">내용 미리보기가 없습니다.</div>
+                            <div th:if="${!report.hasContentPreview()}" class="text-muted small"
+                                 th:text="${report.type().isCollection() ? '등록된 한줄평이 없습니다.' : '내용 미리보기가 없습니다.'}">
+                                내용 미리보기가 없습니다.
+                            </div>
                         </td>
                         <td th:text="${report.reportedAt() != null ? #temporals.format(report.reportedAt(), 'yyyy.MM.dd HH:mm') : '-'}">2024.01.01 12:00</td>
                         <td class="text-end">
@@ -86,13 +87,17 @@
                                 <a class="btn btn-sm btn-outline-secondary" th:href="@{${report.detailPath()}}">상세</a>
                                 <form th:action="@{${report.ignoreAction()}}" method="post" class="d-inline">
                                     <input type="hidden" name="redirect" value="list">
-                                    <input type="hidden" name="returnType" th:value="${typeFilter}">
+                                    <th:block th:each="typeParam : ${selectedTypeParams}">
+                                        <input type="hidden" name="returnType" th:value="${typeParam}">
+                                    </th:block>
                                     <button type="submit" class="btn btn-sm btn-outline-primary"
                                             th:attr="onclick='return confirm(''해당 신고를 무시 처리할까요?'')'">무시</button>
                                 </form>
                                 <form th:action="@{${report.deleteAction()}}" method="post" class="d-inline">
                                     <input type="hidden" name="redirect" value="list">
-                                    <input type="hidden" name="returnType" th:value="${typeFilter}">
+                                    <th:block th:each="typeParam : ${selectedTypeParams}">
+                                        <input type="hidden" name="returnType" th:value="${typeParam}">
+                                    </th:block>
                                     <button type="submit" class="btn btn-sm btn-outline-danger"
                                             th:attr="onclick='return confirm(''신고 대상 콘텐츠를 삭제할까요?'')'">삭제</button>
                                 </form>
