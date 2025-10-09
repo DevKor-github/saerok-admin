@@ -27,3 +27,8 @@ To keep the admin service consistent with the existing style in `saerok-BE`, fol
 - **Annotations:** Place annotations directly above the element they decorate without blank lines, preserving the order used in the backend (Spring stereotypes closest to the declaration, followed by additional annotations).
 
 These rules should be treated as mandatory for any code you add or modify so that both repositories share the same formatting baseline.
+
+### Thymeleaf templates
+
+- Prefer Thymeleaf literal syntax (`|...|`) or dedicated `th:onclick`, `th:href`, etc. attributes when interpolating strings that contain quotes or concatenating literals with expressions. Avoid building inline JavaScript or attribute values with nested quotes inside `th:attr`, as it triggers parsing errors.
+- Use the utility methods that actually exist in Thymeleaf expression objects. For example, prefer `#strings.isEmpty(...)`/`!#strings.isEmpty(...)` rather than `#strings.hasText(...)`, which is unavailable in Thymeleaf 3.
