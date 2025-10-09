@@ -4,11 +4,11 @@
     <head th:replace="~{fragments/_head :: head(${pageTitle})}"></head>
     <body>
     <div class="d-flex">
-        <div th:replace="fragments/_sidebar :: sidebar(${activeMenu})"></div>
+        <div th:replace="~{fragments/_sidebar :: sidebar(${activeMenu})}"></div>
         <div class="flex-grow-1 content-wrapper content-offset">
-            <div th:replace="fragments/_navbar :: navbar(${pageTitle})"></div>
+            <div th:replace="~{fragments/_navbar :: navbar(${pageTitle})}"></div>
             <main class="container-fluid px-4 py-4 py-lg-5">
-                <div th:if="${breadcrumbs}" th:replace="fragments/_breadcrumbs :: breadcrumbs(${breadcrumbs})"></div>
+                <div th:if="${breadcrumbs}" th:replace="~{fragments/_breadcrumbs :: breadcrumbs(${breadcrumbs})}"></div>
                 <div class="mb-4">
                     <h1 class="display-6 fw-semibold" th:text="${pageTitle}">페이지 제목</h1>
                 </div>
