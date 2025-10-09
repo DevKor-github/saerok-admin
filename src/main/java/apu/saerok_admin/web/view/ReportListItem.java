@@ -8,6 +8,7 @@ public record ReportListItem(
         LocalDateTime reportedAt,
         String targetSummary,
         String contentPreview,
+        String collectionImageUrl,
         String reporterNickname,
         String reportedUserNickname,
         String detailPath,
@@ -17,5 +18,9 @@ public record ReportListItem(
 
     public boolean hasContentPreview() {
         return contentPreview != null && !contentPreview.isBlank();
+    }
+
+    public boolean hasCollectionImage() {
+        return collectionImageUrl != null && !collectionImageUrl.isBlank();
     }
 }

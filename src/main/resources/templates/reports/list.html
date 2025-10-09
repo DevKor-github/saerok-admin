@@ -29,6 +29,15 @@
             <span th:text="${loadErrorMessage}">신고 목록을 불러오지 못했습니다.</span>
         </div>
 
+        <style>
+            .report-collection-thumb {
+                width: 72px;
+                height: 72px;
+                object-fit: cover;
+                border-radius: 1rem;
+            }
+        </style>
+
         <div class="card card-shadow-sm border-0">
             <div class="card-header bg-white border-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <div>
@@ -44,8 +53,7 @@
                 <table class="table align-middle table-hover">
                     <thead>
                     <tr>
-                        <th class="text-nowrap">신고 ID</th>
-                        <th class="text-nowrap">유형</th>
+                        <th class="text-nowrap">신고</th>
                         <th>신고 정보</th>
                         <th>내용</th>
                         <th class="text-nowrap">접수일</th>
@@ -57,11 +65,8 @@
                         <td colspan="6" class="py-5 text-muted">표시할 신고 내역이 없습니다.</td>
                     </tr>
                     <tr th:each="report : ${reports}">
-                        <td class="fw-semibold" th:text="${'#' + report.reportId()}">#1</td>
-                        <td>
-                            <span class="badge rounded-pill"
-                                  th:classappend="' text-bg-' + ${report.type().badgeVariant()}"
-                                  th:text="${report.type().displayName()}">새록</span>
+                        <td class="text-nowrap">
+                            <strong th:text="${report.type().displayName() + ' 신고 #' + report.reportId()}">새록 신고 #1</strong>
                         </td>
                         <td>
                             <div class="mb-1">
@@ -74,24 +79,33 @@
                             <div class="text-muted small" th:text="${report.targetSummary()}">새록 #1</div>
                         </td>
                         <td>
-                            <div th:if="${report.hasContentPreview()}" class="text-truncate" style="max-width: 260px;"
-                                 th:text="${report.contentPreview()}">내용 미리보기</div>
-                            <div th:if="${!report.hasContentPreview()}" class="text-muted small"
-                                 th:text="${report.type().isCollection() ? '등록된 한줄평이 없습니다.' : '내용 미리보기가 없습니다.'}">
-                                내용 미리보기가 없습니다.
+                            <div class="d-flex align-items-start gap-3">
+                                <div th:if="${report.type().isCollection() and report.hasCollectionImage()}" class="flex-shrink-0">
+                                    <img th:src="${report.collectionImageUrl()}" alt="새록 미리보기" class="report-collection-thumb">
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div th:if="${report.hasContentPreview()}" class="text-truncate" style="max-width: 260px;"
+                                         th:text="${report.contentPreview()}">내용 미리보기</div>
+                                    <div th:if="${!report.hasContentPreview()}" class="text-muted small"
+                                         th:text="${report.type().isCollection() ? '등록된 한 줄 평이 없습니다.' : '내용 미리보기가 없습니다.'}">
+                                        내용 미리보기가 없습니다.
+                                    </div>
+                                </div>
                             </div>
                         </td>
                         <td th:text="${report.reportedAt() != null ? #temporals.format(report.reportedAt(), 'yyyy.MM.dd HH:mm') : '-'}">2024.01.01 12:00</td>
                         <td class="text-end">
                             <div class="d-flex justify-content-end flex-wrap gap-1">
-                                <a class="btn btn-sm btn-outline-secondary" th:href="@{${report.detailPath()}}">상세</a>
+                                <a class="btn btn-sm btn-outline-secondary" th:href="@{${report.detailPath()}}"
+                                   data-bs-toggle="tooltip" data-bs-placement="top" title="신고 상세 페이지로 이동">상세</a>
                                 <form th:action="@{${report.ignoreAction()}}" method="post" class="d-inline">
                                     <input type="hidden" name="redirect" value="list">
                                     <th:block th:each="typeParam : ${selectedTypeParams}">
                                         <input type="hidden" name="returnType" th:value="${typeParam}">
                                     </th:block>
                                     <button type="submit" class="btn btn-sm btn-outline-primary"
-                                            th:onclick="|return confirm('해당 신고를 무시 처리할까요?');|">무시</button>
+                                            th:onclick="|return confirm('해당 신고를 무시 처리할까요?');|"
+                                            data-bs-toggle="tooltip" data-bs-placement="top" title="신고를 무시 처리합니다">무시</button>
                                 </form>
                                 <form th:action="@{${report.deleteAction()}}" method="post" class="d-inline">
                                     <input type="hidden" name="redirect" value="list">
@@ -99,7 +113,8 @@
                                         <input type="hidden" name="returnType" th:value="${typeParam}">
                                     </th:block>
                                     <button type="submit" class="btn btn-sm btn-outline-danger"
-                                            th:onclick="|return confirm('신고 대상 콘텐츠를 삭제할까요?');|">삭제</button>
+                                            th:onclick="|return confirm('신고 대상 콘텐츠를 삭제할까요?');|"
+                                            data-bs-toggle="tooltip" data-bs-placement="top" title="신고 대상 콘텐츠를 삭제합니다">삭제</button>
                                 </form>
                             </div>
                         </td>
@@ -108,5 +123,22 @@
                 </table>
             </div>
         </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var initializeTooltips = function () {
+                    if (window.bootstrap && window.bootstrap.Tooltip) {
+                        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (triggerEl) {
+                            new window.bootstrap.Tooltip(triggerEl);
+                        });
+                    }
+                };
+                if (window.bootstrap && window.bootstrap.Tooltip) {
+                    initializeTooltips();
+                } else {
+                    window.addEventListener('load', initializeTooltips, { once: true });
+                }
+            });
+        </script>
 </th:block>
 </html>

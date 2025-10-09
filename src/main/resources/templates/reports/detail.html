@@ -18,10 +18,6 @@
                 z-index: 1080;
             }
 
-            .collection-one-line-note {
-                white-space: pre-line;
-            }
-
             .collection-image-modal.d-none {
                 display: none !important;
             }
@@ -53,6 +49,31 @@
                 border-radius: 999px;
                 padding: 0.75rem;
                 opacity: 1;
+            }
+
+            .collection-note-highlight {
+                background: rgba(59, 130, 246, 0.08);
+                border: 1px solid rgba(59, 130, 246, 0.2);
+                border-radius: 1rem;
+                padding: 1.25rem;
+            }
+
+            .collection-note-highlight .note-label {
+                font-size: 0.75rem;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: #2563eb;
+                font-weight: 600;
+            }
+
+            .collection-one-line-note {
+                white-space: pre-line;
+                font-weight: 600;
+                font-size: 1rem;
+            }
+
+            .collection-detail-meta dl {
+                font-size: 0.9rem;
             }
         </style>
 
@@ -117,7 +138,14 @@
                                    rel="noopener">원본 이미지 열기</a>
                             </div>
                         </div>
-                        <div class="row g-4">
+                        <div class="collection-note-highlight mb-4">
+                            <div class="note-label mb-2">한 줄 평</div>
+                            <div class="collection-one-line-note text-break"
+                                 th:text="${#strings.isEmpty(detail.collection().note()) ? '등록된 한 줄 평이 없습니다.' : detail.collection().note()}">
+                                등록된 한 줄 평이 없습니다.
+                            </div>
+                        </div>
+                        <div class="row g-4 collection-detail-meta">
                             <div class="col-12 col-lg-6">
                                 <dl class="row gy-2 mb-0">
                                     <dt class="col-sm-4 text-muted small">새록 ID</dt>
@@ -130,20 +158,9 @@
                                         <span class="text-muted ms-1"
                                               th:text="${detail.collection().accessLevel() != null ? '(' + detail.collection().accessLevel() + ')' : ''}">(PUBLIC)</span>
                                     </dd>
-                                    <dt class="col-sm-4 text-muted small">한 줄 평</dt>
-                                    <dd class="col-sm-8 collection-one-line-note text-break"
-                                        th:text="${#strings.isEmpty(detail.collection().note()) ? '등록된 한 줄 평이 없습니다.' : detail.collection().note()}">
-                                        등록된 한 줄 평이 없습니다.
-                                    </dd>
                                     <dt class="col-sm-4 text-muted small">좋아요/댓글</dt>
                                     <dd class="col-sm-8"
                                         th:text="|${detail.collection().likeCount() != null ? detail.collection().likeCount() : 0} / ${detail.collection().commentCount() != null ? detail.collection().commentCount() : 0}|">0 / 0</dd>
-                                    <dt class="col-sm-4 text-muted small">좋아요 여부</dt>
-                                    <dd class="col-sm-8"
-                                        th:text="${detail.collection().liked() == null ? '-' : (detail.collection().liked() ? '좋아요 표시됨' : '좋아요 없음')}">-</dd>
-                                    <dt class="col-sm-4 text-muted small">내 새록 여부</dt>
-                                    <dd class="col-sm-8"
-                                        th:text="${detail.collection().mine() == null ? '-' : (detail.collection().mine() ? '내 새록' : '타인 새록')}">-</dd>
                                 </dl>
                             </div>
                             <div class="col-12 col-lg-6">
@@ -165,10 +182,6 @@
                                         th:text="${detail.collection().latitude() != null && detail.collection().longitude() != null ? '(' + detail.collection().latitude() + ', ' + detail.collection().longitude() + ')' : '-'}">(0.0, 0.0)</dd>
                                 </dl>
                             </div>
-                        </div>
-                        <div class="mt-4" th:if="${detail.collection().note() != null}">
-                            <h4 class="h6 fw-semibold mb-2">기록 노트</h4>
-                            <div class="bg-light rounded-4 p-3" th:text="${detail.collection().note()}">노트 내용</div>
                         </div>
                     </div>
                 </div>

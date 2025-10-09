@@ -80,10 +80,12 @@ public class ReportController {
                     .map(ReportedCommentListResponse::items)
                     .orElseGet(List::of);
 
-            Map<Long, String> collectionNotes = includeCollections ? loadCollectionNotes(rawCollectionReports) : Map.of();
+            Map<Long, CollectionListSupplement> collectionSupplements = includeCollections
+                    ? loadCollectionSupplements(rawCollectionReports)
+                    : Map.of();
 
             List<ReportListItem> collectionReports = rawCollectionReports.stream()
-                    .map(item -> toCollectionListItem(item, collectionNotes.get(item.reportId())))
+                    .map(item -> toCollectionListItem(item, collectionSupplements.get(item.reportId())))
                     .toList();
             List<ReportListItem> commentReports = rawCommentReports.stream()
                     .map(this::toCommentListItem)
@@ -337,8 +339,11 @@ public class ReportController {
         };
     }
 
-    private ReportListItem toCollectionListItem(ReportedCollectionListResponse.Item item, String note) {
+    private ReportListItem toCollectionListItem(ReportedCollectionListResponse.Item item,
+                                                CollectionListSupplement supplement) {
         String detailPath = "/reports/collections/" + item.reportId();
+        String note = supplement != null ? supplement.note() : null;
+        String imageUrl = supplement != null ? supplement.imageUrl() : null;
         String preview = abbreviate(note, 80);
         return new ReportListItem(
                 item.reportId(),
@@ -346,6 +351,7 @@ public class ReportController {
                 item.reportedAt(),
                 "새록 #" + item.collectionId(),
                 preview,
+                imageUrl,
                 item.reporter() != null ? item.reporter().nickname() : "-",
                 item.reportedUser() != null ? item.reportedUser().nickname() : "-",
                 detailPath,
@@ -363,6 +369,7 @@ public class ReportController {
                 item.reportedAt(),
                 "댓글 #" + item.commentId() + " (새록 #" + item.collectionId() + ")",
                 preview,
+                null,
                 item.reporter() != null ? item.reporter().nickname() : "-",
                 item.reportedUser() != null ? item.reportedUser().nickname() : "-",
                 detailPath,
@@ -371,8 +378,8 @@ public class ReportController {
         );
     }
 
-    private Map<Long, String> loadCollectionNotes(List<ReportedCollectionListResponse.Item> reports) {
-        Map<Long, String> notes = new HashMap<>();
+    private Map<Long, CollectionListSupplement> loadCollectionSupplements(List<ReportedCollectionListResponse.Item> reports) {
+        Map<Long, CollectionListSupplement> details = new HashMap<>();
         for (ReportedCollectionListResponse.Item item : reports) {
             if (item == null || item.reportId() == null) {
                 continue;
@@ -380,7 +387,10 @@ public class ReportController {
             try {
                 ReportedCollectionDetailResponse detail = adminReportClient.getCollectionReportDetail(item.reportId());
                 if (detail != null && detail.collection() != null) {
-                    notes.put(item.reportId(), detail.collection().note());
+                    details.put(item.reportId(), new CollectionListSupplement(
+                            detail.collection().note(),
+                            detail.collection().imageUrl()
+                    ));
                 }
             } catch (RestClientResponseException ex) {
                 log.warn("Failed to fetch collection note for report {}. status={}, body={}",
@@ -389,7 +399,7 @@ public class ReportController {
                 log.warn("Failed to fetch collection note for report {}.", item.reportId(), ex);
             }
         }
-        return notes;
+        return details;
     }
 
     private ReportDetail buildCollectionDetail(ReportedCollectionDetailResponse detailResponse,
@@ -555,5 +565,8 @@ public class ReportController {
         if (!model.containsAttribute("flashMessage")) {
             model.addAttribute("flashMessage", null);
         }
+    }
+
+    private record CollectionListSupplement(String note, String imageUrl) {
     }
 }
