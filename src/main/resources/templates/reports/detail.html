@@ -137,7 +137,7 @@
                                     </dd>
                                     <dt class="col-sm-4 text-muted small">좋아요/댓글</dt>
                                     <dd class="col-sm-8"
-                                        th:text="${(detail.collection().likeCount() != null ? detail.collection().likeCount() : 0)} + ' / ' + (detail.collection().commentCount() != null ? detail.collection().commentCount() : 0)">0 / 0</dd>
+                                        th:text="|${detail.collection().likeCount() != null ? detail.collection().likeCount() : 0} / ${detail.collection().commentCount() != null ? detail.collection().commentCount() : 0}|">0 / 0</dd>
                                     <dt class="col-sm-4 text-muted small">좋아요 여부</dt>
                                     <dd class="col-sm-8"
                                         th:text="${detail.collection().liked() == null ? '-' : (detail.collection().liked() ? '좋아요 표시됨' : '좋아요 없음')}">-</dd>
