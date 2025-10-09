@@ -2,15 +2,15 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <th:block th:fragment="layout(pageTitle, activeMenu, breadcrumbs, content)">
     <head th:replace="~{fragments/_head :: head(${pageTitle})}"></head>
-    <body>
+    <body class="app-shell">
     <div class="d-flex">
         <div th:replace="~{fragments/_sidebar :: sidebar(${activeMenu})}"></div>
-        <div class="flex-grow-1 content-wrapper content-offset">
+        <div class="app-content">
             <div th:replace="~{fragments/_navbar :: navbar(${pageTitle})}"></div>
-            <main class="container-fluid px-4 py-4 py-lg-5">
+            <main class="app-main container-fluid">
                 <div th:if="${breadcrumbs}" th:replace="~{fragments/_breadcrumbs :: breadcrumbs(${breadcrumbs})}"></div>
                 <div class="mb-4">
-                    <h1 class="display-6 fw-semibold" th:text="${pageTitle}">페이지 제목</h1>
+                    <h1 class="section-heading" th:text="${pageTitle}">페이지 제목</h1>
                 </div>
                 <div th:replace="${content}"></div>
             </main>

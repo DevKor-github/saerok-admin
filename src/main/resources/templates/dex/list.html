@@ -2,8 +2,8 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
       th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
 <th:block th:fragment="content">
-        <div class="card card-shadow-sm border-0 mb-4">
-            <div class="card-body">
+        <div class="card card-elevated mb-4">
+            <div class="card-body card-body-comfy">
                 <form class="row g-3 align-items-end" method="get">
                     <div class="col-md-4">
                         <label for="query" class="form-label small text-uppercase text-muted">검색어</label>
@@ -45,9 +45,9 @@
             <p class="mb-0 text-muted">총 <strong th:text="${totalElements}">146</strong>건 · <strong th:text="${page}">1</strong>/<span th:text="${totalPages}">8</span> 페이지</p>
             <a th:href="@{/dex/new}" class="btn btn-primary"><i class="bi bi-plus-lg me-2"></i>도감 등록</a>
         </div>
-        <div class="card card-shadow-sm border-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
+        <div class="card card-elevated">
+            <div class="table-responsive table-shell">
+                <table class="table table-modern table-hover align-middle">
                     <thead>
                     <tr>
                         <th scope="col">ID</th>

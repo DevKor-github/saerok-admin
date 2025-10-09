@@ -2,8 +2,8 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
       th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
 <th:block th:fragment="content">
-        <div class="card card-shadow-sm border-0 mb-4">
-            <div class="card-body">
+        <div class="card card-elevated mb-4">
+            <div class="card-body card-body-comfy">
                 <form class="row g-3 align-items-end" method="get">
                     <div class="col-md-4">
                         <label class="form-label small text-uppercase text-muted" for="userQuery">검색어</label>
@@ -24,9 +24,9 @@
                 </form>
             </div>
         </div>
-        <div class="card card-shadow-sm border-0">
-            <div class="table-responsive">
-                <table class="table align-middle table-hover">
+        <div class="card card-elevated">
+            <div class="table-responsive table-shell">
+                <table class="table table-modern align-middle table-hover">
                     <thead>
                     <tr>
                         <th>ID</th>
