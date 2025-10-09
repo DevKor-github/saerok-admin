@@ -132,7 +132,7 @@
                                     </dd>
                                     <dt class="col-sm-4 text-muted small">한 줄 평</dt>
                                     <dd class="col-sm-8 collection-one-line-note text-break"
-                                        th:text="${#strings.hasText(detail.collection().note()) ? detail.collection().note() : '등록된 한 줄 평이 없습니다.'}">
+                                        th:text="${#strings.isEmpty(detail.collection().note()) ? '등록된 한 줄 평이 없습니다.' : detail.collection().note()}">
                                         등록된 한 줄 평이 없습니다.
                                     </dd>
                                     <dt class="col-sm-4 text-muted small">좋아요/댓글</dt>
