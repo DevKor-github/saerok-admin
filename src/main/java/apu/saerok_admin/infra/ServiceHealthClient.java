@@ -23,7 +23,7 @@ public class ServiceHealthClient {
         LocalDateTime checkedAt = LocalDateTime.now(clock);
         try {
             ResponseEntity<String> response = saerokRestClient.get()
-                    .uri("/health")
+                    .uri(uriBuilder -> uriBuilder.replacePath("/health").replaceQuery(null).build())
                     .retrieve()
                     .toEntity(String.class);
 
