@@ -1,0 +1,121 @@
+name: Deploy Admin to Dev (EC2 + Docker Compose)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    environment: dev
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # (옵션) BE와 동일 스타일 - 리포지토리명 소문자/메타 태그
+      - name: Normalize image repo (lowercase)
+        id: normalize
+        run: echo "image_repo=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: GHCR login
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Meta (tags/labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.normalize.outputs.image_repo }}
+          tags: |
+            type=raw,value=dev-latest
+            type=sha,format=long,prefix=dev-
+
+      - name: Build & Push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ steps.normalize.outputs.image_repo }}:buildcache
+          cache-to:   type=registry,ref=${{ steps.normalize.outputs.image_repo }}:buildcache,mode=max
+
+      - name: Copy compose files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          source: "deploy/docker-compose.yml,deploy/docker-compose.dev.yml"
+          target: "~/saerok-admin"
+          strip_components: 1
+
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          script: |
+            set -euo pipefail
+            cd ~/saerok-admin
+
+            # 0) Docker & Compose must exist
+            docker --version
+            docker compose version
+
+            # 1) GHCR login for pull
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+
+            # 2) Create ephemeral env file in RAM and ensure cleanup
+            sudo install -d -m 0700 /run/saerok-admin
+            ENV_FILE="/run/saerok-admin/env.dev"
+            umask 177
+            : > "$ENV_FILE"
+            cleanup() { shred -u "$ENV_FILE" || rm -f "$ENV_FILE"; }
+            trap cleanup EXIT
+
+            add_kv() { printf '%s=%s\n' "$1" "$2" >> "$ENV_FILE"; }
+
+            # 2-1) Runtime envs (dev)
+            # 프록시 뒤 HTTPS 인식/자바 힙 튜닝은 compose에 이미 있다면 생략 가능
+            # add_kv SERVER_FORWARD_HEADERS_STRATEGY "native"
+            # add_kv JAVA_OPTS "-Duser.timezone=Asia/Seoul -XX:MaxRAMPercentage=50 -XX:+ExitOnOutOfMemoryError"
+
+            # API endpoints
+            add_kv SAEROK_API_BASE_URL "${{ secrets.SAEROK_API_BASE_URL }}"
+            add_kv SAEROK_API_PREFIX   "${{ secrets.SAEROK_API_PREFIX }}"
+
+            # Social login (admin 전용 redirect)
+            add_kv KAKAO_CLIENT_ID     "${{ secrets.ADMIN_KAKAO_CLIENT_ID }}"
+            add_kv KAKAO_REDIRECT_URI  "${{ secrets.KAKAO_REDIRECT_URI }}"
+            add_kv APPLE_CLIENT_ID     "${{ secrets.ADMIN_APPLE_CLIENT_ID }}"
+            add_kv APPLE_REDIRECT_URI  "${{ secrets.APPLE_REDIRECT_URI }}"
+
+            # 3) Pull & Up with dev overlay (mem/cpu limits inside dev.yml)
+            docker compose -p saerok-admin -f docker-compose.yml -f docker-compose.dev.yml pull --quiet
+            docker compose -p saerok-admin -f docker-compose.yml -f docker-compose.dev.yml up -d --force-recreate --quiet-pull
+
+            # 4) Healthcheck: /login (HEAD OK)
+            for i in {1..30}; do
+              if curl -fsS -I http://localhost:8081/login > /dev/null; then
+                echo "✅ admin up"
+                docker image prune -af --filter "until=24h" || true
+                docker builder prune -af --filter "until=24h" || true
+                exit 0
+              fi
+              echo "⏳ ($i/30)"; sleep 3
+            done
+
+            echo "❌ admin health check failed"
+            docker logs saerok-admin-dev --tail=200 || true
+            exit 1

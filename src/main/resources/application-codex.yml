@@ -3,13 +3,13 @@ server:
 
 oauth:
   kakao:
-    client-id: ${KAKAO_CLIENT_ID:}
-    redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:8081/auth/callback/kakao}
+    client-id: ${KAKAO_CLIENT_ID}
+    redirect-uri: ${KAKAO_REDIRECT_URI}
   apple:
-    client-id: ${APPLE_CLIENT_ID:}
-    redirect-uri: ${APPLE_REDIRECT_URI:http://localhost:8081/auth/callback/apple}
+    client-id: ${APPLE_CLIENT_ID}
+    redirect-uri: ${APPLE_REDIRECT_URI}
 
 saerok:
   api:
-    base-url: http://localhost:8080/api/v1
+    base-url: ${SAEROK_API_BASE_URL}
     prefix: /api/v1
