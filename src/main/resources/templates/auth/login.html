@@ -10,7 +10,13 @@
                  src="/images/saerok-admin-icon.png"
                  alt="새록 어드민 로고"
                  decoding="async">
-            <h1 class="h4 fw-bold mt-3">새록 어드민</h1>
+            <div class="d-flex align-items-center justify-content-center gap-2 mt-3 flex-wrap">
+                <h1 class="h4 fw-bold mb-0">새록 어드민</h1>
+                <span class="environment-badge"
+                      th:if="${environmentProfileBadge}"
+                      th:classappend="' ' + ${environmentProfileBadge.cssClass()}"
+                      th:text="${environmentProfileBadge.label()}">운영</span>
+            </div>
             <p class="text-muted small mb-0">운영자 전용 로그인 페이지입니다.</p>
         </div>
 
