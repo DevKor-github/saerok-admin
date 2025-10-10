@@ -16,6 +16,7 @@
             </main>
         </div>
     </div>
+    <th:block th:replace="~{fragments/_scripts :: scripts}"></th:block>
     <div th:replace="~{fragments/_toast :: toast(${toastMessages})}"></div>
     </body>
 </th:block>
