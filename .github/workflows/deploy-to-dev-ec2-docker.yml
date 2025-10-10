@@ -93,9 +93,9 @@ jobs:
             add_kv SAEROK_API_PREFIX   "${{ secrets.SAEROK_API_PREFIX }}"
             
             # Social login (admin 전용 redirect)
-            add_kv KAKAO_CLIENT_ID     "${{ secrets.ADMIN_KAKAO_CLIENT_ID }}"
+            add_kv KAKAO_CLIENT_ID     "${{ secrets.KAKAO_CLIENT_ID }}"
             add_kv KAKAO_REDIRECT_URI  "${{ secrets.KAKAO_REDIRECT_URI }}"
-            add_kv APPLE_CLIENT_ID     "${{ secrets.ADMIN_APPLE_CLIENT_ID }}"
+            add_kv APPLE_CLIENT_ID     "${{ secrets.APPLE_CLIENT_ID }}"
             add_kv APPLE_REDIRECT_URI  "${{ secrets.APPLE_REDIRECT_URI }}"
             
             # 3) Pull & Up with dev overlay (limits in dev.yml)
