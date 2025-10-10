@@ -5,7 +5,13 @@
     <div class="app-sidebar d-none d-lg-flex flex-column position-fixed">
         <div class="app-sidebar__brand">
             <img th:src="@{/images/saerok-admin-icon.png}" src="/images/saerok-admin-icon.png" alt="새록 어드민 로고" width="48" height="48" class="me-2">
-            <span class="app-sidebar__title">새록 어드민</span>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="app-sidebar__title mb-0">새록 어드민</span>
+                <span class="environment-badge"
+                      th:if="${environmentProfileBadge}"
+                      th:classappend="' ' + ${environmentProfileBadge.cssClass()}"
+                      th:text="${environmentProfileBadge.label()}">운영</span>
+            </div>
         </div>
         <nav class="app-sidebar__nav">
             <a th:href="@{/}" class="app-sidebar__link" th:classappend="${activeMenu}=='dashboard' ? ' is-active'">
@@ -34,7 +40,13 @@
     </div>
     <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarOffcanvas">
         <div class="offcanvas-header">
-            <h5 class="offcanvas-title">새록 어드민</h5>
+            <div class="d-flex align-items-center gap-2">
+                <h5 class="offcanvas-title mb-0">새록 어드민</h5>
+                <span class="environment-badge"
+                      th:if="${environmentProfileBadge}"
+                      th:classappend="' ' + ${environmentProfileBadge.cssClass()}"
+                      th:text="${environmentProfileBadge.label()}">운영</span>
+            </div>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
         <div class="offcanvas-body">

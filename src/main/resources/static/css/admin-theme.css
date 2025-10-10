@@ -176,6 +176,36 @@ a:focus {
     color: var(--accent-primary-strong) !important;
 }
 
+.environment-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.environment-badge--local {
+    background: rgba(59, 130, 246, 0.18);
+    color: #1d4ed8;
+    box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.25);
+}
+
+.environment-badge--dev {
+    background: rgba(168, 85, 247, 0.18);
+    color: #7c3aed;
+    box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.25);
+}
+
+.environment-badge--prod {
+    background: rgba(34, 197, 94, 0.18);
+    color: #15803d;
+    box-shadow: inset 0 0 0 1px rgba(22, 163, 74, 0.25);
+}
+
 .table-modern thead th {
     background: var(--surface-muted);
     font-size: 0.875rem;
