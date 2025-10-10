@@ -398,6 +398,64 @@ a:focus {
     color: var(--text-muted);
 }
 
+.metric-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metric-card--interactive {
+    cursor: pointer;
+}
+
+.metric-card--interactive:hover,
+.metric-card--interactive:focus-visible {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-soft);
+}
+
+.metric-card--interactive:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 4px;
+}
+
+.report-card {
+    border: none;
+    background: transparent;
+}
+
+.report-card + .report-card {
+    border-top: 1px solid var(--border-subtle);
+}
+
+.report-card__link {
+    display: block;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-lg);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.report-card__link:hover,
+.report-card__link:focus-visible {
+    background: var(--surface-muted);
+    box-shadow: var(--shadow-soft);
+    transform: translateY(-2px);
+}
+
+.report-card__link:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+.report-card:hover .report-card__link,
+.report-card:focus-within .report-card__link {
+    background: var(--surface-muted);
+    box-shadow: var(--shadow-soft);
+}
+
+.report-card__footer {
+    padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md);
+    border-color: var(--border-subtle) !important;
+}
+
 .offcanvas .app-sidebar__link {
     color: var(--text-primary);
 }

@@ -44,14 +44,16 @@ public class DashboardController {
                 reportCounts.formattedTotal(),
                 "bi-flag",
                 "primary",
-                reportCounts.subtitle()
+                reportCounts.subtitle(),
+                "/reports"
         )
                 : new DashboardMetric(
                 "접수된 신고",
                 "정보 없음",
                 "bi-flag",
                 "secondary",
-                "신고 데이터를 불러오지 못했습니다."
+                "신고 데이터를 불러오지 못했습니다.",
+                "/reports"
         );
 
         model.addAttribute("metrics", List.of(reportMetric));

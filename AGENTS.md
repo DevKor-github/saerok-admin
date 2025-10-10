@@ -32,3 +32,7 @@ These rules should be treated as mandatory for any code you add or modify so tha
 
 - Prefer Thymeleaf literal syntax (`|...|`) or dedicated `th:onclick`, `th:href`, etc. attributes when interpolating strings that contain quotes or concatenating literals with expressions. Avoid building inline JavaScript or attribute values with nested quotes inside `th:attr`, as it triggers parsing errors.
 - Use the utility methods that actually exist in Thymeleaf expression objects. For example, prefer `#strings.isEmpty(...)`/`!#strings.isEmpty(...)` rather than `#strings.hasText(...)`, which is unavailable in Thymeleaf 3.
+
+### Gotchas
+
+- When building ternary expressions that concatenate literals and values (e.g., `cond ? 'text' : value + 'suffix'`), always wrap the entire expression with Thymeleaf's literal syntax (`|...|`). This prevents parsing errors like the one we recently fixed in `reports/list.html` and keeps the expression engine from misinterpreting string concatenations.
