@@ -8,7 +8,7 @@ services:
 
     # t2.micro 안전 제한 (BE와 합쳐도 1GiB 넘지 않게)
     cpus: "0.25"
-    mem_limit: "250m"
+    mem_limit: "200m"
 
     # 런타임에 만드는 RAM env 파일
     env_file:
