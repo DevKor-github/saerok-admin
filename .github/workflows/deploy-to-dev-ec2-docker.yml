@@ -105,14 +105,14 @@ jobs:
             docker compose -p saerok-admin -f docker-compose.yml -f docker-compose.dev.yml up -d --force-recreate --quiet-pull
             
             # 4) Healthcheck: /login (HEAD OK)
-            for i in {1..30}; do
+            for i in {1..45}; do
             if curl -fsS -I http://localhost:8081/login > /dev/null; then
             echo "✅ admin up"
             docker image prune -af --filter "until=24h" || true
             docker builder prune -af --filter "until=24h" || true
             exit 0
             fi
-            echo "⏳ ($i/30)"; sleep 3
+            echo "⏳ ($i/45)"; sleep 3
             done
             
             echo "❌ admin health check failed"
