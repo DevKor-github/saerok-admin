@@ -45,6 +45,37 @@
     <footer class="overlay-actions">
         <div class="overlay-actions__scrim"></div>
 
+        <!-- Login error banner (glass alert) -->
+        <div class="overlay-actions__error"
+             th:if="${param.error}"
+             th:with="err=${#strings.toString(param.error[0])}">
+            <div class="alert alert-dismissible fade show alert-login"
+                 th:classappend="${err == 'state' or err == 'session'} ? ' alert-warning'
+                       : (${err} == 'callback' ? ' alert-info' : ' alert-danger')"
+                 role="alert">
+                <!-- 아이콘: 삼항 대신 조건 분기 -->
+                <i class="bi bi-info-circle-fill me-2" th:if="${err == 'callback'}"></i>
+                <i class="bi bi-exclamation-triangle-fill me-2" th:if="${err == 'state' or err == 'session'}"></i>
+                <i class="bi bi-x-octagon-fill me-2"
+                   th:if="${err != 'callback' and err != 'state' and err != 'session'}"></i>
+
+                <!-- 메시지 본문 -->
+                <span th:switch="${err}">
+                  <span th:case="'state'">보안 검증에 실패했습니다. 새로고침 후 다시 로그인해주세요.</span>
+                  <span th:case="'callback'">필수 인증 정보가 누락되었습니다. 창/앱을 닫았다면 다시 시도해주세요.</span>
+                  <span th:case="'session'">세션이 만료되었습니다. 다시 로그인해주세요.</span>
+                  <span th:case="'login'">
+                    <span th:if="${param.message}" th:text="${param.message[0]}">로그인 중 오류가 발생했습니다. 다시 시도해주세요.</span>
+                    <span th:unless="${param.message}">로그인 중 오류가 발생했습니다. 다시 시도해주세요.</span>
+                  </span>
+                  <span th:case="*">로그인에 실패했습니다. 다시 시도해주세요.</span>
+                </span>
+
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="닫기"></button>
+            </div>
+        </div>
+
+
         <!-- Unsplash attribution -->
         <div id="attributionOverlay" class="overlay-actions__attr small text-white-75">
             <span>사진을 불러오는 중…</span>
@@ -57,7 +88,8 @@
                role="button"
                style="background-color: #FEE500; color: #191600;"
                aria-label="카카오 계정으로 로그인">
-                <img th:src="@{/images/kakao-symbol.svg}" src="/images/kakao-symbol.svg" alt="카카오 심볼" width="20" height="20">
+                <img th:src="@{/images/kakao-symbol.svg}" src="/images/kakao-symbol.svg" alt="카카오 심볼" width="20"
+                     height="20">
                 <span class="fw-semibold">카카오로 로그인</span>
             </a>
 
@@ -82,9 +114,9 @@
 <th:block th:replace="~{fragments/_scripts :: scripts}"></th:block>
 
 <script>
-    const imgEl   = document.getElementById('loginPhoto');
-    const linkEl  = document.getElementById('photoLink');
-    const attrEl  = document.getElementById('attributionOverlay');
+    const imgEl = document.getElementById('loginPhoto');
+    const linkEl = document.getElementById('photoLink');
+    const attrEl = document.getElementById('attributionOverlay');
 
     // imgix(Unsplash CDN) 파라미터: 화면 크기에 맞춰 다운샘플 + entropy 크롭
     function buildSmartUrl(base, w, h) {
@@ -97,14 +129,16 @@
             u.searchParams.set('fit', 'crop');
             u.searchParams.set('crop', 'entropy');
             return u.toString();
-        } catch { return base; }
+        } catch {
+            return base;
+        }
     }
 
     function renderImage(baseUrl) {
         if (!baseUrl) return;
         const rect = document.querySelector('.login-visual').getBoundingClientRect();
-        const dpr  = Math.min(2, window.devicePixelRatio || 1);
-        const w = rect.width  * dpr;
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        const w = rect.width * dpr;
         const h = rect.height * dpr;
         imgEl.src = buildSmartUrl(baseUrl, w, h);
     }
@@ -119,7 +153,7 @@
     async function loadRandomBirdViaProxy() {
         try {
             const orientation = pickInitialOrientation();
-            const res = await fetch('/public/unsplash/random-bird?orientation=' + orientation, { cache: 'no-store' });
+            const res = await fetch('/public/unsplash/random-bird?orientation=' + orientation, {cache: 'no-store'});
             if (!res.ok) throw new Error('Proxy request failed: ' + res.status);
             const photo = await res.json(); // { imageUrl, htmlLink, photographerName, photographerLink, unsplashHome }
 
@@ -160,7 +194,7 @@
             if (existing) existing.dispose();
             new window.bootstrap.Tooltip(triggerEl, {
                 trigger: 'hover focus',
-                delay: { show: 0, hide: 100 },
+                delay: {show: 0, hide: 100},
                 customClass: 'tooltip-bubble'
             });
         });
@@ -168,85 +202,217 @@
 </script>
 
 <style>
-    :root{
-        --panel-bg: rgba(248,250,252,.80);
-        --panel-border: rgba(255,255,255,.28);
-        --panel-shadow: 0 20px 40px rgba(15,23,42,.25);
-        --scrim-top:    rgba(0,0,0,.70);
-        --scrim-mid:    rgba(0,0,0,.28);
-        --scrim-btm:    rgba(0,0,0,.74);
+    :root {
+        --panel-bg: rgba(248, 250, 252, .80);
+        --panel-border: rgba(255, 255, 255, .28);
+        --panel-shadow: 0 20px 40px rgba(15, 23, 42, .25);
+        --scrim-top: rgba(0, 0, 0, .70);
+        --scrim-mid: rgba(0, 0, 0, .28);
+        --scrim-btm: rgba(0, 0, 0, .74);
     }
 
-    .login-page{min-height:100dvh;background:#0b1220;overflow:hidden;}
-    .login-shell{position:relative;min-height:100dvh;}
+    .login-page {
+        min-height: 100dvh;
+        background: #0b1220;
+        overflow: hidden;
+    }
+
+    .login-shell {
+        position: relative;
+        min-height: 100dvh;
+    }
 
     /* Background (full-bleed) */
-    .login-visual{position:absolute;inset:0;z-index:0;overflow:hidden;background:#0b1220;}
-    .login-visual__image-link,.login-visual__image{display:block;width:100%;height:100%;}
-    .login-visual__image{object-fit:cover;}
-    .login-visual__scrim{
-        position:absolute;inset:0;pointer-events:none;
-        background:
-                linear-gradient(180deg, var(--scrim-top) 0%, rgba(0,0,0,0) 32%, rgba(0,0,0,0) 68%, var(--scrim-btm) 100%);
+    .login-visual {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        background: #0b1220;
     }
-    .login-visual__credit{display:none;}
+
+    .login-visual__image-link, .login-visual__image {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+
+    .login-visual__image {
+        object-fit: cover;
+    }
+
+    .login-visual__scrim {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(180deg, var(--scrim-top) 0%, rgba(0, 0, 0, 0) 32%, rgba(0, 0, 0, 0) 68%, var(--scrim-btm) 100%);
+    }
+
+    .login-visual__credit {
+        display: none;
+    }
 
     /* Top overlay: title */
-    .overlay-header{
-        position:fixed; z-index:2; inset:0 0 auto 0;
+    .overlay-header {
+        position: fixed;
+        z-index: 2;
+        inset: 0 0 auto 0;
         padding: max(1.25rem, env(safe-area-inset-top)) 1.25rem .75rem;
         pointer-events: none;
     }
-    .overlay-header__scrim{
-        position:absolute; inset:0 0 auto 0; height:32dvh; pointer-events:none;
-        background: linear-gradient(180deg, var(--scrim-top) 0%, var(--scrim-mid) 55%, rgba(0,0,0,0) 100%);
+
+    .overlay-header__scrim {
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 32dvh;
+        pointer-events: none;
+        background: linear-gradient(180deg, var(--scrim-top) 0%, var(--scrim-mid) 55%, rgba(0, 0, 0, 0) 100%);
     }
-    .overlay-header__content{
-        position:relative; z-index:1; pointer-events:auto;
+
+    .overlay-header__content {
+        position: relative;
+        z-index: 1;
+        pointer-events: auto;
         max-width: min(960px, 80vw);
     }
-    .overlay-logo{ width:56px; height:56px; display:inline-block; margin-bottom:.5rem; }
-    .overlay-title{ font-size: clamp(1.5rem, 2.8vw, 2.25rem); }
-    .overlay-subtitle{ font-size: clamp(.85rem, 1.4vw, .95rem); }
+
+    .overlay-logo {
+        width: 56px;
+        height: 56px;
+        display: inline-block;
+        margin-bottom: .5rem;
+    }
+
+    .overlay-title {
+        font-size: clamp(1.5rem, 2.8vw, 2.25rem);
+    }
+
+    .overlay-subtitle {
+        font-size: clamp(.85rem, 1.4vw, .95rem);
+    }
 
     /* Bottom overlay: attribution + buttons */
-    .overlay-actions{
-        position:fixed; z-index:2; inset:auto 0 0 0;
+    .overlay-actions {
+        position: fixed;
+        z-index: 2;
+        inset: auto 0 0 0;
         padding: 0 1.25rem max(1.25rem, env(safe-area-inset-bottom));
         pointer-events: none;
-        display:flex; flex-direction:column; gap:.75rem;
-    }
-    .overlay-actions__scrim{
-        position:absolute; inset:auto 0 0 0; height:40dvh; pointer-events:none;
-        background: linear-gradient(0deg, var(--scrim-btm) 0%, var(--scrim-mid) 55%, rgba(0,0,0,0) 100%);
-    }
-    .overlay-actions__attr{
-        position:relative; z-index:1; pointer-events:auto;
-        color:#fff; text-shadow: 0 1px 1px rgba(0,0,0,.6);
-    }
-    .overlay-actions__attr a{ color:#fff; text-decoration:underline; }
-    .overlay-actions__buttons{
-        position:relative; z-index:1; pointer-events:auto;
-        display:grid; gap:.75rem; width:100%;
-        max-width: min(600px, 92vw); margin-inline:auto;
-    }
-    .overlay-actions__safe{ height:.25rem; position:relative; z-index:1; }
-
-    @media (min-width: 992px){
-        .overlay-header{ padding: max(1.75rem, env(safe-area-inset-top)) 2rem 1rem; }
-        .overlay-header__scrim{ height: 34dvh; }
-        .overlay-logo{ width:64px; height:64px; }
-        .overlay-title{ font-size: clamp(1.75rem, 2.2vw, 2.5rem); }
-        .overlay-subtitle{ font-size: clamp(.9rem, 1vw, 1rem); }
-
-        .overlay-actions{ padding: 0 2rem max(2rem, env(safe-area-inset-bottom)); }
-        .overlay-actions__scrim{ height: 42dvh; }
-        .overlay-actions__buttons{ max-width: 640px; }
+        display: flex;
+        flex-direction: column;
+        gap: .75rem;
     }
 
-    @media (max-height: 640px){
-        .overlay-header__scrim{ height: 28dvh; }
-        .overlay-actions__scrim{ height: 44dvh; }
+    .overlay-actions__scrim {
+        position: absolute;
+        inset: auto 0 0 0;
+        height: 40dvh;
+        pointer-events: none;
+        background: linear-gradient(0deg, var(--scrim-btm) 0%, var(--scrim-mid) 55%, rgba(0, 0, 0, 0) 100%);
+    }
+
+    .overlay-actions__error {
+        position: relative;
+        z-index: 1;
+        pointer-events: auto;
+    }
+
+    /* Glassy alert on dark background */
+    .alert-login {
+        backdrop-filter: saturate(140%) blur(8px);
+        -webkit-backdrop-filter: saturate(140%) blur(8px);
+        border: 1px solid rgba(255, 255, 255, .22);
+        border-radius: .8rem;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, .28);
+        color: #fff;
+    }
+
+    .alert-login.alert-danger {
+        background: rgba(220, 38, 38, .90);
+    }
+
+    .alert-login.alert-warning {
+        background: rgba(234, 179, 8, .92);
+        color: #0b0b0b;
+    }
+
+    .alert-login.alert-info {
+        background: rgba(59, 130, 246, .92);
+    }
+
+    .overlay-actions__attr {
+        position: relative;
+        z-index: 1;
+        pointer-events: auto;
+        color: #fff;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, .6);
+    }
+
+    .overlay-actions__attr a {
+        color: #fff;
+        text-decoration: underline;
+    }
+
+    .overlay-actions__buttons {
+        position: relative;
+        z-index: 1;
+        pointer-events: auto;
+        display: grid;
+        gap: .75rem;
+        width: 100%;
+        max-width: min(600px, 92vw);
+        margin-inline: auto;
+    }
+
+    .overlay-actions__safe {
+        height: .25rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    @media (min-width: 992px) {
+        .overlay-header {
+            padding: max(1.75rem, env(safe-area-inset-top)) 2rem 1rem;
+        }
+
+        .overlay-header__scrim {
+            height: 34dvh;
+        }
+
+        .overlay-logo {
+            width: 64px;
+            height: 64px;
+        }
+
+        .overlay-title {
+            font-size: clamp(1.75rem, 2.2vw, 2.5rem);
+        }
+
+        .overlay-subtitle {
+            font-size: clamp(.9rem, 1vw, 1rem);
+        }
+
+        .overlay-actions {
+            padding: 0 2rem max(2rem, env(safe-area-inset-bottom));
+        }
+
+        .overlay-actions__scrim {
+            height: 42dvh;
+        }
+
+        .overlay-actions__buttons {
+            max-width: 640px;
+        }
+    }
+
+    @media (max-height: 640px) {
+        .overlay-header__scrim {
+            height: 28dvh;
+        }
+
+        .overlay-actions__scrim {
+            height: 44dvh;
+        }
     }
 </style>
 
