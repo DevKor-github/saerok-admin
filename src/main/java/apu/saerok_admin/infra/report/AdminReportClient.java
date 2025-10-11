@@ -1,11 +1,13 @@
 package apu.saerok_admin.infra.report;
 
 import apu.saerok_admin.infra.SaerokApiProps;
+import apu.saerok_admin.infra.report.dto.AdminDeleteReasonRequest;
 import apu.saerok_admin.infra.report.dto.ReportedCollectionDetailResponse;
 import apu.saerok_admin.infra.report.dto.ReportedCollectionListResponse;
 import apu.saerok_admin.infra.report.dto.ReportedCommentDetailResponse;
 import apu.saerok_admin.infra.report.dto.ReportedCommentListResponse;
 import java.net.URI;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriBuilder;
@@ -46,9 +48,9 @@ public class AdminReportClient {
         post("collections", id, "ignore");
     }
 
-    public void deleteCollectionByReport(Long reportId) {
+    public void deleteCollectionByReport(Long reportId, String reason) {
         String id = reportId.toString();
-        delete("collections", id);
+        deleteWithBody(new AdminDeleteReasonRequest(reason), "collections", id);
     }
 
     public void ignoreCommentReport(Long reportId) {
@@ -56,9 +58,9 @@ public class AdminReportClient {
         post("comments", id, "ignore");
     }
 
-    public void deleteCommentByReport(Long reportId) {
+    public void deleteCommentByReport(Long reportId, String reason) {
         String id = reportId.toString();
-        delete("comments", id);
+        deleteWithBody(new AdminDeleteReasonRequest(reason), "comments", id);
     }
 
     private <T> T get(Class<T> responseType, String... segments) {
@@ -79,9 +81,10 @@ public class AdminReportClient {
                 .toBodilessEntity();
     }
 
-    private void delete(String... segments) {
-        saerokRestClient.delete()
+    private void deleteWithBody(Object body, String... segments) {
+        saerokRestClient.method(HttpMethod.DELETE)
                 .uri(uriBuilder -> buildUri(uriBuilder, segments))
+                .body(body)
                 .retrieve()
                 .toBodilessEntity();
     }
