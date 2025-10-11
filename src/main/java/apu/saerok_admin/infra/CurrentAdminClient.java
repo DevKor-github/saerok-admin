@@ -23,9 +23,8 @@ public class CurrentAdminClient {
 
     private static final Logger log = LoggerFactory.getLogger(CurrentAdminClient.class);
     private static final Map<String, String> ROLE_DESCRIPTION_MAP = Map.of(
-            "ADMIN_VIEWER", "읽기 전용 관리자",
-            "ADMIN_EDITOR", "콘텐츠 편집 관리자",
-            "ADMIN_SUPER", "슈퍼 관리자"
+            "ADMIN_VIEWER", "열람자",
+            "ADMIN_EDITOR", "운영자"
     );
     private static final String UNKNOWN_ROLE_DESCRIPTION = "알 수 없는 관리자 권한";
 
