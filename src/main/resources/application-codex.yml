@@ -13,3 +13,7 @@ saerok:
   api:
     base-url: ${SAEROK_API_BASE_URL}
     prefix: /api/v1
+
+unsplash:
+  access-key: ${UNSPLASH_ACCESS_KEY}
+  app-name: ${UNSPLASH_APP_NAME}

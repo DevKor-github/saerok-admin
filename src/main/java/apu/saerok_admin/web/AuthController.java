@@ -1,6 +1,7 @@
 package apu.saerok_admin.web;
 
 import apu.saerok_admin.config.SocialLoginProperties;
+import apu.saerok_admin.config.UnsplashProperties;
 import apu.saerok_admin.infra.auth.BackendAuthClient;
 import apu.saerok_admin.security.LoginSession;
 import apu.saerok_admin.security.LoginSessionManager;
@@ -37,18 +38,23 @@ public class AuthController {
     private final LoginSessionManager loginSessionManager;
     private final ObjectMapper objectMapper;
 
+    // ▼ 추가: Unsplash 설정
+    private final UnsplashProperties unsplashProperties;
+
     public AuthController(
             SocialLoginProperties socialLoginProperties,
             OAuthStateManager oAuthStateManager,
             BackendAuthClient backendAuthClient,
             LoginSessionManager loginSessionManager,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            UnsplashProperties unsplashProperties // ← 추가 주입
     ) {
         this.socialLoginProperties = socialLoginProperties;
         this.oAuthStateManager = oAuthStateManager;
         this.backendAuthClient = backendAuthClient;
         this.loginSessionManager = loginSessionManager;
         this.objectMapper = objectMapper;
+        this.unsplashProperties = unsplashProperties; // ← 보관
     }
 
     @RequestMapping(value = "/login", method = {RequestMethod.GET, RequestMethod.HEAD})
@@ -84,6 +90,11 @@ public class AuthController {
         String effectiveState = state != null ? state : "";
         model.addAttribute("kakaoAuthUrl", buildKakaoAuthorizeUrl(effectiveState));
         model.addAttribute("appleAuthUrl", buildAppleAuthorizeUrl(effectiveState));
+
+        // ▼ 추가: 템플릿에서 Unsplash 키/앱명을 읽을 수 있도록 전달
+        model.addAttribute("unsplashAccessKey", unsplashProperties.getAccessKey());
+        model.addAttribute("unsplashAppName", unsplashProperties.getAppName());
+
         return "auth/login";
     }
 
@@ -162,8 +173,7 @@ public class AuthController {
         return Optional.empty();
     }
 
-    private record BackendErrorResponse(int status, String message) {
-    }
+    private record BackendErrorResponse(int status, String message) {}
 
     private String buildKakaoAuthorizeUrl(String state) {
         SocialLoginProperties.Provider kakao = socialLoginProperties.kakao();

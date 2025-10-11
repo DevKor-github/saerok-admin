@@ -30,6 +30,8 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+                        // ▼ 프록시 엔드포인트 공개
+                        .requestMatchers("/public/**").permitAll()
                         .requestMatchers("/login", "/auth/callback/**").permitAll()
                         .anyRequest().authenticated()
                 )

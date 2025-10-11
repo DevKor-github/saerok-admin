@@ -97,6 +97,8 @@ jobs:
             add_kv KAKAO_REDIRECT_URI  "${{ secrets.KAKAO_REDIRECT_URI }}"
             add_kv APPLE_CLIENT_ID     "${{ secrets.APPLE_CLIENT_ID }}"
             add_kv APPLE_REDIRECT_URI  "${{ secrets.APPLE_REDIRECT_URI }}"
+            add_kv UNSPLASH_ACCESS_KEY "${{ secrets.UNSPLASH_ACCESS_KEY }}"
+            add_kev UNSPLASH_APP_NAME   "${{ secrets.UNSPLASH_APP_NAME }}"
             
             # 3) Pull & Up with dev overlay (limits in dev.yml)
             docker compose -p saerok-admin -f docker-compose.yml -f docker-compose.dev.yml pull --quiet
