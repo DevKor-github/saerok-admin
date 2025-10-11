@@ -502,6 +502,44 @@ a:focus {
     gap: var(--spacing-md);
 }
 
+.audit-log-details {
+    display: block;
+}
+
+.audit-log-details__summary {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--accent-primary);
+    text-decoration: none;
+}
+
+.audit-log-details__summary:hover,
+.audit-log-details__summary:focus-visible {
+    color: var(--accent-primary-strong);
+    outline: none;
+}
+
+.audit-log-details__summary::-webkit-details-marker {
+    display: none;
+}
+
+.audit-log-details__summary::after {
+    content: '\25BC';
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+}
+
+.audit-log-details[open] .audit-log-details__summary::after {
+    transform: rotate(-180deg);
+}
+
+.audit-log-details__content {
+    margin-top: var(--spacing-sm);
+}
+
 .offcanvas .app-sidebar__link {
     color: var(--text-primary);
 }
