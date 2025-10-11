@@ -52,6 +52,15 @@
 
         <!-- Buttons -->
         <div class="overlay-actions__buttons">
+            <div class="overlay-actions__alert alert alert-danger alert-elevated d-flex align-items-start gap-2 mb-0"
+                 th:if="${loginError != null}">
+                <i class="bi bi-exclamation-triangle-fill fs-5" aria-hidden="true"></i>
+                <div>
+                    <div class="fw-semibold" th:text="${loginError.title()}">로그인 실패</div>
+                    <p class="mb-0" th:text="${loginError.message()}">로그인을 다시 시도해 주세요.</p>
+                </div>
+            </div>
+
             <a th:href="${kakaoAuthUrl}"
                class="btn btn-lg w-100 d-flex align-items-center justify-content-center gap-2"
                role="button"
@@ -230,6 +239,12 @@
         display:grid; gap:.75rem; width:100%;
         max-width: min(600px, 92vw); margin-inline:auto;
     }
+    .overlay-actions__alert{
+        background:rgba(248,215,218,.95);
+        border:1px solid rgba(220,53,69,.25);
+        color:#58151c;
+    }
+    .overlay-actions__alert .bi{margin-top:.25rem;}
     .overlay-actions__safe{ height:.25rem; position:relative; z-index:1; }
 
     @media (min-width: 992px){

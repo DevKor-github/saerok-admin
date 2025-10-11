@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import apu.saerok_admin.config.SocialLoginProperties;
+import apu.saerok_admin.config.UnsplashProperties;
 import apu.saerok_admin.infra.CurrentAdminClient;
 import apu.saerok_admin.infra.auth.BackendAuthClient;
 import apu.saerok_admin.security.LoginSession;
@@ -189,6 +190,14 @@ class AuthControllerTest {
                     new SocialLoginProperties.Provider("kakao-client", URI.create("http://localhost/auth/callback/kakao")),
                     new SocialLoginProperties.Provider("apple-client", URI.create("http://localhost/auth/callback/apple"))
             );
+        }
+
+        @Bean
+        UnsplashProperties unsplashProperties() {
+            UnsplashProperties properties = new UnsplashProperties();
+            properties.setAccessKey("test-access-key");
+            properties.setAppName("test-app");
+            return properties;
         }
     }
 }

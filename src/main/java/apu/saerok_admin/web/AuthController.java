@@ -95,6 +95,8 @@ public class AuthController {
         model.addAttribute("unsplashAccessKey", unsplashProperties.getAccessKey());
         model.addAttribute("unsplashAppName", unsplashProperties.getAppName());
 
+        resolveLoginError(request).ifPresent(error -> model.addAttribute("loginError", error));
+
         return "auth/login";
     }
 
@@ -173,7 +175,45 @@ public class AuthController {
         return Optional.empty();
     }
 
+    private Optional<LoginError> resolveLoginError(HttpServletRequest request) {
+        String errorCode = request.getParameter("error");
+        if (!StringUtils.hasText(errorCode)) {
+            return Optional.empty();
+        }
+
+        String backendMessage = request.getParameter("message");
+        String title = "로그인 실패";
+        String message;
+
+        switch (errorCode) {
+            case "session" -> {
+                title = "세션 오류";
+                message = "로그인 세션이 만료되었어요. 다시 로그인해 주세요.";
+            }
+            case "callback" -> {
+                message = "로그인에 필요한 정보가 확인되지 않았어요. 다시 시도해 주세요.";
+            }
+            case "state" -> {
+                message = "로그인 요청이 만료되었어요. 다시 시도해 주세요.";
+            }
+            case "login" -> {
+                if (StringUtils.hasText(backendMessage)) {
+                    message = backendMessage;
+                } else {
+                    message = "로그인 처리 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.";
+                }
+            }
+            default -> {
+                message = "로그인에 실패했어요. 다시 시도해 주세요.";
+            }
+        }
+
+        return Optional.of(new LoginError(title, message));
+    }
+
     private record BackendErrorResponse(int status, String message) {}
+
+    private record LoginError(String title, String message) {}
 
     private String buildKakaoAuthorizeUrl(String state) {
         SocialLoginProperties.Provider kakao = socialLoginProperties.kakao();
