@@ -15,7 +15,7 @@
     </div>
 </div>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    (function () {
         var initializeTooltips = function () {
             if (!window.bootstrap || !window.bootstrap.Tooltip) {
                 return;
@@ -33,40 +33,53 @@
             });
         };
 
-        initializeTooltips();
-
-        document.addEventListener('saerok:refresh-tooltips', initializeTooltips);
-
-        document.querySelectorAll('.toast').forEach(function (toastEl) {
-            if (toastEl.dataset.showOnLoad === 'true') {
-                new bootstrap.Toast(toastEl).show();
+        var initializeToasts = function () {
+            if (!window.bootstrap || !window.bootstrap.Toast) {
+                return;
             }
-        });
-        document.querySelectorAll('[data-toast-target]').forEach(function (trigger) {
-            trigger.addEventListener('click', function () {
-                var targetId = trigger.getAttribute('data-toast-target');
-                if (targetId) {
-                    var toastElement = document.getElementById(targetId);
-                    if (toastElement) {
-                        new bootstrap.Toast(toastElement).show();
-                    }
+            document.querySelectorAll('.toast').forEach(function (toastEl) {
+                if (toastEl.dataset.showOnLoad === 'true') {
+                    new window.bootstrap.Toast(toastEl).show();
                 }
             });
-        });
-        document.querySelectorAll('[data-bs-dismiss="modal"][data-toast-target]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var targetId = btn.getAttribute('data-toast-target');
-                if (targetId) {
-                    setTimeout(function () {
+            document.querySelectorAll('[data-toast-target]').forEach(function (trigger) {
+                trigger.addEventListener('click', function () {
+                    var targetId = trigger.getAttribute('data-toast-target');
+                    if (targetId) {
                         var toastElement = document.getElementById(targetId);
                         if (toastElement) {
-                            new bootstrap.Toast(toastElement).show();
+                            new window.bootstrap.Toast(toastElement).show();
                         }
-                    }, 300);
-                }
+                    }
+                });
             });
-        });
-    });
+            document.querySelectorAll('[data-bs-dismiss="modal"][data-toast-target]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var targetId = btn.getAttribute('data-toast-target');
+                    if (targetId) {
+                        setTimeout(function () {
+                            var toastElement = document.getElementById(targetId);
+                            if (toastElement) {
+                                new window.bootstrap.Toast(toastElement).show();
+                            }
+                        }, 300);
+                    }
+                });
+            });
+        };
+
+        var onReady = function () {
+            initializeTooltips();
+            document.addEventListener('saerok:refresh-tooltips', initializeTooltips);
+            initializeToasts();
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', onReady);
+        } else {
+            onReady();
+        }
+    })();
 </script>
 </body>
 </html>
