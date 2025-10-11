@@ -8,9 +8,9 @@
             <div class="d-flex align-items-center gap-2 flex-wrap">
                 <span class="app-sidebar__title mb-0">새록 어드민</span>
                 <span class="environment-badge"
-                      th:if="${environmentProfileBadge}"
-                      th:classappend="' ' + ${environmentProfileBadge.cssClass()}"
-                      th:text="${environmentProfileBadge.label()}">운영</span>
+                      th:if="${environmentProfileBadge != null}"
+                      th:classappend="${environmentProfileBadge != null} ? ' ' + ${environmentProfileBadge.cssClass} : ''"
+                      th:text="${environmentProfileBadge != null} ? ${environmentProfileBadge.label} : '운영'">운영</span>
             </div>
         </div>
         <nav class="app-sidebar__nav">
@@ -50,9 +50,9 @@
                      alt="새록 어드민 로고" width="32" height="32" class="flex-shrink-0">
                 <h5 class="offcanvas-title mb-0">새록 어드민</h5>
                 <span class="environment-badge"
-                      th:if="${environmentProfileBadge}"
-                      th:classappend="' ' + ${environmentProfileBadge.cssClass()}"
-                      th:text="${environmentProfileBadge.label()}">운영</span>
+                      th:if="${environmentProfileBadge != null}"
+                      th:classappend="${environmentProfileBadge != null} ? ' ' + ${environmentProfileBadge.cssClass} : ''"
+                      th:text="${environmentProfileBadge != null} ? ${environmentProfileBadge.label} : '운영'">운영</span>
             </div>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>

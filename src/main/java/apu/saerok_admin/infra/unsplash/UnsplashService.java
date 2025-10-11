@@ -13,7 +13,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * 서버 측에서만 Unsplash API 를 호출한다.
- * - random photo 조회
+ * - random photo 조회 (orientation: landscape | portrait)
  * - download_location 트리거 (사용 이벤트 카운트)
  * - 브라우저에는 이미지/링크 정보만 내려준다 (키 절대 노출 X)
  */
@@ -22,6 +22,7 @@ public class UnsplashService {
 
     private final RestClient client;
     private final UnsplashProperties props;
+    @SuppressWarnings("unused")
     private final ObjectMapper mapper;
 
     public UnsplashService(UnsplashProperties props, ObjectMapper mapper) {
@@ -37,13 +38,18 @@ public class UnsplashService {
                 .build();
     }
 
-    public Result fetchRandomBird() {
-        // 1) 랜덤 사진 조회
+    /** orientation 값에 따라 한 장만 내려준다 (기본: landscape). */
+    public Photo fetchRandomBird(String orientation) {
+        String normalized = normalizeOrientation(orientation);
+        return fetchOne(normalized);
+    }
+
+    private Photo fetchOne(String orientation) {
         JsonNode node = client.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/photos/random")
-                        .queryParam("query", "bird on branch, small bird, passerine, backyard bird, morning light")
-                        .queryParam("orientation", "landscape")
+                        .queryParam("query", "bird on branch, small bird, passerine, morning light")
+                        .queryParam("orientation", orientation)   // landscape | portrait
                         .queryParam("content_filter", "high")
                         .queryParam("count", 1)
                         .build())
@@ -52,52 +58,54 @@ public class UnsplashService {
 
         JsonNode photo = (node != null && node.isArray() && node.size() > 0) ? node.get(0) : node;
         if (photo == null || photo.isNull()) {
-            throw new IllegalStateException("Empty response from Unsplash random photo API");
+            throw new IllegalStateException("Empty response from Unsplash random photo API (" + orientation + ")");
         }
 
-        // 2) 이미지 URL (hotlink 원본)
-        String raw = textAt(photo, "/urls/raw");
-        String full = textAt(photo, "/urls/full");
-        String regular = textAt(photo, "/urls/regular");
-        String baseUrl = StringUtils.hasText(raw) ? raw : (StringUtils.hasText(full) ? full : regular);
+        String baseUrl = chooseBaseUrl(photo);
         if (!StringUtils.hasText(baseUrl)) {
-            throw new IllegalStateException("Unsplash response missing image URLs");
+            throw new IllegalStateException("Unsplash response missing image URLs (" + orientation + ")");
         }
-        String imageUrl = appendParams(baseUrl, 1600);
 
-        // 3) 링크/저작자/홈 (utm_source=appName, utm_medium=referral)
+        // 링크/저작자/홈 (utm_source=appName, utm_medium=referral)
         String appName = props.getAppName();
         String photoHtml = addUtm(textAt(photo, "/links/html"), appName);
         String photographerName = textAt(photo, "/user/name");
         String photographerLink = addUtm(textAt(photo, "/user/links/html"), appName);
-        String unsplashHome = addUtm("https://unsplash.com", appName);
+        String unsplashHome     = addUtm("https://unsplash.com", appName);
 
-        // 4) 다운로드 트리거 (서버에서 실행)
+        // 다운로드 트리거 (필수)
         String downloadLocation = textAt(photo, "/links/download_location");
         if (StringUtils.hasText(downloadLocation)) {
             URI dlUri = UriComponentsBuilder.fromUriString(downloadLocation)
                     .queryParam("utm_source", StringUtils.hasText(appName) ? appName : null)
                     .queryParam("utm_medium", StringUtils.hasText(appName) ? "referral" : null)
                     .build(true).toUri();
-            // 응답은 사용 안 해도 됨 (카운트 목적)
-            client.get().uri(dlUri).retrieve().toBodilessEntity();
+            client.get().uri(dlUri).retrieve().toBodilessEntity(); // 응답 바디 불필요
         }
 
-        return new Result(imageUrl, photoHtml, photographerName, photographerLink, unsplashHome);
+        return new Photo(baseUrl, photoHtml, photographerName, photographerLink, unsplashHome);
+    }
+
+    private static String normalizeOrientation(String o) {
+        if (!StringUtils.hasText(o)) return "landscape";
+        String v = o.trim().toLowerCase();
+        if ("portrait".equals(v)) return "portrait";
+        return "landscape";
+    }
+
+    private static String chooseBaseUrl(JsonNode photo) {
+        String raw = textAt(photo, "/urls/raw");
+        String full = textAt(photo, "/urls/full");
+        String regular = textAt(photo, "/urls/regular");
+        if (StringUtils.hasText(raw)) return raw;
+        if (StringUtils.hasText(full)) return full;
+        return regular;
     }
 
     private static String textAt(JsonNode node, String pointer) {
         if (node == null) return null;
         JsonNode n = node.at(pointer);
         return n.isMissingNode() || n.isNull() ? null : n.asText();
-    }
-
-    private static String appendParams(String base, int width) {
-        UriComponentsBuilder b = UriComponentsBuilder.fromUriString(base)
-                .queryParam("w", width)
-                .queryParam("q", 80)
-                .queryParam("auto", "format");
-        return b.build(true).toString();
     }
 
     private static String addUtm(String url, String app) {
@@ -109,18 +117,12 @@ public class UnsplashService {
         return b.build(true).toString();
     }
 
-    /**
-     * 프론트로 내려줄 최소 정보.
-     * - imageUrl: Unsplash CDN 원본 (img src에 그대로 hotlink)
-     * - htmlLink: 사진 상세 페이지 (utm 포함)
-     * - photographerName / photographerLink (utm 포함)
-     * - unsplashHome (utm 포함)
-     */
-    public record Result(
-            String imageUrl,
-            String htmlLink,
+    /** 단일 사진 메타 */
+    public record Photo(
+            String imageUrl,          // 원본 CDN base URL (프론트에서 w/h/fit=crop 적용)
+            String htmlLink,          // 사진 상세 페이지 (utm 포함)
             String photographerName,
-            String photographerLink,
-            String unsplashHome
-    ) { }
+            String photographerLink,  // 작가 페이지 (utm 포함)
+            String unsplashHome       // 홈 (utm 포함)
+    ) {}
 }

@@ -5,9 +5,8 @@
 
 <!--
   풀 블리드 사진을 배경으로 깔고(Unsplash Random Bird),
-  상단은 타이틀 오버레이, 하단은 버튼/저작자 오버레이(그라데이션)로 중앙 사진을 선명하게 노출.
-  전체 영역 배경 이미지는 클릭 시 Unsplash 사진 페이지로 이동(가이드라인 준수).
-  Unsplash 키는 서버 프록시(/public/unsplash/random-bird)에서만 사용.
+  상단은 타이틀 오버레이, 하단은 버튼/저작자 오버레이(그라데이션)로 중앙 사진을 선명하게.
+  최초 진입 시점의 뷰포트 비율로 orientation을 결정하여 단 한 장만 요청한다.
 -->
 
 <div class="login-shell">
@@ -16,10 +15,7 @@
         <a id="photoLink" class="login-visual__image-link" href="#" target="_blank" rel="noopener">
             <img id="loginPhoto" class="login-visual__image" alt="" decoding="async">
         </a>
-        <!-- 상/하단 가독성 스크림 -->
         <div class="login-visual__scrim"></div>
-
-        <!-- (Fallback) 별도 좌하단 표기는 숨김. 하단 오버레이에 저작자 표기 표시 -->
         <p class="login-visual__credit small mb-0" hidden>
             <span>사진을 불러오는 중…</span>
         </p>
@@ -37,10 +33,11 @@
             <div class="d-flex align-items-center gap-2 flex-wrap">
                 <h1 class="overlay-title fw-bold mb-0 text-white">새록 어드민</h1>
                 <span class="environment-badge"
-                      th:if="${environmentProfileBadge}"
-                      th:classappend="' ' + ${environmentProfileBadge.cssClass()}">운영</span>
+                      th:if="${environmentProfileBadge != null}"
+                      th:classappend="' ' + ${environmentProfileBadge.cssClass}"
+                      th:text="${environmentProfileBadge.label}">환경</span>
             </div>
-            <p class="overlay-subtitle text-white-50 small mb-0 mt-1">운영자 전용 로그인 페이지</p>
+            <p class="overlay-subtitle text-white-50 small mb-0 mt-1">로그인 페이지</p>
         </div>
     </header>
 
@@ -48,7 +45,7 @@
     <footer class="overlay-actions">
         <div class="overlay-actions__scrim"></div>
 
-        <!-- Unsplash attribution (always visible) -->
+        <!-- Unsplash attribution -->
         <div id="attributionOverlay" class="overlay-actions__attr small text-white-75">
             <span>사진을 불러오는 중…</span>
         </div>
@@ -78,7 +75,6 @@
             </div>
         </div>
 
-        <!-- Safe area spacer -->
         <div class="overlay-actions__safe"></div>
     </footer>
 </div>
@@ -113,34 +109,47 @@
         imgEl.src = buildSmartUrl(baseUrl, w, h);
     }
 
+    function pickInitialOrientation() {
+        // 순수 뷰포트 비율로 결정: 가로가 크면 landscape, 아니면 portrait
+        const ratio = (window.innerWidth || document.documentElement.clientWidth) /
+            (window.innerHeight || document.documentElement.clientHeight);
+        return ratio >= 1 ? 'landscape' : 'portrait';
+    }
+
     async function loadRandomBirdViaProxy() {
         try {
-            const res = await fetch('/public/unsplash/random-bird', { cache: 'no-store' });
+            const orientation = pickInitialOrientation();
+            const res = await fetch('/public/unsplash/random-bird?orientation=' + orientation, { cache: 'no-store' });
             if (!res.ok) throw new Error('Proxy request failed: ' + res.status);
-            const data = await res.json();
+            const photo = await res.json(); // { imageUrl, htmlLink, photographerName, photographerLink, unsplashHome }
 
             // 클릭 시 Unsplash 사진 페이지로 이동 (가이드라인 준수)
-            linkEl.href = data.htmlLink;
+            linkEl.href = photo.htmlLink;
 
             // 저작자/Unsplash 표기 (가이드라인 준수)
-            const creditHtml = `Photo by <a href="${data.photographerLink || data.unsplashHome || 'https://unsplash.com'}" target="_blank" rel="noopener">` +
-                `${data.photographerName || 'Unknown'}</a> on ` +
-                `<a href="${data.unsplashHome || 'https://unsplash.com'}" target="_blank" rel="noopener">Unsplash</a>`;
+            const creditHtml = `Photo by <a href="${photo.photographerLink || photo.unsplashHome || 'https://unsplash.com'}" target="_blank" rel="noopener">`
+                + `${photo.photographerName || 'Unknown'}</a> on `
+                + `<a href="${photo.unsplashHome || 'https://unsplash.com'}" target="_blank" rel="noopener">Unsplash</a>`;
             attrEl.innerHTML = creditHtml;
 
-            // 서버에서 orientation=landscape로 공급 → 화면 맞춤만 수행
-            renderImage(data.imageUrl);
+            // 최초 한 장만 요청 → 이후에는 재요청 없이 화면 크기에 맞춰 리렌더만 수행
+            renderImage(photo.imageUrl);
 
-            // 리사이즈/회전 시 재렌더
-            let base = data.imageUrl;
+            // 리사이즈/회전 시 품질 유지용 리렌더(재요청 없음)
+            const base = photo.imageUrl;
             const ro = new ResizeObserver(() => renderImage(base));
             ro.observe(document.querySelector('.login-visual'));
             window.addEventListener('orientationchange', () => setTimeout(() => renderImage(base), 250));
+            window.addEventListener('resize', () => {
+                clearTimeout(window.__saerok_login_resize_timer);
+                window.__saerok_login_resize_timer = setTimeout(() => renderImage(base), 120);
+            });
         } catch (e) {
             console.warn(e);
             attrEl.textContent = '이미지를 불러오지 못했습니다.';
         }
     }
+
     document.addEventListener('DOMContentLoaded', loadRandomBirdViaProxy);
 
     // 툴팁 초기화
@@ -177,17 +186,16 @@
     .login-visual__image{object-fit:cover;}
     .login-visual__scrim{
         position:absolute;inset:0;pointer-events:none;
-        /* 중앙은 투명, 상/하는 살짝 어둡게 (PC/모바일 공통) */
         background:
                 linear-gradient(180deg, var(--scrim-top) 0%, rgba(0,0,0,0) 32%, rgba(0,0,0,0) 68%, var(--scrim-btm) 100%);
     }
-    .login-visual__credit{display:none;} /* 오버레이에서 표기하므로 숨김 */
+    .login-visual__credit{display:none;}
 
     /* Top overlay: title */
     .overlay-header{
         position:fixed; z-index:2; inset:0 0 auto 0;
         padding: max(1.25rem, env(safe-area-inset-top)) 1.25rem .75rem;
-        pointer-events: none; /* 배경 클릭 허용 */
+        pointer-events: none;
     }
     .overlay-header__scrim{
         position:absolute; inset:0 0 auto 0; height:32dvh; pointer-events:none;
@@ -205,7 +213,7 @@
     .overlay-actions{
         position:fixed; z-index:2; inset:auto 0 0 0;
         padding: 0 1.25rem max(1.25rem, env(safe-area-inset-bottom));
-        pointer-events: none; /* 배경 클릭 허용 */
+        pointer-events: none;
         display:flex; flex-direction:column; gap:.75rem;
     }
     .overlay-actions__scrim{
@@ -220,18 +228,10 @@
     .overlay-actions__buttons{
         position:relative; z-index:1; pointer-events:auto;
         display:grid; gap:.75rem; width:100%;
-        max-width: min(560px, 92vw); margin-inline:auto;
+        max-width: min(600px, 92vw); margin-inline:auto;
     }
     .overlay-actions__safe{ height:.25rem; position:relative; z-index:1; }
 
-    /* Tooltip style */
-    .tooltip-bubble .tooltip-inner{
-        background-color:#1f2937;color:#fff;border-radius:.5rem;box-shadow:0 10px 25px rgba(0,0,0,.2);
-        padding:.5rem .75rem;
-    }
-    .tooltip-bubble .tooltip-arrow::before{border-top-color:#1f2937;}
-
-    /* L screens: 더 여유 있는 타이포/여백 */
     @media (min-width: 992px){
         .overlay-header{ padding: max(1.75rem, env(safe-area-inset-top)) 2rem 1rem; }
         .overlay-header__scrim{ height: 34dvh; }
@@ -241,10 +241,9 @@
 
         .overlay-actions{ padding: 0 2rem max(2rem, env(safe-area-inset-bottom)); }
         .overlay-actions__scrim{ height: 42dvh; }
-        .overlay-actions__buttons{ max-width: 600px; }
+        .overlay-actions__buttons{ max-width: 640px; }
     }
 
-    /* Very small heights: 스크림 비율 미세 조정 */
     @media (max-height: 640px){
         .overlay-header__scrim{ height: 28dvh; }
         .overlay-actions__scrim{ height: 44dvh; }
