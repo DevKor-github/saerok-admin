@@ -13,19 +13,20 @@ import apu.saerok_admin.web.view.ReportListItem;
 import apu.saerok_admin.web.view.ReportType;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -268,7 +269,8 @@ public class ReportController {
             log.warn("Failed to process report action. status={}, body={}",
                     exception.getStatusCode(), exception.getResponseBodyAsString(), exception);
             redirectAttributes.addFlashAttribute("flashStatus", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", failureMessage);
+            redirectAttributes.addFlashAttribute("flashMessage",
+                    resolveFailureMessage(exception, failureMessage));
         } catch (RestClientException | IllegalStateException exception) {
             log.warn("Failed to process report action.", exception);
             redirectAttributes.addFlashAttribute("flashStatus", "error");
@@ -337,6 +339,14 @@ public class ReportController {
             case COLLECTION -> "collection";
             case COMMENT -> "comment";
         };
+    }
+
+    private String resolveFailureMessage(RestClientResponseException exception, String defaultMessage) {
+        int status = exception.getRawStatusCode();
+        if (status == HttpStatus.FORBIDDEN.value()) {
+            return "권한이 없어 해당 작업을 수행할 수 없습니다.";
+        }
+        return defaultMessage;
     }
 
     private ReportListItem toCollectionListItem(ReportedCollectionListResponse.Item item,
