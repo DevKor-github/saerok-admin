@@ -486,6 +486,22 @@ a:focus {
     border-color: var(--border-subtle) !important;
 }
 
+.audit-log-card {
+    border: none;
+    background: transparent;
+}
+
+.audit-log-card + .audit-log-card {
+    border-top: 1px solid var(--border-subtle);
+}
+
+.audit-log-card__content {
+    padding: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
 .offcanvas .app-sidebar__link {
     color: var(--text-primary);
 }
