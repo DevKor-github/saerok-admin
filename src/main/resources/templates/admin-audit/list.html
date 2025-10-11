@@ -21,7 +21,7 @@
         </div>
 
         <div class="card card-elevated">
-            <div class="table-responsive table-shell">
+            <div class="table-responsive table-shell d-none d-md-block">
                 <table class="table table-modern align-middle table-hover">
                     <thead>
                     <tr>
@@ -75,6 +75,66 @@
                     </tr>
                     </tbody>
                 </table>
+            </div>
+            <div class="list-group list-group-flush d-md-none">
+                <div th:if="${loadErrorMessage != null}"
+                     class="list-group-item py-5 text-center text-danger"
+                     th:text="${loadErrorMessage}">
+                    관리자 활동 로그를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.
+                </div>
+                <div th:if="${loadErrorMessage == null && #lists.isEmpty(logs)}"
+                     class="list-group-item py-5 text-center text-muted">
+                    기록된 관리자 활동이 없습니다.
+                </div>
+                <article class="list-group-item p-0 audit-log-card"
+                         th:if="${loadErrorMessage == null}"
+                         th:each="log : ${logs}">
+                    <div class="audit-log-card__content">
+                        <div class="d-flex flex-column gap-3">
+                            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                                <div class="d-flex flex-column gap-2">
+                                    <div class="d-flex flex-wrap align-items-center gap-2">
+                                        <span class="badge" th:classappend="' ' + ${log.actionBadgeClass()}"
+                                              th:text="${log.actionLabel()}">신고 무시</span>
+                                        <span class="text-muted small" th:text="${'#' + log.id()}">#1</span>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small mb-1">대상</div>
+                                        <div class="fw-semibold text-break" th:text="${log.targetDisplay()}">컬렉션 신고 #12</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small mb-1">관련 신고</div>
+                                        <div class="text-break" th:text="${log.reportDisplay()}">신고 #12</div>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="text-muted small">발생 시각</div>
+                                    <div class="fw-semibold"
+                                         th:text="${log.occurredAt() != null ? #temporals.format(log.occurredAt(), 'yyyy.MM.dd HH:mm') : '-'}">
+                                        2025.01.01 10:00
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="text-muted small mb-1">관리자</div>
+                                <div class="fw-semibold" th:text="${log.adminNickname()}">운영자</div>
+                            </div>
+                            <div>
+                                <div class="text-muted small mb-1">설명</div>
+                                <div class="text-break" th:text="${log.actionDescription()}">신고를 추가 조치 없이 마감했습니다.</div>
+                            </div>
+                            <div>
+                                <div class="text-muted small mb-1">추가 정보</div>
+                                <ul class="list-unstyled small mb-0" th:if="${!#lists.isEmpty(log.metadataEntries())}">
+                                    <li th:each="meta : ${log.metadataEntries()}">
+                                        <span class="text-muted" th:text="|${meta.key()}: ${meta.value()}|">사유: 스팸</span>
+                                    </li>
+                                </ul>
+                                <span class="text-muted small" th:unless="${!#lists.isEmpty(log.metadataEntries())}">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
             </div>
             <div class="card-footer bg-white border-0 py-3">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
