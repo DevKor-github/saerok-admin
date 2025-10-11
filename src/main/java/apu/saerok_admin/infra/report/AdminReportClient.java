@@ -46,9 +46,9 @@ public class AdminReportClient {
         post("collections", id, "ignore");
     }
 
-    public void deleteCollectionByReport(Long reportId) {
+    public void deleteCollectionByReport(Long reportId, String reason) {
         String id = reportId.toString();
-        delete("collections", id);
+        deleteWithReason(reason, "collections", id);
     }
 
     public void ignoreCommentReport(Long reportId) {
@@ -56,9 +56,9 @@ public class AdminReportClient {
         post("comments", id, "ignore");
     }
 
-    public void deleteCommentByReport(Long reportId) {
+    public void deleteCommentByReport(Long reportId, String reason) {
         String id = reportId.toString();
-        delete("comments", id);
+        deleteWithReason(reason, "comments", id);
     }
 
     private <T> T get(Class<T> responseType, String... segments) {
@@ -86,12 +86,31 @@ public class AdminReportClient {
                 .toBodilessEntity();
     }
 
+    private void deleteWithReason(String reason, String... segments) {
+        saerokRestClient.delete()
+                .uri(uriBuilder -> buildUriWithReason(uriBuilder, reason, segments))
+                .retrieve()
+                .toBodilessEntity();
+    }
+
     private URI buildUri(UriBuilder builder, String... segments) {
         if (missingPrefixSegments.length > 0) {
             builder.pathSegment(missingPrefixSegments);
         }
         builder.pathSegment(ADMIN_REPORTS_SEGMENTS);
         builder.pathSegment(segments);
+        return builder.build();
+    }
+
+    private URI buildUriWithReason(UriBuilder builder, String reason, String... segments) {
+        if (missingPrefixSegments.length > 0) {
+            builder.pathSegment(missingPrefixSegments);
+        }
+        builder.pathSegment(ADMIN_REPORTS_SEGMENTS);
+        builder.pathSegment(segments);
+        if (reason != null && !reason.isBlank()) {
+            builder.queryParam("reason", reason);
+        }
         return builder.build();
     }
 }

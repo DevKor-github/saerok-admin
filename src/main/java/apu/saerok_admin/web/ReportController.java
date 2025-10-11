@@ -210,10 +210,16 @@ public class ReportController {
 
     @PostMapping("/collections/{reportId}/delete")
     public String deleteCollectionByReport(@PathVariable long reportId,
+                                           @RequestParam(name = "reason") String reason,
                                            @RequestParam(name = "redirect", defaultValue = "list") String redirect,
                                            @RequestParam(name = "returnType", required = false) List<String> returnTypes,
                                            RedirectAttributes redirectAttributes) {
-        return performAction(() -> adminReportClient.deleteCollectionByReport(reportId),
+        String trimmedReason = reason != null ? reason.trim() : "";
+        if (!StringUtils.hasText(trimmedReason)) {
+            return handleMissingReason(redirect, returnTypes, "/reports/collections/" + reportId, redirectAttributes);
+        }
+
+        return performAction(() -> adminReportClient.deleteCollectionByReport(reportId, trimmedReason),
                 reportId,
                 "신고 대상 새록을 삭제했습니다.",
                 "신고 대상 새록 삭제에 실패했습니다.",
@@ -240,10 +246,16 @@ public class ReportController {
 
     @PostMapping("/comments/{reportId}/delete")
     public String deleteCommentByReport(@PathVariable long reportId,
+                                        @RequestParam(name = "reason") String reason,
                                         @RequestParam(name = "redirect", defaultValue = "list") String redirect,
                                         @RequestParam(name = "returnType", required = false) List<String> returnTypes,
                                         RedirectAttributes redirectAttributes) {
-        return performAction(() -> adminReportClient.deleteCommentByReport(reportId),
+        String trimmedReason = reason != null ? reason.trim() : "";
+        if (!StringUtils.hasText(trimmedReason)) {
+            return handleMissingReason(redirect, returnTypes, "/reports/comments/" + reportId, redirectAttributes);
+        }
+
+        return performAction(() -> adminReportClient.deleteCommentByReport(reportId, trimmedReason),
                 reportId,
                 "신고 대상 댓글을 삭제했습니다.",
                 "신고 대상 댓글 삭제에 실패했습니다.",
@@ -251,6 +263,15 @@ public class ReportController {
                 returnTypes,
                 "/reports/comments/" + reportId,
                 redirectAttributes);
+    }
+
+    private String handleMissingReason(String redirect,
+                                       List<String> returnTypes,
+                                       String detailPath,
+                                       RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute("flashStatus", "error");
+        redirectAttributes.addFlashAttribute("flashMessage", "콘텐츠 삭제 사유를 입력해주세요.");
+        return determineRedirectUrl(redirect, returnTypes, detailPath);
     }
 
     private String performAction(Runnable action,

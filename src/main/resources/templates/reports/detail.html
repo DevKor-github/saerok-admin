@@ -158,9 +158,10 @@
                             </div>
                             <form th:action="@{${detail.deleteAction()}}" method="post" class="m-0">
                                 <input type="hidden" name="redirect" value="detail">
-                                <button type="submit"
+                                <input type="hidden" name="reason" value="" data-report-delete-reason-field>
+                                <button type="button"
                                         class="btn btn-danger d-inline-flex align-items-center gap-1"
-                                        th:onclick="|return confirm('신고 대상 콘텐츠를 삭제할까요?');|"
+                                        data-report-delete-trigger
                                         data-bs-toggle="tooltip" data-bs-placement="top" title="콘텐츠 삭제">
                                     <i class="bi bi-trash"></i>
                                     <span>콘텐츠 삭제</span>
@@ -195,6 +196,8 @@
                 <img th:src="${detail.collection().imageUrl()}" alt="새록 전체 이미지" class="img-fluid">
             </div>
         </div>
+
+        <th:block th:replace="~{reports/delete-reason-modal :: reasonModal}"></th:block>
 
         <script th:if="${detail.collection() != null && detail.collection().imageUrl() != null}">
             document.addEventListener('DOMContentLoaded', function () {

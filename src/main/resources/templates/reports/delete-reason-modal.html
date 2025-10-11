@@ -1,0 +1,104 @@
+<th:block th:fragment="reasonModal">
+    <div class="modal fade" id="reportDeleteReasonModal" tabindex="-1" aria-hidden="true"
+         aria-labelledby="reportDeleteReasonModalLabel">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reportDeleteReasonModalLabel">콘텐츠 삭제</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">
+                        삭제 사유는 관리자 감사 기록과 백오피스에 남습니다. 관련 이용자에게 안내할 수 있으니,
+                        구체적인 삭제 이유를 입력해주세요.
+                    </p>
+                    <div class="mb-3">
+                        <label for="reportDeleteReasonInput" class="form-label">삭제 사유</label>
+                        <textarea id="reportDeleteReasonInput" class="form-control" rows="3" maxlength="300"
+                                  placeholder="예: 커뮤니티 가이드라인 위반(혐오 표현)"
+                                  data-report-delete-reason-input></textarea>
+                        <div class="invalid-feedback">삭제 사유를 입력해주세요.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-danger" data-report-delete-confirm>삭제</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var modalElement = document.getElementById('reportDeleteReasonModal');
+            if (!modalElement || !window.bootstrap || !window.bootstrap.Modal) {
+                return;
+            }
+
+            var modal = new window.bootstrap.Modal(modalElement, { backdrop: 'static' });
+            var reasonInput = modalElement.querySelector('[data-report-delete-reason-input]');
+            var confirmButton = modalElement.querySelector('[data-report-delete-confirm]');
+            var activeForm = null;
+
+            var resetModal = function () {
+                reasonInput.value = '';
+                reasonInput.classList.remove('is-invalid');
+            };
+
+            var openModal = function (event) {
+                event.preventDefault();
+                var trigger = event.currentTarget;
+                activeForm = trigger ? trigger.closest('form') : null;
+                if (!activeForm) {
+                    return;
+                }
+                resetModal();
+                modal.show();
+                window.setTimeout(function () {
+                    reasonInput.focus();
+                }, 150);
+            };
+
+            var ensureReasonField = function (form) {
+                var field = form.querySelector('input[name="reason"]');
+                if (!field) {
+                    field = document.createElement('input');
+                    field.type = 'hidden';
+                    field.name = 'reason';
+                    form.appendChild(field);
+                }
+                return field;
+            };
+
+            document.querySelectorAll('[data-report-delete-trigger]').forEach(function (button) {
+                button.addEventListener('click', openModal);
+            });
+
+            confirmButton.addEventListener('click', function () {
+                if (!activeForm) {
+                    return;
+                }
+                var reason = reasonInput.value.trim();
+                if (!reason) {
+                    reasonInput.classList.add('is-invalid');
+                    reasonInput.focus();
+                    return;
+                }
+                ensureReasonField(activeForm).value = reason;
+                modal.hide();
+                activeForm.submit();
+            });
+
+            reasonInput.addEventListener('input', function () {
+                if (reasonInput.classList.contains('is-invalid') && reasonInput.value.trim()) {
+                    reasonInput.classList.remove('is-invalid');
+                }
+            });
+
+            modalElement.addEventListener('hidden.bs.modal', function () {
+                resetModal();
+                activeForm = null;
+            });
+        });
+    </script>
+</th:block>
