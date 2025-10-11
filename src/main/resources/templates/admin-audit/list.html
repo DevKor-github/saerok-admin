@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+        <div class="card card-elevated mb-4">
+            <div class="card-body card-body-comfy d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <div class="fw-semibold">관리자 감사 로그를 확인하세요</div>
+                    <div class="text-muted small">신고 처리 및 주요 관리자 활동이 시간순으로 기록됩니다.</div>
+                </div>
+                <form class="d-flex align-items-center gap-2" method="get">
+                    <input type="hidden" name="page" value="1">
+                    <label class="form-label small text-uppercase text-muted mb-0" for="pageSize">페이지당 표시</label>
+                    <select class="form-select form-select-sm" id="pageSize" name="size">
+                        <option th:each="option : ${pageSizeOptions}" th:value="${option}"
+                                th:selected="${option == size}" th:text="${option + '건'}">20건</option>
+                    </select>
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">적용</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card card-elevated">
+            <div class="table-responsive table-shell">
+                <table class="table table-modern align-middle table-hover">
+                    <thead>
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">발생 시각</th>
+                        <th scope="col">관리자</th>
+                        <th scope="col">작업</th>
+                        <th scope="col">대상</th>
+                        <th scope="col">관련 신고</th>
+                        <th scope="col">추가 정보</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${loadErrorMessage != null}">
+                        <td colspan="7" class="text-center text-danger py-5" th:text="${loadErrorMessage}">
+                            관리자 활동 로그를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.
+                        </td>
+                    </tr>
+                    <tr th:if="${loadErrorMessage == null && #lists.isEmpty(logs)}">
+                        <td colspan="7" class="text-center text-muted py-5">기록된 관리자 활동이 없습니다.</td>
+                    </tr>
+                    <tr th:each="log : ${logs}">
+                        <td class="text-muted" th:text="${'#' + log.id()}">#1</td>
+                        <td>
+                            <div class="fw-semibold"
+                                 th:text="${log.occurredAt() != null ? #temporals.format(log.occurredAt(), 'yyyy.MM.dd HH:mm') : '-'}">
+                                2025.01.01 10:00
+                            </div>
+                        </td>
+                        <td>
+                            <span class="fw-semibold" th:text="${log.adminNickname()}">운영자</span>
+                        </td>
+                        <td>
+                            <span class="badge" th:classappend="' ' + ${log.actionBadgeClass()}"
+                                  th:text="${log.actionLabel()}">신고 무시</span>
+                            <div class="small text-muted" th:text="${log.actionDescription()}">신고를 추가 조치 없이 마감했습니다.</div>
+                        </td>
+                        <td>
+                            <span class="fw-semibold" th:text="${log.targetDisplay()}">컬렉션 신고 #12</span>
+                        </td>
+                        <td th:text="${log.reportDisplay()}">신고 #12</td>
+                        <td>
+                            <ul class="list-unstyled small mb-0"
+                                th:if="${!#lists.isEmpty(log.metadataEntries())}">
+                                <li th:each="meta : ${log.metadataEntries()}">
+                                    <span class="text-muted" th:text="|${meta.key()}: ${meta.value()}|">사유: 스팸</span>
+                                </li>
+                            </ul>
+                            <span class="text-muted" th:unless="${!#lists.isEmpty(log.metadataEntries())}">-</span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer bg-white border-0 py-3">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <span class="text-muted small">
+                        <span th:if="${rangeEnd > 0}" th:text="|${rangeStart} - ${rangeEnd}건 표시|">1 - 20건 표시</span>
+                        <span th:if="${rangeEnd > 0}"> · 페이지당 <strong th:text="${size}">20</strong>건</span>
+                        <span th:unless="${rangeEnd > 0}">표시할 로그가 없습니다.</span>
+                    </span>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item" th:classappend="${hasPrevious} ? '' : ' disabled'">
+                            <a class="page-link"
+                               th:href="@{/admin/audit-logs(page=${page > 1 ? page - 1 : 1}, size=${size})}">이전</a>
+                        </li>
+                        <li class="page-item active"><span class="page-link" th:text="${page}">1</span></li>
+                        <li class="page-item" th:classappend="${hasNext} ? '' : ' disabled'">
+                            <a class="page-link"
+                               th:href="@{/admin/audit-logs(page=${hasNext ? page + 1 : page}, size=${size})}">다음</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+</th:block>
+</html>
