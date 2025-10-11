@@ -3,8 +3,12 @@ package apu.saerok_admin.infra;
 import apu.saerok_admin.security.LoginSessionManager;
 import apu.saerok_admin.web.view.CurrentAdminProfile;
 import java.net.URI;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -12,11 +16,18 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriBuilder;
+import org.springframework.util.StringUtils;
 
 @Component
 public class CurrentAdminClient {
 
     private static final Logger log = LoggerFactory.getLogger(CurrentAdminClient.class);
+    private static final Map<String, String> ROLE_DESCRIPTION_MAP = Map.of(
+            "ADMIN_VIEWER", "읽기 전용 관리자",
+            "ADMIN_EDITOR", "콘텐츠 편집 관리자",
+            "ADMIN_SUPER", "슈퍼 관리자"
+    );
+    private static final String UNKNOWN_ROLE_DESCRIPTION = "알 수 없는 관리자 권한";
 
     private final RestClient saerokRestClient;
     private final List<String> missingPrefixSegments;
@@ -50,7 +61,8 @@ public class CurrentAdminClient {
             return Optional.of(new CurrentAdminProfile(
                     response.nickname(),
                     response.email(),
-                    response.profileImageUrl()
+                    response.profileImageUrl(),
+                    toRoleDescriptions(response.roles())
             ));
         } catch (RestClientResponseException exception) {
             log.warn(
@@ -77,7 +89,34 @@ public class CurrentAdminClient {
     private record BackendUserProfileResponse(
             String nickname,
             String email,
-            String profileImageUrl
+            String profileImageUrl,
+            List<String> roles
     ) {
+    }
+
+    private List<String> toRoleDescriptions(List<String> roles) {
+        if (roles == null || roles.isEmpty()) {
+            return List.of();
+        }
+
+        Set<String> descriptions = new LinkedHashSet<>();
+        for (String role : roles) {
+            if (!StringUtils.hasText(role)) {
+                continue;
+            }
+
+            String normalized = role.toUpperCase(Locale.ROOT);
+            String description = ROLE_DESCRIPTION_MAP.get(normalized);
+            if (description != null) {
+                descriptions.add(description);
+                continue;
+            }
+
+            if (normalized.startsWith("ADMIN_")) {
+                descriptions.add(UNKNOWN_ROLE_DESCRIPTION);
+            }
+        }
+
+        return descriptions.isEmpty() ? List.of() : List.copyOf(descriptions);
     }
 }

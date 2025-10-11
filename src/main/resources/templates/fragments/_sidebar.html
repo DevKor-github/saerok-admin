@@ -27,6 +27,11 @@
                 <i class="bi bi-flag"></i>
                 <span>신고 관리</span>
             </a>
+            <a th:href="@{/admin/audit-logs}" class="app-sidebar__link"
+               th:classappend="${activeMenu}=='adminAuditLogs' ? ' is-active'">
+                <i class="bi bi-clipboard-check"></i>
+                <span>관리자 활동 로그</span>
+            </a>
             <span class="app-sidebar__link is-disabled upcoming-feature" role="button" tabindex="-1" aria-disabled="true"
                   data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="추후 제공 예정인 기능">
                 <i class="bi bi-megaphone"></i>
@@ -65,6 +70,11 @@
                 <a th:href="@{/reports}" class="app-sidebar__link" th:classappend="${activeMenu}=='reports' ? ' is-active fw-semibold'">
                     <i class="bi bi-flag"></i>
                     <span>신고 관리</span>
+                </a>
+                <a th:href="@{/admin/audit-logs}" class="app-sidebar__link"
+                   th:classappend="${activeMenu}=='adminAuditLogs' ? ' is-active fw-semibold'">
+                    <i class="bi bi-clipboard-check"></i>
+                    <span>관리자 활동 로그</span>
                 </a>
                 <span class="app-sidebar__link is-disabled upcoming-feature" role="button" tabindex="-1" aria-disabled="true"
                       data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="추후 제공 예정인 기능">

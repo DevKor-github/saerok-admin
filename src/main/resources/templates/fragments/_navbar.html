@@ -17,9 +17,25 @@
                     <div class="ms-2 text-start">
                         <div class="fw-semibold" th:text="${currentAdminProfile.nickname()}">운영자</div>
                         <small class="text-muted" th:text="${currentAdminProfile.email()}">admin@saerok.app</small>
+                        <div class="text-muted small" th:if="${currentAdminProfile.hasRoleDescriptions()}"
+                             th:text="${#strings.listJoin(currentAdminProfile.roleDescriptions(), ', ')}">읽기 전용 관리자</div>
                     </div>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow">
+                    <li class="dropdown-header">
+                        <div class="fw-semibold" th:text="${currentAdminProfile.nickname()}">운영자</div>
+                        <small class="text-muted" th:text="${currentAdminProfile.email()}">admin@saerok.app</small>
+                    </li>
+                    <li th:if="${currentAdminProfile.hasRoleDescriptions()}">
+                        <span class="dropdown-item-text small text-muted d-flex align-items-start">
+                            <i class="bi bi-shield-check text-primary me-2 mt-1"></i>
+                            <span th:text="${#strings.listJoin(currentAdminProfile.roleDescriptions(), ', ')}">읽기 전용 관리자</span>
+                        </span>
+                    </li>
+                    <li th:unless="${currentAdminProfile.hasRoleDescriptions()}">
+                        <span class="dropdown-item-text small text-muted">권한 정보가 없습니다.</span>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
                     <li>
                         <form th:action="@{/logout}" method="post">
                             <button type="submit" class="dropdown-item text-danger w-100">
