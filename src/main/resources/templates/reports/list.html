@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+        <div class="card card-elevated mb-4">
+            <div class="card-body card-body-comfy">
+                <form class="d-flex flex-wrap align-items-center flex-gap-sm" method="get">
+                    <div class="d-flex flex-wrap align-items-center flex-gap-sm" role="group" aria-label="신고 유형 필터">
+                        <div>
+                            <input class="btn-check" type="checkbox" id="filter-collection" name="type" value="collection"
+                                   th:checked="${collectionFilterActive}">
+                            <label class="btn btn-outline-primary d-inline-flex align-items-center gap-2"
+                                   for="filter-collection">
+                                <span class="fw-semibold">새록</span>
+                                <span class="badge text-bg-light text-primary"
+                                      th:text="${collectionCount} + '건'">0건</span>
+                            </label>
+                        </div>
+                        <div>
+                            <input class="btn-check" type="checkbox" id="filter-comment" name="type" value="comment"
+                                   th:checked="${commentFilterActive}">
+                            <label class="btn btn-outline-primary d-inline-flex align-items-center gap-2"
+                                   for="filter-comment">
+                                <span class="fw-semibold">댓글</span>
+                                <span class="badge text-bg-light text-primary"
+                                      th:text="${commentCount} + '건'">0건</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="ms-auto d-flex align-items-center flex-gap-sm">
+                        <span class="badge text-bg-primary-subtle text-primary"
+                              th:text="${#lists.isEmpty(selectedTypeParams)} ? '모두 보기' : |${selectedTypeParams.size()}개 유형 선택|">모두 보기</span>
+                        <button type="submit" class="btn btn-primary">필터 적용</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div th:if="${flashMessage}" class="alert alert-elevated d-flex align-items-center"
+             th:classappend="${flashStatus} == 'success' ? ' alert-success' : ' alert-danger'">
+            <i class="bi" th:classappend="${flashStatus} == 'success' ? ' bi-check-circle-fill me-2' : ' bi-exclamation-triangle-fill me-2'"></i>
+            <span th:text="${flashMessage}">처리가 완료되었습니다.</span>
+        </div>
+
+        <div th:if="${loadErrorMessage}" class="alert alert-danger alert-elevated d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${loadErrorMessage}">신고 목록을 불러오지 못했습니다.</span>
+        </div>
+
+        <div class="card card-elevated">
+            <div class="card-header card-header-tight d-flex flex-wrap justify-content-between align-items-center flex-gap-sm">
+                <div>
+                    <h2 class="h6 mb-1 fw-semibold">신고 내역</h2>
+                    <p class="text-muted-soft small mb-0">
+                        총 <strong th:text="${totalCount}">0</strong>건 · 현재 보기 <strong th:text="${filteredCount}">0</strong>건
+                        (<span th:text="'새록 ' + ${collectionCount} + '건'">새록 0건</span>
+                        · <span th:text="'댓글 ' + ${commentCount} + '건'">댓글 0건</span>)
+                    </p>
+                </div>
+            </div>
+            <div class="list-group list-group-flush">
+                <div th:if="${reports.isEmpty()}" class="list-group-item py-5 text-center text-muted">
+                    표시할 신고 내역이 없습니다.
+                </div>
+                <article class="list-group-item p-0 report-card" th:each="report : ${reports}">
+                    <a class="report-card__link d-flex flex-column gap-4 text-decoration-none text-reset"
+                       th:href="@{${report.detailPath()}}"
+                       th:aria-label="|${report.type().displayName()} 신고 상세로 이동|">
+                            <header class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+                                <div class="d-flex flex-column gap-2">
+                                    <div class="d-flex flex-wrap align-items-center gap-2">
+                                        <span class="badge rounded-pill"
+                                              th:classappend="' text-bg-' + ${report.type().badgeVariant()}"
+                                              th:text="${report.type().displayName()}">새록</span>
+                                    </div>
+                                    <div class="text-muted small d-flex flex-wrap gap-2">
+                                        <span>신고자 <strong class="text-body" th:text="${report.reporterNickname()}">신고자</strong></span>
+                                        <span class="text-muted" aria-hidden="true">·</span>
+                                        <span>피신고자 <strong class="text-body" th:text="${report.reportedUserNickname()}">피신고자</strong></span>
+                                    </div>
+                                </div>
+                                <div class="text-md-end">
+                                    <div class="text-muted small">접수일</div>
+                                    <div class="fw-semibold"
+                                         th:text="${report.reportedAt() != null ? #temporals.format(report.reportedAt(), 'yyyy.MM.dd HH:mm') : '-'}">
+                                        2024.01.01 12:00
+                                    </div>
+                                </div>
+                            </header>
+                            <div class="d-flex flex-column flex-md-row gap-3">
+                                <div class="flex-shrink-0" th:if="${report.type().isCollection()}">
+                                    <div th:if="${report.hasCollectionImage()}"
+                                         class="ratio ratio-1x1" style="width: 96px;">
+                                        <img th:src="${report.collectionImageUrl()}" alt="신고 대상 미리보기"
+                                             class="media-thumb w-100 h-100">
+                                    </div>
+                                    <div th:if="${!report.hasCollectionImage()}"
+                                         class="d-flex align-items-center justify-content-center bg-light border rounded"
+                                         style="width: 96px; height: 96px;">
+                                        <i class="bi bi-flag text-muted fs-4"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="text-muted small mb-2"
+                                         th:text="${report.type().isCollection() ? '한 줄 평' : '댓글 내용'}">신고 내용 요약</div>
+                                    <div th:if="${report.hasContentPreview()}" class="text-break"
+                                         th:text="${report.contentPreview()}">내용 미리보기</div>
+                                    <div th:if="${!report.hasContentPreview()}" class="text-muted small"
+                                         th:text="${report.type().isCollection() ? '등록된 한 줄 평이 없습니다.' : '내용 미리보기가 없습니다.'}">
+                                        내용 미리보기가 없습니다.
+                                    </div>
+                                </div>
+                            </div>
+                    </a>
+                    <footer class="report-card__footer border-top d-flex flex-wrap gap-2 justify-content-end align-items-center">
+                        <form th:action="@{${report.ignoreAction()}}" method="post" class="m-0">
+                            <input type="hidden" name="redirect" value="list">
+                            <th:block th:each="typeParam : ${selectedTypeParams}">
+                                <input type="hidden" name="returnType" th:value="${typeParam}">
+                            </th:block>
+                            <button type="submit"
+                                    class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
+                                    th:onclick="|return confirm('해당 신고를 무시 처리할까요?');|"
+                                    data-bs-toggle="tooltip" data-bs-placement="top" title="신고 무시">
+                                <i class="bi bi-slash-circle"></i>
+                                <span>신고 무시</span>
+                            </button>
+                        </form>
+                        <form th:action="@{${report.deleteAction()}}" method="post" class="m-0">
+                            <input type="hidden" name="redirect" value="list">
+                            <th:block th:each="typeParam : ${selectedTypeParams}">
+                                <input type="hidden" name="returnType" th:value="${typeParam}">
+                            </th:block>
+                            <input type="hidden" name="reason" value="">
+                            <button type="button"
+                                    class="btn btn-sm btn-danger d-inline-flex align-items-center gap-1"
+                                    data-report-delete-button
+                                    th:data-report-delete-target-name="|신고 대상 ${report.type().targetNoun()}|"
+                                    th:data-report-delete-confirm-message="|정말 신고 대상 ${report.type().targetNoun()}을(를) 삭제할까요?|"
+                                    data-bs-toggle="tooltip" data-bs-placement="top" title="콘텐츠 삭제">
+                                <i class="bi bi-trash"></i>
+                                <span>콘텐츠 삭제</span>
+                            </button>
+                        </form>
+                    </footer>
+                </article>
+            </div>
+        </div>
+
+        <div th:replace="~{reports/delete-modal :: reportDeleteModal}"></div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var initializeTooltips = function () {
+                    if (window.bootstrap && window.bootstrap.Tooltip) {
+                        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (triggerEl) {
+                            new window.bootstrap.Tooltip(triggerEl, {
+                                trigger: 'hover focus',
+                                delay: { show: 0, hide: 100 },
+                                customClass: 'tooltip-bubble'
+                            });
+                        });
+                    }
+                };
+                if (window.bootstrap && window.bootstrap.Tooltip) {
+                    initializeTooltips();
+                } else {
+                    window.addEventListener('load', initializeTooltips, { once: true });
+                }
+            });
+        </script>
+</th:block>
+</html>

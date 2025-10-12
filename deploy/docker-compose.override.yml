@@ -1,0 +1,32 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: saerok-admin-local:latest
+    container_name: saerok-admin-app
+    restart: unless-stopped
+
+    env_file:
+      - ../.env
+
+    environment:
+      SPRING_PROFILES_ACTIVE: "${SPRING_PROFILES_ACTIVE:-local}"
+      SERVER_PORT: "${SERVER_PORT:-8081}"
+      SAEROK_API_BASE_URL: "${SAEROK_API_BASE_URL:-http://host.docker.internal:8080}"
+      JAVA_OPTS: >-
+        -Duser.timezone=Asia/Seoul
+        -XX:MaxRAMPercentage=60
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    ports:
+      - "${SERVER_PORT:-8081}:${SERVER_PORT:-8081}"
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:${SERVER_PORT:-8081} >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 20s

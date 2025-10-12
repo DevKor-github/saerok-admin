@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+        <div class="card card-elevated mb-4">
+            <div class="card-body card-body-comfy">
+                <form class="row g-3 align-items-end" method="get">
+                    <div class="col-md-4">
+                        <label class="form-label small text-uppercase text-muted" for="collectionQuery">검색어</label>
+                        <input type="search" class="form-control" id="collectionQuery" name="q" placeholder="작성자 또는 내용" th:value="${query}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-uppercase text-muted" for="collectionStatus">상태</label>
+                        <select class="form-select" id="collectionStatus" name="status">
+                            <option th:each="option : ${statusOptions}" th:value="${option == '전체' ? '' : option}"
+                                    th:selected="${option == statusFilter || (statusFilter == null && option == '전체')}"
+                                    th:text="${option}">전체</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">검색</button>
+                        <a th:href="@{/collections}" class="btn btn-outline-secondary">초기화</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="selectAllCollections">
+                    <label class="form-check-label" for="selectAllCollections">전체 선택</label>
+                </div>
+                <button class="btn btn-sm btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#bulkDeleteModal">선택 삭제</button>
+            </div>
+            <p class="mb-0 text-muted small">총 <strong th:text="${totalElements}">184</strong>건 · <strong th:text="${page}">1</strong>/<span th:text="${totalPages}">9</span> 페이지</p>
+        </div>
+        <div class="card card-elevated">
+            <div class="table-responsive table-shell">
+                <table class="table table-modern align-middle table-hover">
+                    <thead>
+                    <tr>
+                        <th><input class="form-check-input" type="checkbox" id="selectAllCollectionsHead"></th>
+                        <th>ID</th>
+                        <th>작성자</th>
+                        <th>본문 요약</th>
+                        <th>상태</th>
+                        <th>신고 수</th>
+                        <th>생성일</th>
+                        <th class="text-end">액션</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="collection : ${collections}" th:data-collection-id="${collection.id()}">
+                        <td><input class="form-check-input collection-checkbox" type="checkbox" th:value="${collection.id()}"></td>
+                        <td class="fw-semibold" th:text="${'#' + collection.id()}">#872</td>
+                        <td th:text="${collection.author()}">솔바람</td>
+                        <td>
+                            <div class="fw-semibold" th:text="${collection.excerpt()}">초여름 갈대밭 풍경과 관찰 기록</div>
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill" th:classappend="${collection.status()} == '공개' ? ' text-bg-success' : (${collection.status()} == '비공개' ? ' text-bg-secondary' : ' text-bg-danger')"
+                                  th:text="${collection.status()}">공개</span>
+                        </td>
+                        <td>
+                            <span class="badge text-bg-light" th:text="${collection.reportCount()}">3</span>
+                        </td>
+                        <td th:text="${#temporals.format(collection.createdAt(), 'yyyy.MM.dd HH:mm')}">2024.06.01 09:10</td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a th:href="@{'/collections/' + ${collection.id()}}" class="btn btn-outline-secondary">상세</a>
+                                <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#statusModal"
+                                        th:attr="data-collection='새록 #' + ${collection.id()}">상태 변경</button>
+                                <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#singleDeleteModal"
+                                        th:attr="data-collection='새록 #' + ${collection.id()}">삭제</button>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer bg-white border-0 py-3">
+                <ul class="pagination pagination-sm justify-content-end mb-0">
+                    <li class="page-item" th:classappend="${page == 1} ? ' disabled'">
+                        <a class="page-link" th:href="@{/collections(page=${page-1 < 1 ? 1 : page-1}, size=${size}, q=${query}, status=${statusFilter})}">이전</a>
+                    </li>
+                    <li class="page-item" th:each="pageNum : ${#numbers.sequence(1, totalPages)}" th:classappend="${pageNum} == ${page} ? ' active'">
+                        <a class="page-link" th:text="${pageNum}" th:href="@{/collections(page=${pageNum}, size=${size}, q=${query}, status=${statusFilter})}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${page == totalPages} ? ' disabled'">
+                        <a class="page-link" th:href="@{/collections(page=${page+1 > totalPages ? totalPages : page+1}, size=${size}, q=${query}, status=${statusFilter})}">다음</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">선택 항목 삭제</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>선택한 <strong id="bulkDeleteCount">0</strong>개의 새록을 삭제하시겠습니까?</p>
+                        <p class="small text-muted mb-0">삭제 시 신고 기록은 유지되지만 본문은 비공개 처리됩니다.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-toast-target="toastCollectionBulk">삭제</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="singleDeleteModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">새록 삭제</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong id="singleDeleteTarget">새록</strong>을 삭제하시겠습니까?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-toast-target="toastCollectionBulk">삭제</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="statusModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">상태 변경</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong id="statusTarget">새록</strong>의 상태를 변경합니다.</p>
+                        <select class="form-select">
+                            <option value="공개">공개</option>
+                            <option value="비공개">비공개</option>
+                            <option value="차단">차단</option>
+                        </select>
+                        <div class="mt-3">
+                            <label class="form-label">메모</label>
+                            <textarea class="form-control" rows="3" placeholder="조치 사유를 입력하세요."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" data-toast-target="toastCollectionAction">저장</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <script>
+    const checkboxes = document.querySelectorAll('.collection-checkbox');
+    const selectAll = document.getElementById('selectAllCollections');
+    const selectAllHead = document.getElementById('selectAllCollectionsHead');
+    const bulkCount = document.getElementById('bulkDeleteCount');
+
+    function updateBulkCount() {
+        const count = Array.from(checkboxes).filter(cb => cb.checked).length;
+        if (bulkCount) {
+            bulkCount.textContent = count;
+        }
+    }
+
+    function toggleAll(state) {
+        checkboxes.forEach(cb => cb.checked = state);
+        if (selectAll) selectAll.checked = state;
+        if (selectAllHead) selectAllHead.checked = state;
+        updateBulkCount();
+    }
+
+    [selectAll, selectAllHead].forEach(controller => {
+        if (controller) {
+            controller.addEventListener('change', event => toggleAll(event.target.checked));
+        }
+    });
+
+    checkboxes.forEach(cb => cb.addEventListener('change', updateBulkCount));
+
+    const bulkModal = document.getElementById('bulkDeleteModal');
+    if (bulkModal) {
+        bulkModal.addEventListener('show.bs.modal', updateBulkCount);
+    }
+
+    const singleModal = document.getElementById('singleDeleteModal');
+    if (singleModal) {
+        singleModal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const target = button ? button.getAttribute('data-collection') : '새록';
+            singleModal.querySelector('#singleDeleteTarget').textContent = target;
+        });
+    }
+
+    const statusModal = document.getElementById('statusModal');
+    if (statusModal) {
+        statusModal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const target = button ? button.getAttribute('data-collection') : '새록';
+            statusModal.querySelector('#statusTarget').textContent = target;
+        });
+    }
+    </script>
+</th:block>
+</html>

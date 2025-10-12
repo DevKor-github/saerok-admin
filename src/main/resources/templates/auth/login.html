@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/_head :: head('새록 어드민 로그인')}"></head>
+<body class="login-page">
+
+<!--
+  풀 블리드 사진을 배경으로 깔고(Unsplash Random Bird),
+  상단은 타이틀 오버레이, 하단은 버튼/저작자 오버레이(그라데이션)로 중앙 사진을 선명하게.
+  최초 진입 시점의 뷰포트 비율로 orientation을 결정하여 단 한 장만 요청한다.
+-->
+
+<div class="login-shell">
+    <!-- Background visual (full-bleed) -->
+    <aside class="login-visual" aria-hidden="false">
+        <a id="photoLink" class="login-visual__image-link" href="#" target="_blank" rel="noopener">
+            <img id="loginPhoto" class="login-visual__image" alt="" decoding="async">
+        </a>
+        <div class="login-visual__scrim"></div>
+        <p class="login-visual__credit small mb-0" hidden>
+            <span>사진을 불러오는 중…</span>
+        </p>
+    </aside>
+
+    <!-- Top overlay: title area (dark→transparent) -->
+    <header class="overlay-header">
+        <div class="overlay-header__scrim"></div>
+        <div class="overlay-header__content">
+            <img class="overlay-logo"
+                 th:src="@{/images/saerok-admin-icon.png}"
+                 src="/images/saerok-admin-icon.png"
+                 alt="새록 어드민 로고"
+                 decoding="async">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <h1 class="overlay-title fw-bold mb-0 text-white">새록 어드민</h1>
+                <span class="environment-badge"
+                      th:if="${environmentProfileBadge != null}"
+                      th:classappend="' ' + ${environmentProfileBadge.cssClass}"
+                      th:text="${environmentProfileBadge.label}">환경</span>
+            </div>
+            <p class="overlay-subtitle text-white-50 small mb-0 mt-1">로그인 페이지</p>
+        </div>
+    </header>
+
+    <!-- Bottom overlay: attribution + buttons (transparent→dark) -->
+    <footer class="overlay-actions">
+        <div class="overlay-actions__scrim"></div>
+
+        <!-- Login error banner (glass alert) -->
+        <div class="overlay-actions__error"
+             th:if="${param.error}"
+             th:with="err=${#strings.toString(param.error[0])}">
+            <div class="alert alert-dismissible fade show alert-login"
+                 th:classappend="${err == 'state' or err == 'session'} ? ' alert-warning'
+                       : (${err} == 'callback' ? ' alert-info' : ' alert-danger')"
+                 role="alert">
+                <!-- 아이콘: 삼항 대신 조건 분기 -->
+                <i class="bi bi-info-circle-fill me-2" th:if="${err == 'callback'}"></i>
+                <i class="bi bi-exclamation-triangle-fill me-2" th:if="${err == 'state' or err == 'session'}"></i>
+                <i class="bi bi-x-octagon-fill me-2"
+                   th:if="${err != 'callback' and err != 'state' and err != 'session'}"></i>
+
+                <!-- 메시지 본문 -->
+                <span th:switch="${err}">
+                  <span th:case="'state'">보안 검증에 실패했습니다. 새로고침 후 다시 로그인해주세요.</span>
+                  <span th:case="'callback'">필수 인증 정보가 누락되었습니다. 창/앱을 닫았다면 다시 시도해주세요.</span>
+                  <span th:case="'session'">세션이 만료되었습니다. 다시 로그인해주세요.</span>
+                  <span th:case="'login'">
+                    <span th:if="${param.message}" th:text="${param.message[0]}">로그인 중 오류가 발생했습니다. 다시 시도해주세요.</span>
+                    <span th:unless="${param.message}">로그인 중 오류가 발생했습니다. 다시 시도해주세요.</span>
+                  </span>
+                  <span th:case="*">로그인에 실패했습니다. 다시 시도해주세요.</span>
+                </span>
+
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="닫기"></button>
+            </div>
+        </div>
+
+
+        <!-- Unsplash attribution -->
+        <div id="attributionOverlay" class="overlay-actions__attr small text-white-75">
+            <span>사진을 불러오는 중…</span>
+        </div>
+
+        <!-- Buttons -->
+        <div class="overlay-actions__buttons">
+            <a th:href="${kakaoAuthUrl}"
+               class="btn btn-lg w-100 d-flex align-items-center justify-content-center gap-2"
+               role="button"
+               style="background-color: #FEE500; color: #191600;"
+               aria-label="카카오 계정으로 로그인">
+                <img th:src="@{/images/kakao-symbol.svg}" src="/images/kakao-symbol.svg" alt="카카오 심볼" width="20"
+                     height="20">
+                <span class="fw-semibold">카카오로 로그인</span>
+            </a>
+
+            <div class="tooltip-wrapper w-100"
+                 data-bs-toggle="tooltip"
+                 data-bs-placement="top"
+                 data-bs-title="추후 제공 예정인 기능">
+                <button type="button"
+                        class="btn btn-lg w-100 d-flex align-items-center justify-content-center gap-2 upcoming-feature"
+                        style="background-color: #000000; color: #ffffff;"
+                        aria-disabled="true" disabled>
+                    <i class="bi bi-apple fs-4" aria-hidden="true"></i>
+                    <span class="fw-semibold">Sign in with Apple</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="overlay-actions__safe"></div>
+    </footer>
+</div>
+
+<th:block th:replace="~{fragments/_scripts :: scripts}"></th:block>
+
+<script>
+    const imgEl = document.getElementById('loginPhoto');
+    const linkEl = document.getElementById('photoLink');
+    const attrEl = document.getElementById('attributionOverlay');
+
+    // imgix(Unsplash CDN) 파라미터: 화면 크기에 맞춰 다운샘플 + entropy 크롭
+    function buildSmartUrl(base, w, h) {
+        try {
+            const u = new URL(base);
+            u.searchParams.set('w', Math.round(w));
+            u.searchParams.set('h', Math.round(h));
+            u.searchParams.set('q', '80');
+            u.searchParams.set('auto', 'format');
+            u.searchParams.set('fit', 'crop');
+            u.searchParams.set('crop', 'entropy');
+            return u.toString();
+        } catch {
+            return base;
+        }
+    }
+
+    function renderImage(baseUrl) {
+        if (!baseUrl) return;
+        const rect = document.querySelector('.login-visual').getBoundingClientRect();
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        const w = rect.width * dpr;
+        const h = rect.height * dpr;
+        imgEl.src = buildSmartUrl(baseUrl, w, h);
+    }
+
+    function pickInitialOrientation() {
+        // 순수 뷰포트 비율로 결정: 가로가 크면 landscape, 아니면 portrait
+        const ratio = (window.innerWidth || document.documentElement.clientWidth) /
+            (window.innerHeight || document.documentElement.clientHeight);
+        return ratio >= 1 ? 'landscape' : 'portrait';
+    }
+
+    async function loadRandomBirdViaProxy() {
+        try {
+            const orientation = pickInitialOrientation();
+            const res = await fetch('/public/unsplash/random-bird?orientation=' + orientation, {cache: 'no-store'});
+            if (!res.ok) throw new Error('Proxy request failed: ' + res.status);
+            const photo = await res.json(); // { imageUrl, htmlLink, photographerName, photographerLink, unsplashHome }
+
+            // 클릭 시 Unsplash 사진 페이지로 이동 (가이드라인 준수)
+            linkEl.href = photo.htmlLink;
+
+            // 저작자/Unsplash 표기 (가이드라인 준수)
+            const creditHtml = `Photo by <a href="${photo.photographerLink || photo.unsplashHome || 'https://unsplash.com'}" target="_blank" rel="noopener">`
+                + `${photo.photographerName || 'Unknown'}</a> on `
+                + `<a href="${photo.unsplashHome || 'https://unsplash.com'}" target="_blank" rel="noopener">Unsplash</a>`;
+            attrEl.innerHTML = creditHtml;
+
+            // 최초 한 장만 요청 → 이후에는 재요청 없이 화면 크기에 맞춰 리렌더만 수행
+            renderImage(photo.imageUrl);
+
+            // 리사이즈/회전 시 품질 유지용 리렌더(재요청 없음)
+            const base = photo.imageUrl;
+            const ro = new ResizeObserver(() => renderImage(base));
+            ro.observe(document.querySelector('.login-visual'));
+            window.addEventListener('orientationchange', () => setTimeout(() => renderImage(base), 250));
+            window.addEventListener('resize', () => {
+                clearTimeout(window.__saerok_login_resize_timer);
+                window.__saerok_login_resize_timer = setTimeout(() => renderImage(base), 120);
+            });
+        } catch (e) {
+            console.warn(e);
+            attrEl.textContent = '이미지를 불러오지 못했습니다.';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadRandomBirdViaProxy);
+
+    // 툴팁 초기화
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!window.bootstrap || !window.bootstrap.Tooltip) return;
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (triggerEl) {
+            var existing = window.bootstrap.Tooltip.getInstance(triggerEl);
+            if (existing) existing.dispose();
+            new window.bootstrap.Tooltip(triggerEl, {
+                trigger: 'hover focus',
+                delay: {show: 0, hide: 100},
+                customClass: 'tooltip-bubble'
+            });
+        });
+    });
+</script>
+
+<style>
+    :root {
+        --panel-bg: rgba(248, 250, 252, .80);
+        --panel-border: rgba(255, 255, 255, .28);
+        --panel-shadow: 0 20px 40px rgba(15, 23, 42, .25);
+        --scrim-top: rgba(0, 0, 0, .70);
+        --scrim-mid: rgba(0, 0, 0, .28);
+        --scrim-btm: rgba(0, 0, 0, .74);
+    }
+
+    .login-page {
+        min-height: 100dvh;
+        background: #0b1220;
+        overflow: hidden;
+    }
+
+    .login-shell {
+        position: relative;
+        min-height: 100dvh;
+    }
+
+    /* Background (full-bleed) */
+    .login-visual {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        background: #0b1220;
+    }
+
+    .login-visual__image-link, .login-visual__image {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+
+    .login-visual__image {
+        object-fit: cover;
+    }
+
+    .login-visual__scrim {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(180deg, var(--scrim-top) 0%, rgba(0, 0, 0, 0) 32%, rgba(0, 0, 0, 0) 68%, var(--scrim-btm) 100%);
+    }
+
+    .login-visual__credit {
+        display: none;
+    }
+
+    /* Top overlay: title */
+    .overlay-header {
+        position: fixed;
+        z-index: 2;
+        inset: 0 0 auto 0;
+        padding: max(1.25rem, env(safe-area-inset-top)) 1.25rem .75rem;
+        pointer-events: none;
+    }
+
+    .overlay-header__scrim {
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 32dvh;
+        pointer-events: none;
+        background: linear-gradient(180deg, var(--scrim-top) 0%, var(--scrim-mid) 55%, rgba(0, 0, 0, 0) 100%);
+    }
+
+    .overlay-header__content {
+        position: relative;
+        z-index: 1;
+        pointer-events: auto;
+        max-width: min(960px, 80vw);
+    }
+
+    .overlay-logo {
+        width: 56px;
+        height: 56px;
+        display: inline-block;
+        margin-bottom: .5rem;
+    }
+
+    .overlay-title {
+        font-size: clamp(1.5rem, 2.8vw, 2.25rem);
+    }
+
+    .overlay-subtitle {
+        font-size: clamp(.85rem, 1.4vw, .95rem);
+    }
+
+    /* Bottom overlay: attribution + buttons */
+    .overlay-actions {
+        position: fixed;
+        z-index: 2;
+        inset: auto 0 0 0;
+        padding: 0 1.25rem max(1.25rem, env(safe-area-inset-bottom));
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        gap: .75rem;
+    }
+
+    .overlay-actions__scrim {
+        position: absolute;
+        inset: auto 0 0 0;
+        height: 40dvh;
+        pointer-events: none;
+        background: linear-gradient(0deg, var(--scrim-btm) 0%, var(--scrim-mid) 55%, rgba(0, 0, 0, 0) 100%);
+    }
+
+    .overlay-actions__error {
+        position: relative;
+        z-index: 1;
+        pointer-events: auto;
+    }
+
+    /* Glassy alert on dark background */
+    .alert-login {
+        backdrop-filter: saturate(140%) blur(8px);
+        -webkit-backdrop-filter: saturate(140%) blur(8px);
+        border: 1px solid rgba(255, 255, 255, .22);
+        border-radius: .8rem;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, .28);
+        color: #fff;
+    }
+
+    .alert-login.alert-danger {
+        background: rgba(220, 38, 38, .90);
+    }
+
+    .alert-login.alert-warning {
+        background: rgba(234, 179, 8, .92);
+        color: #0b0b0b;
+    }
+
+    .alert-login.alert-info {
+        background: rgba(59, 130, 246, .92);
+    }
+
+    .overlay-actions__attr {
+        position: relative;
+        z-index: 1;
+        pointer-events: auto;
+        color: #fff;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, .6);
+    }
+
+    .overlay-actions__attr a {
+        color: #fff;
+        text-decoration: underline;
+    }
+
+    .overlay-actions__buttons {
+        position: relative;
+        z-index: 1;
+        pointer-events: auto;
+        display: grid;
+        gap: .75rem;
+        width: 100%;
+        max-width: min(600px, 92vw);
+        margin-inline: auto;
+    }
+
+    .overlay-actions__safe {
+        height: .25rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    @media (min-width: 992px) {
+        .overlay-header {
+            padding: max(1.75rem, env(safe-area-inset-top)) 2rem 1rem;
+        }
+
+        .overlay-header__scrim {
+            height: 34dvh;
+        }
+
+        .overlay-logo {
+            width: 64px;
+            height: 64px;
+        }
+
+        .overlay-title {
+            font-size: clamp(1.75rem, 2.2vw, 2.5rem);
+        }
+
+        .overlay-subtitle {
+            font-size: clamp(.9rem, 1vw, 1rem);
+        }
+
+        .overlay-actions {
+            padding: 0 2rem max(2rem, env(safe-area-inset-bottom));
+        }
+
+        .overlay-actions__scrim {
+            height: 42dvh;
+        }
+
+        .overlay-actions__buttons {
+            max-width: 640px;
+        }
+    }
+
+    @media (max-height: 640px) {
+        .overlay-header__scrim {
+            height: 28dvh;
+        }
+
+        .overlay-actions__scrim {
+            height: 44dvh;
+        }
+    }
+</style>
+
+</body>
+</html>

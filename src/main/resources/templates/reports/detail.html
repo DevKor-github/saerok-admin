@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+        <div th:if="${flashMessage}" class="alert alert-elevated d-flex align-items-center"
+             th:classappend="${flashStatus} == 'success' ? ' alert-success' : ' alert-danger'">
+            <i class="bi" th:classappend="${flashStatus} == 'success' ? ' bi-check-circle-fill me-2' : ' bi-exclamation-triangle-fill me-2'"></i>
+            <span th:text="${flashMessage}">처리가 완료되었습니다.</span>
+        </div>
+        <div class="row g-4">
+            <div class="col-12 col-lg-8">
+                <div class="card card-elevated mb-4">
+                    <div class="card-body card-body-comfy">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                            <div>
+                                <span class="badge rounded-pill"
+                                      th:classappend="' text-bg-' + ${detail.type().badgeVariant()}"
+                                      th:text="${detail.type().displayName()}">새록</span>
+                                <h2 class="h4 fw-semibold mt-3" th:text="${'신고 #' + detail.reportId()}">신고 #1</h2>
+                                <p class="text-muted-soft mb-0">
+                                    접수 시각
+                                    <span class="fw-semibold"
+                                          th:text="${detail.reportedAt() != null ? #temporals.format(detail.reportedAt(), 'yyyy.MM.dd HH:mm') : '정보 없음'}">2024.01.01 12:00</span>
+                                </p>
+                            </div>
+                            <div class="text-end small text-muted">
+                                <div>신고자 <strong th:text="${detail.reporter() != null ? detail.reporter().nickname() : '-'}">-</strong></div>
+                                <div>피신고자 <strong th:text="${detail.reportedUser() != null ? detail.reportedUser().nickname() : '-'}">-</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${detail.reportedComment() != null}" class="card card-elevated mb-4">
+                    <div class="card-header card-header-tight">
+                        <h3 class="h6 mb-0 fw-semibold">신고된 댓글</h3>
+                    </div>
+                    <div class="card-body card-body-comfy">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="fw-semibold" th:text="${detail.reportedComment().nickname()}">작성자</div>
+                                <div class="text-muted small" th:text="${'#' + detail.reportedComment().commentId()}">#0</div>
+                            </div>
+                            <div class="text-muted small" th:text="${detail.reportedComment().createdAt() != null ? #temporals.format(detail.reportedComment().createdAt(), 'yyyy.MM.dd HH:mm') : '-'}">2024.01.01 12:00</div>
+                        </div>
+                        <div class="surface-muted rounded-lg p-3 mt-3" th:text="${detail.reportedComment().content()}">댓글 내용</div>
+                    </div>
+                </div>
+
+                <div class="card card-elevated mb-4" th:if="${detail.collection() != null}">
+                    <div class="card-header card-header-tight">
+                        <h3 class="h6 mb-0 fw-semibold">새록 정보</h3>
+                    </div>
+                    <div class="card-body card-body-comfy">
+                        <div th:if="${detail.collection().imageUrl() != null}" class="mb-3">
+                            <button type="button" class="border-0 bg-transparent p-0 w-100"
+                                    data-collection-image-trigger>
+                                <img th:src="${detail.collection().imageUrl()}" alt="새록 이미지"
+                                     class="img-fluid collection-image-thumbnail">
+                            </button>
+                            <div class="text-end mt-2">
+                                <a class="small text-decoration-none" th:href="${detail.collection().imageUrl()}" target="_blank"
+                                   rel="noopener">원본 이미지 열기</a>
+                            </div>
+                        </div>
+                        <div class="collection-note-highlight mb-4">
+                            <div class="note-label mb-2">한 줄 평</div>
+                            <div class="collection-one-line-note text-break"
+                                 th:text="${#strings.isEmpty(detail.collection().note()) ? '등록된 한 줄 평이 없습니다.' : detail.collection().note()}">
+                                등록된 한 줄 평이 없습니다.
+                            </div>
+                        </div>
+                        <div class="row g-4 collection-detail-meta">
+                            <div class="col-12 col-lg-6">
+                                <dl class="row gy-2 mb-0">
+                                    <dt class="col-sm-4 text-muted small">새록 ID</dt>
+                                    <dd class="col-sm-8 fw-semibold" th:text="${'#' + detail.collection().collectionId()}">#0</dd>
+                                    <dt class="col-sm-4 text-muted small">관찰일</dt>
+                                    <dd class="col-sm-8" th:text="${detail.collection().discoveredDate() != null ? #temporals.format(detail.collection().discoveredDate(), 'yyyy.MM.dd') : '-'}">2024.01.01</dd>
+                                    <dt class="col-sm-4 text-muted small">공개 범위</dt>
+                                    <dd class="col-sm-8">
+                                        <span th:text="${detail.collection().accessLevelLabel()}">공개</span>
+                                        <span class="text-muted ms-1"
+                                              th:text="${detail.collection().accessLevel() != null ? '(' + detail.collection().accessLevel() + ')' : ''}">(PUBLIC)</span>
+                                    </dd>
+                                    <dt class="col-sm-4 text-muted small">좋아요/댓글</dt>
+                                    <dd class="col-sm-8"
+                                        th:text="|${detail.collection().likeCount() != null ? detail.collection().likeCount() : 0} / ${detail.collection().commentCount() != null ? detail.collection().commentCount() : 0}|">0 / 0</dd>
+                                </dl>
+                            </div>
+                            <div class="col-12 col-lg-6">
+                                <dl class="row gy-2 mb-0">
+                                    <dt class="col-sm-4 text-muted small">새 이름</dt>
+                                    <dd class="col-sm-8" th:text="${detail.collection().birdKoreanName() != null ? detail.collection().birdKoreanName() : '-'}">-</dd>
+                                    <dt class="col-sm-4 text-muted small">새 ID</dt>
+                                    <dd class="col-sm-8" th:text="${detail.collection().birdId() != null ? '#' + detail.collection().birdId() : '-'}">-</dd>
+                                    <dt class="col-sm-4 text-muted small">학명</dt>
+                                    <dd class="col-sm-8" th:text="${detail.collection().birdScientificName() != null ? detail.collection().birdScientificName() : '-'}">-</dd>
+                                    <dt class="col-sm-4 text-muted small">관찰 위치</dt>
+                                    <dd class="col-sm-8 text-break"
+                                        th:text="${detail.collection().locationAlias() != null ? detail.collection().locationAlias() : '-'}">서울숲</dd>
+                                    <dt class="col-sm-4 text-muted small">주소</dt>
+                                    <dd class="col-sm-8 text-break text-muted"
+                                        th:text="${detail.collection().address() != null ? detail.collection().address() : '-'}">주소</dd>
+                                    <dt class="col-sm-4 text-muted small">좌표</dt>
+                                    <dd class="col-sm-8 text-muted"
+                                        th:text="${detail.collection().latitude() != null && detail.collection().longitude() != null ? '(' + detail.collection().latitude() + ', ' + detail.collection().longitude() + ')' : '-'}">(0.0, 0.0)</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card card-elevated">
+                    <div class="card-header card-header-tight">
+                        <h3 class="h6 mb-0 fw-semibold">댓글 목록</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <div th:if="${detail.comments().isEmpty()}" class="p-4 text-center text-muted">등록된 댓글이 없습니다.</div>
+                        <div th:each="comment : ${detail.comments()}"
+                             th:classappend="${detail.reportedComment() != null && detail.reportedComment().commentId() == comment.commentId()} ? ' bg-warning-subtle' : ''"
+                             class="border-bottom p-4">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <div class="fw-semibold" th:text="${comment.nickname()}">작성자</div>
+                                    <div class="text-muted small" th:text="${'#' + comment.commentId()}">#0</div>
+                                </div>
+                                <div class="text-muted small text-end">
+                                    <div th:text="${comment.createdAt() != null ? #temporals.format(comment.createdAt(), 'yyyy.MM.dd HH:mm') : '-'}">2024.01.01 12:00</div>
+                                    <div th:text="${'좋아요 ' + comment.likeCount()}" class="text-muted">좋아요 0</div>
+                                </div>
+                            </div>
+                            <p class="mb-0 mt-2" th:text="${comment.content()}">댓글 내용</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-4">
+                <div class="card card-elevated mb-4">
+                    <div class="card-body card-body-comfy">
+                        <h3 class="h6 fw-semibold mb-3">처리 옵션</h3>
+                        <div class="d-flex flex-wrap flex-gap-sm">
+                            <div class="d-flex flex-wrap flex-gap-sm">
+                                <a class="btn btn-outline-secondary d-inline-flex align-items-center gap-1"
+                                   th:href="@{/reports}" data-bs-toggle="tooltip" data-bs-placement="top" title="목록 보기">
+                                    <i class="bi bi-list"></i>
+                                    <span>목록 보기</span>
+                                </a>
+                                <form th:action="@{${detail.ignoreAction()}}" method="post" class="m-0">
+                                    <input type="hidden" name="redirect" value="detail">
+                                    <button type="submit"
+                                            class="btn btn-outline-primary d-inline-flex align-items-center gap-1"
+                                            th:onclick="|return confirm('해당 신고를 무시 처리할까요?');|"
+                                            data-bs-toggle="tooltip" data-bs-placement="top" title="신고 무시">
+                                        <i class="bi bi-slash-circle"></i>
+                                        <span>신고 무시</span>
+                                    </button>
+                                </form>
+                            </div>
+                            <form th:action="@{${detail.deleteAction()}}" method="post" class="m-0">
+                                <input type="hidden" name="redirect" value="detail">
+                                <input type="hidden" name="reason" value="">
+                                <button type="button"
+                                        class="btn btn-danger d-inline-flex align-items-center gap-1"
+                                        data-report-delete-button
+                                        th:data-report-delete-target-name="|신고 대상 ${detail.type().targetNoun()}|"
+                                        th:data-report-delete-confirm-message="|정말 신고 대상 ${detail.type().targetNoun()}을(를) 삭제할까요?|"
+                                        data-bs-toggle="tooltip" data-bs-placement="top" title="콘텐츠 삭제">
+                                    <i class="bi bi-trash"></i>
+                                    <span>콘텐츠 삭제</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="card card-elevated" th:if="${detail.collection() != null}">
+                    <div class="card-body card-body-comfy">
+                        <h3 class="h6 fw-semibold mb-3">새록 작성자</h3>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="profile-avatar flex-shrink-0"
+                                 th:style="${detail.collection().authorProfileImageUrl() != null} ? |--avatar-image: url('${detail.collection().authorProfileImageUrl()}')| : null">
+                                <i th:if="${detail.collection().authorProfileImageUrl() == null}" class="bi bi-person"></i>
+                            </div>
+                            <div>
+                                <div class="fw-semibold" th:text="${detail.collection().authorNickname() != null ? detail.collection().authorNickname() : '-'}">작성자</div>
+                                <div class="text-muted small" th:text="${detail.collection().authorId() != null ? '#' + detail.collection().authorId() : ''}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${detail.collection() != null && detail.collection().imageUrl() != null}" id="collectionImageModal"
+             class="collection-image-modal d-none" role="dialog" aria-modal="true">
+            <div class="collection-image-backdrop" data-collection-image-close></div>
+            <div class="collection-image-dialog">
+                <button type="button" class="btn-close btn-close-white" data-collection-image-close aria-label="닫기"></button>
+                <img th:src="${detail.collection().imageUrl()}" alt="새록 전체 이미지" class="img-fluid">
+            </div>
+        </div>
+
+        <script th:if="${detail.collection() != null && detail.collection().imageUrl() != null}">
+            document.addEventListener('DOMContentLoaded', function () {
+                const trigger = document.querySelector('[data-collection-image-trigger]');
+                const modal = document.getElementById('collectionImageModal');
+                if (!trigger || !modal) {
+                    return;
+                }
+
+                const closeElements = modal.querySelectorAll('[data-collection-image-close]');
+
+                const showModal = () => {
+                    modal.classList.remove('d-none');
+                    document.body.classList.add('overflow-hidden');
+                };
+
+                const hideModal = () => {
+                    modal.classList.add('d-none');
+                    document.body.classList.remove('overflow-hidden');
+                };
+
+                trigger.addEventListener('click', showModal);
+                closeElements.forEach(element => element.addEventListener('click', hideModal));
+                modal.addEventListener('click', function (event) {
+                    if (event.target === modal) {
+                        hideModal();
+                    }
+                });
+                document.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape' && !modal.classList.contains('d-none')) {
+                        hideModal();
+                    }
+                });
+            });
+        </script>
+
+        <div th:replace="~{reports/delete-modal :: reportDeleteModal}"></div>
+</th:block>
+</html>

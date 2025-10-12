@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: saerok-admin
+
+server:
+  port: 8081
+
+oauth:
+  kakao:
+    client-id: ${KAKAO_CLIENT_ID}
+    redirect-uri: ${KAKAO_REDIRECT_URI}
+  apple:
+    client-id: ${APPLE_CLIENT_ID}
+    redirect-uri: ${APPLE_REDIRECT_URI}
+
+saerok:
+  api:
+    base-url: ${SAEROK_API_BASE_URL}
+    prefix: ${SAEROK_API_PREFIX}
+
+unsplash:
+  access-key: ${UNSPLASH_ACCESS_KEY}
+  app-name: ${UNSPLASH_APP_NAME}

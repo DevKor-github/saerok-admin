@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="reportDeleteModal">
+    <div class="modal fade" id="reportDeleteReasonModal" tabindex="-1" aria-labelledby="reportDeleteReasonModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reportDeleteReasonModalLabel">삭제 사유 입력</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3"><span data-delete-target-name>신고 대상 콘텐츠</span>을(를) 삭제하려면 사유를 입력해주세요.</p>
+                    <div class="mb-3">
+                        <label class="form-label" for="reportDeleteReasonInput">삭제 사유</label>
+                        <textarea class="form-control" id="reportDeleteReasonInput" rows="3" placeholder="삭제 사유를 입력하세요."></textarea>
+                        <div class="invalid-feedback d-block d-none" data-delete-reason-error>삭제 사유를 입력해주세요.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-danger" data-delete-reason-confirm
+                            data-default-confirm-message="정말 삭제할까요?">삭제</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            if (window.__reportDeleteModalInitialized) {
+                return;
+            }
+            window.__reportDeleteModalInitialized = true;
+
+            document.addEventListener('DOMContentLoaded', function () {
+                var modalElement = document.getElementById('reportDeleteReasonModal');
+                var buttons = document.querySelectorAll('[data-report-delete-button]');
+                if (!modalElement || buttons.length === 0) {
+                    return;
+                }
+
+                var bootstrap = window.bootstrap;
+                if (!bootstrap || !bootstrap.Modal) {
+                    buttons.forEach(function (button) {
+                        button.addEventListener('click', function (event) {
+                            event.preventDefault();
+                            var form = button.closest('form');
+                            if (!form) {
+                                return;
+                            }
+                            var reason = window.prompt('삭제 사유를 입력해주세요.');
+                            if (!reason || reason.trim().length === 0) {
+                                window.alert('삭제 사유를 입력해주세요.');
+                                return;
+                            }
+                            var confirmMessage = button.getAttribute('data-report-delete-confirm-message')
+                                    || '정말 삭제할까요?';
+                            if (!window.confirm(confirmMessage)) {
+                                return;
+                            }
+                            var hiddenInput = form.querySelector('input[name="reason"]');
+                            if (!hiddenInput) {
+                                hiddenInput = document.createElement('input');
+                                hiddenInput.type = 'hidden';
+                                hiddenInput.name = 'reason';
+                                form.appendChild(hiddenInput);
+                            }
+                            hiddenInput.value = reason.trim();
+                            form.submit();
+                        });
+                    });
+                    return;
+                }
+
+                var modal = new bootstrap.Modal(modalElement);
+                var reasonInput = modalElement.querySelector('#reportDeleteReasonInput');
+                var errorMessage = modalElement.querySelector('[data-delete-reason-error]');
+                var confirmButton = modalElement.querySelector('[data-delete-reason-confirm]');
+                var targetNameElement = modalElement.querySelector('[data-delete-target-name]');
+                var currentForm = null;
+                var currentTrigger = null;
+
+                var openModal = function (trigger) {
+                    if (!trigger) {
+                        return;
+                    }
+                    if (reasonInput) {
+                        reasonInput.value = '';
+                    }
+                    if (errorMessage) {
+                        errorMessage.classList.add('d-none');
+                    }
+                    currentForm = trigger.closest('form');
+                    currentTrigger = trigger;
+                    if (!currentForm) {
+                        currentTrigger = null;
+                        return;
+                    }
+                    var targetName = trigger.getAttribute('data-report-delete-target-name');
+                    if (targetNameElement) {
+                        targetNameElement.textContent = targetName || '신고 대상 콘텐츠';
+                    }
+                    modal.show();
+                    window.setTimeout(function () {
+                        if (reasonInput) {
+                            reasonInput.focus();
+                        }
+                    }, 200);
+                };
+
+                buttons.forEach(function (button) {
+                    button.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        openModal(button);
+                    });
+                });
+
+                modalElement.addEventListener('shown.bs.modal', function () {
+                    if (reasonInput) {
+                        reasonInput.focus();
+                    }
+                });
+
+                modalElement.addEventListener('hidden.bs.modal', function () {
+                    if (reasonInput) {
+                        reasonInput.value = '';
+                    }
+                    if (errorMessage) {
+                        errorMessage.classList.add('d-none');
+                    }
+                    currentForm = null;
+                    currentTrigger = null;
+                });
+
+                if (!confirmButton) {
+                    return;
+                }
+
+                confirmButton.addEventListener('click', function () {
+                    if (!currentForm) {
+                        return;
+                    }
+                    var reason = reasonInput && reasonInput.value ? reasonInput.value.trim() : '';
+                    if (!reason) {
+                        if (errorMessage) {
+                            errorMessage.classList.remove('d-none');
+                        }
+                        if (reasonInput) {
+                            reasonInput.focus();
+                        }
+                        return;
+                    }
+
+                    var hiddenInput = currentForm.querySelector('input[name="reason"]');
+                    if (!hiddenInput) {
+                        hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = 'reason';
+                        currentForm.appendChild(hiddenInput);
+                    }
+                    hiddenInput.value = reason;
+
+                    var confirmMessage = (currentTrigger && currentTrigger.getAttribute('data-report-delete-confirm-message'))
+                        || confirmButton.getAttribute('data-default-confirm-message')
+                        || '정말 삭제할까요?';
+                    if (!window.confirm(confirmMessage)) {
+                        return;
+                    }
+
+                    modal.hide();
+                    currentForm.submit();
+                });
+            });
+        })();
+    </script>
+</th:block>
+</html>

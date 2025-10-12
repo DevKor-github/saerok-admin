@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="layout(pageTitle, activeMenu, breadcrumbs, content)">
+    <head th:replace="~{fragments/_head :: head(${pageTitle})}"></head>
+    <body class="app-shell">
+    <div class="d-flex">
+        <div th:replace="~{fragments/_sidebar :: sidebar(${activeMenu})}"></div>
+        <div class="app-content">
+            <div th:replace="~{fragments/_navbar :: navbar(${pageTitle})}"></div>
+            <main class="app-main container-fluid">
+                <div th:if="${breadcrumbs}" th:replace="~{fragments/_breadcrumbs :: breadcrumbs(${breadcrumbs})}"></div>
+                <div class="mb-4">
+                    <h1 class="section-heading" th:text="${pageTitle}">페이지 제목</h1>
+                </div>
+                <div th:replace="${content}"></div>
+            </main>
+        </div>
+    </div>
+    <th:block th:replace="~{fragments/_scripts :: scripts}"></th:block>
+    <div th:replace="~{fragments/_toast :: toast(${toastMessages})}"></div>
+    </body>
+</th:block>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+        <div class="row g-4">
+            <div class="col-12 col-lg-8">
+                <div class="card card-elevated mb-4">
+                    <div class="card-body p-0">
+                        <div class="ratio ratio-21x9 rounded-top" th:style="${'background:url(' + detail.imageUrl() + ') center/cover no-repeat'}"></div>
+                        <div class="p-4 p-lg-5">
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="badge bg-primary-subtle text-primary me-2" th:text="${detail.rarity()}">RARE</span>
+                                <span class="badge text-bg-light" th:each="tag : ${detail.tags()}" th:text="${tag}">태그</span>
+                            </div>
+                            <h2 class="h3 fw-bold" th:text="${detail.koreanName()}">해오라기</h2>
+                            <p class="text-muted mb-1" th:text="${detail.englishName()}">Striated Heron</p>
+                            <p class="text-muted fst-italic" th:text="${detail.scientificName()}">Butorides striata</p>
+                            <p class="fs-6 lh-lg" th:text="${detail.description()}">설명</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card card-elevated">
+                    <div class="card-header bg-white border-0">
+                        <h3 class="h6 mb-0 fw-semibold">최근 업데이트</h3>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-3 text-muted">ID</dt>
+                            <dd class="col-sm-9" th:text="${'#' + detail.id()}">#401</dd>
+                            <dt class="col-sm-3 text-muted">업데이트</dt>
+                            <dd class="col-sm-9" th:text="${#temporals.format(detail.updatedAt(), 'yyyy.MM.dd HH:mm')}">2024.06.01 12:00</dd>
+                            <dt class="col-sm-3 text-muted">태그</dt>
+                            <dd class="col-sm-9">
+                                <span class="badge text-bg-light me-1" th:each="tag : ${detail.tags()}" th:text="${tag}">태그</span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-4">
+                <div class="card card-elevated mb-4">
+                    <div class="card-body">
+                        <h3 class="h6 fw-semibold mb-3">서식 정보</h3>
+                        <ul class="list-unstyled mb-0 small text-muted">
+                            <li class="mb-2"><i class="bi bi-geo-alt me-2 text-primary"></i>
+                                <span th:each="habitat : ${detail.habitats()}" th:text="${habitat}"
+                                      th:append="${!#lists.isLast(habitat, detail.habitats()) ? ', ' : ''}">하천</span>
+                            </li>
+                            <li class="mb-2"><i class="bi bi-shield-check me-2 text-success"></i>보호 등급 <strong th:text="${detail.rarity()}">RARE</strong></li>
+                        </ul>
+                        <div class="d-grid gap-2 mt-4">
+                            <a th:href="@{'/dex/' + ${detail.id()} + '/edit'}" class="btn btn-primary">도감 수정</a>
+                            <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteDexModal" data-entry="상세 #" th:data-entry="${'#' + detail.id() + ' ' + detail.koreanName()}">삭제</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card card-elevated">
+                    <div class="card-body">
+                        <h3 class="h6 fw-semibold mb-3">관련 링크</h3>
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2"><a href="#" class="text-decoration-none"><i class="bi bi-link-45deg me-2"></i>현장 사진 아카이브</a></li>
+                            <li class="mb-2"><a href="#" class="text-decoration-none"><i class="bi bi-link-45deg me-2"></i>관찰 데이터 다운로드</a></li>
+                            <li><a href="#" class="text-decoration-none"><i class="bi bi-link-45deg me-2"></i>관련 새록 모음</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="deleteDexModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">도감 삭제</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong th:text="${detail.koreanName()}">해오라기</strong> 도감 항목을 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-toast-target="toastDexDeleted">삭제</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </th:block>
+</html>

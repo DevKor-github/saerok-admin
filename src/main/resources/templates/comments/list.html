@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+        <div class="card card-elevated mb-4">
+            <div class="card-body card-body-comfy">
+                <form class="row g-3 align-items-end" method="get">
+                    <div class="col-md-4">
+                        <label class="form-label small text-uppercase text-muted" for="commentQuery">검색어</label>
+                        <input type="search" class="form-control" id="commentQuery" name="q" placeholder="작성자 또는 본문" th:value="${query}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-uppercase text-muted" for="commentStatus">상태</label>
+                        <select class="form-select" id="commentStatus" name="status">
+                            <option th:each="option : ${statusOptions}" th:value="${option == '전체' ? '' : option}"
+                                    th:selected="${option == statusFilter || (statusFilter == null && option == '전체')}"
+                                    th:text="${option}">전체</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">검색</button>
+                        <a th:href="@{/comments}" class="btn btn-outline-secondary">초기화</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="selectAllComments">
+                    <label class="form-check-label" for="selectAllComments">전체 선택</label>
+                </div>
+                <button class="btn btn-sm btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#commentBulkDelete">선택 삭제</button>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#commentBulkHide">선택 숨김</button>
+            </div>
+            <p class="mb-0 text-muted small">총 <strong th:text="${totalElements}">312</strong>건 · <strong th:text="${page}">1</strong>/<span th:text="${totalPages}">15</span> 페이지</p>
+        </div>
+        <div class="card card-elevated">
+            <div class="table-responsive table-shell">
+                <table class="table table-modern table-hover align-middle">
+                    <thead>
+                    <tr>
+                        <th><input class="form-check-input" type="checkbox" id="selectAllCommentsHead"></th>
+                        <th>ID</th>
+                        <th>작성자</th>
+                        <th>원글</th>
+                        <th>본문 요약</th>
+                        <th>신고 수</th>
+                        <th>생성일</th>
+                        <th class="text-end">액션</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="comment : ${comments}" th:data-comment="${'#' + comment.id()}">
+                        <td><input class="form-check-input comment-checkbox" type="checkbox" th:value="${comment.id()}"></td>
+                        <td class="fw-semibold" th:text="${'#' + comment.id()}">#481</td>
+                        <td th:text="${comment.author()}">솔바람</td>
+                        <td th:text="${'#' + comment.parentId()}">#872</td>
+                        <td>
+                            <div class="fw-semibold" th:text="${comment.excerpt()}">갈대밭의 색감이 정말 아름답네요!</div>
+                        </td>
+                        <td><span class="badge text-bg-light" th:text="${comment.reportCount()}">2</span></td>
+                        <td th:text="${#temporals.format(comment.createdAt(), 'yyyy.MM.dd HH:mm')}">2024.06.01 08:10</td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#commentHideModal"
+                                        th:attr="data-comment='댓글 ' + ${'#' + comment.id()}">상태 변경</button>
+                                <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#commentDeleteModal"
+                                        th:attr="data-comment='댓글 ' + ${'#' + comment.id()}">삭제</button>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer bg-white border-0 py-3">
+                <ul class="pagination pagination-sm justify-content-end mb-0">
+                    <li class="page-item" th:classappend="${page == 1} ? ' disabled'">
+                        <a class="page-link" th:href="@{/comments(page=${page-1 < 1 ? 1 : page-1}, size=${size}, q=${query}, status=${statusFilter})}">이전</a>
+                    </li>
+                    <li class="page-item" th:each="pageNum : ${#numbers.sequence(1, totalPages)}" th:classappend="${pageNum} == ${page} ? ' active'">
+                        <a class="page-link" th:text="${pageNum}" th:href="@{/comments(page=${pageNum}, size=${size}, q=${query}, status=${statusFilter})}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${page == totalPages} ? ' disabled'">
+                        <a class="page-link" th:href="@{/comments(page=${page+1 > totalPages ? totalPages : page+1}, size=${size}, q=${query}, status=${statusFilter})}">다음</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="modal fade" id="commentBulkDelete" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">선택 댓글 삭제</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>선택된 <strong id="commentBulkDeleteCount">0</strong>개의 댓글을 삭제하시겠습니까?</p>
+                        <p class="small text-muted mb-0">삭제 시 댓글은 즉시 비공개 처리됩니다.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-toast-target="toastCommentBulk">삭제</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="commentBulkHide" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">선택 댓글 숨김</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>선택된 댓글을 숨김 처리하시겠습니까?</p>
+                        <p class="small text-muted mb-0">언제든지 다시 표시할 수 있습니다.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" data-toast-target="toastCommentHide">숨김 처리</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="commentHideModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">댓글 상태 변경</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong id="commentHideTarget">댓글</strong>을 어떻게 조치하시겠습니까?</p>
+                        <select class="form-select">
+                            <option value="정상">정상</option>
+                            <option value="숨김">숨김</option>
+                            <option value="삭제">삭제</option>
+                        </select>
+                        <div class="mt-3">
+                            <label class="form-label">운영자 메모</label>
+                            <textarea class="form-control" rows="3" placeholder="사유를 입력하세요."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" data-toast-target="toastCommentHide">저장</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="commentDeleteModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">댓글 삭제</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong id="commentDeleteTarget">댓글</strong>을 삭제하시겠습니까?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-toast-target="toastCommentBulk">삭제</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <script>
+    const commentCheckboxes = document.querySelectorAll('.comment-checkbox');
+    const selectAllComments = document.getElementById('selectAllComments');
+    const selectAllCommentsHead = document.getElementById('selectAllCommentsHead');
+    const bulkDeleteCount = document.getElementById('commentBulkDeleteCount');
+
+    function updateCommentBulkCount() {
+        const count = Array.from(commentCheckboxes).filter(cb => cb.checked).length;
+        if (bulkDeleteCount) {
+            bulkDeleteCount.textContent = count;
+        }
+    }
+
+    function toggleCommentAll(state) {
+        commentCheckboxes.forEach(cb => cb.checked = state);
+        if (selectAllComments) selectAllComments.checked = state;
+        if (selectAllCommentsHead) selectAllCommentsHead.checked = state;
+        updateCommentBulkCount();
+    }
+
+    [selectAllComments, selectAllCommentsHead].forEach(controller => {
+        if (controller) {
+            controller.addEventListener('change', event => toggleCommentAll(event.target.checked));
+        }
+    });
+
+    commentCheckboxes.forEach(cb => cb.addEventListener('change', updateCommentBulkCount));
+
+    const hideModal = document.getElementById('commentHideModal');
+    if (hideModal) {
+        hideModal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const target = button ? button.getAttribute('data-comment') : '댓글';
+            hideModal.querySelector('#commentHideTarget').textContent = target;
+        });
+    }
+
+    const deleteModal = document.getElementById('commentDeleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const target = button ? button.getAttribute('data-comment') : '댓글';
+            deleteModal.querySelector('#commentDeleteTarget').textContent = target;
+        });
+    }
+
+    const bulkDeleteModal = document.getElementById('commentBulkDelete');
+    if (bulkDeleteModal) {
+        bulkDeleteModal.addEventListener('show.bs.modal', updateCommentBulkCount);
+    }
+
+    const bulkHideModal = document.getElementById('commentBulkHide');
+    if (bulkHideModal) {
+        bulkHideModal.addEventListener('show.bs.modal', updateCommentBulkCount);
+    }
+    </script>
+</th:block>
+</html>

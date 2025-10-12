@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+        <div class="row g-4">
+            <div class="col-12 col-xl-4">
+                <div class="card card-elevated mb-4">
+                    <div class="card-body text-center">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle" style="width:88px; height:88px;">
+                            <i class="bi bi-person-circle fs-1"></i>
+                        </div>
+                        <h2 class="h4 fw-semibold mt-3 mb-1" th:text="${detail.nickname()}">솔바람</h2>
+                        <p class="text-muted mb-3" th:text="${detail.email()}">sol@saerok.app</p>
+                        <div class="badge" th:classappend="${detail.status()} == '정상' ? ' text-bg-success' : (${detail.status()} == '휴면' ? ' text-bg-secondary' : ' text-bg-danger')"
+                             th:text="${detail.status()}">정상</div>
+                        <dl class="row text-start mt-4 mb-0 small">
+                            <dt class="col-5 text-muted">가입일</dt>
+                            <dd class="col-7" th:text="${#temporals.format(detail.joinedAt(), 'yyyy.MM.dd HH:mm')}">2024.01.02 10:00</dd>
+                            <dt class="col-5 text-muted">마지막 로그인</dt>
+                            <dd class="col-7" th:text="${#temporals.format(detail.lastLoginAt(), 'yyyy.MM.dd HH:mm')}">2024.06.01 21:00</dd>
+                            <dt class="col-5 text-muted">작성/신고</dt>
+                            <dd class="col-7">새록 <strong th:text="${detail.postCount()}">48</strong> · 신고 <strong th:text="${detail.reportCount()}">2</strong></dd>
+                            <dt class="col-5 text-muted">연락처</dt>
+                            <dd class="col-7" th:text="${detail.phone()}">010-1234-5678</dd>
+                        </dl>
+                        <div class="d-grid gap-2 mt-4">
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#userStatusModal">상태 변경</button>
+                            <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#userNotifyModal">알림 발송</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card card-elevated">
+                    <div class="card-body">
+                        <h3 class="h6 fw-semibold mb-3">활동 통계</h3>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">최근 30일 작성</span>
+                            <span class="fw-semibold">12건</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">좋아요 받은 수</span>
+                            <span class="fw-semibold">86회</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">신고 접수</span>
+                            <span class="fw-semibold">2건</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-xl-8">
+                <div class="card card-elevated">
+                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="h6 mb-0 fw-semibold">최근 활동</h3>
+                            <p class="text-muted small mb-0">최근 일주일 내 주요 활동 내역</p>
+                        </div>
+                        <a href="#" class="btn btn-sm btn-outline-secondary">전체 보기</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item px-0 py-3" th:each="activity : ${detail.recentActivities()}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <span class="badge text-bg-light me-2" th:text="${activity.type()}">새록</span>
+                                        <span class="fw-semibold" th:text="${activity.title()}">초여름 갈대밭 일지</span>
+                                        <span class="badge rounded-pill ms-2" th:classappend="${activity.status()} == '공개' ? ' text-bg-success' : (${activity.status()} == '검토중' ? ' text-bg-warning' : ' text-bg-secondary')"
+                                              th:text="${activity.status()}">공개</span>
+                                    </div>
+                                    <small class="text-muted" th:text="${#temporals.format(activity.createdAt(), 'yyyy.MM.dd HH:mm')}">2024.06.01 14:30</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="userStatusModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">사용자 상태 변경</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong th:text="${detail.nickname()}">솔바람</strong>님의 상태를 조정합니다.</p>
+                        <select class="form-select">
+                            <option>정상</option>
+                            <option>휴면</option>
+                            <option>차단</option>
+                        </select>
+                        <div class="mt-3">
+                            <label class="form-label">조치 메모</label>
+                            <textarea class="form-control" rows="3" placeholder="사유를 입력하세요."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" data-toast-target="toastUserAction">저장</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="userNotifyModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">사용자 알림 발송</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong th:text="${detail.nickname()}">솔바람</strong>님에게 보낼 메시지를 작성하세요.</p>
+                        <div class="mb-3">
+                            <label class="form-label">제목</label>
+                            <input type="text" class="form-control" placeholder="알림 제목">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">내용</label>
+                            <textarea class="form-control" rows="4" placeholder="알림 본문"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-success" data-bs-dismiss="modal" data-toast-target="toastUserNotify">발송</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </th:block>
+</html>

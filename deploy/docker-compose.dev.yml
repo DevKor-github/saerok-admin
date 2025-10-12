@@ -1,0 +1,30 @@
+services:
+  app:
+    image: ghcr.io/devkor-github/saerok-admin:dev-latest
+    container_name: saerok-admin-dev
+    restart: unless-stopped
+    stop_grace_period: 15s
+    ports: ["8081:8081"]
+
+    # t2.micro 안전 제한 (BE와 합쳐도 1GiB 넘지 않게)
+    cpus: "0.10"
+    mem_limit: "256m"
+
+    # 런타임에 만드는 RAM env 파일
+    env_file:
+      - /run/saerok-admin/env.dev
+
+    environment:
+      # dev 오버레이에서 명시적으로 고정
+      SPRING_PROFILES_ACTIVE: "dev"
+      # 프록시 뒤 HTTPS 인식 (X-Forwarded-Proto 처리)
+      SERVER_FORWARD_HEADERS_STRATEGY: "native"
+      # 자바 메모리/타임존 튜닝
+      JAVA_OPTS: >-
+        -Duser.timezone=Asia/Seoul
+        -Xms64m -Xmx110m
+        -XX:MaxMetaspaceSize=64m
+        -XX:MaxDirectMemorySize=16m
+        -XX:ReservedCodeCacheSize=32m
+        -XX:+UseSerialGC
+        -XX:+ExitOnOutOfMemoryError
