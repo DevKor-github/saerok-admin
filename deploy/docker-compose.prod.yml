@@ -1,0 +1,30 @@
+services:
+  app:
+    image: ghcr.io/devkor-github/saerok-admin:prod-latest
+    container_name: saerok-admin-prod
+    restart: unless-stopped
+    stop_grace_period: 15s
+    ports: ["8081:8081"]
+
+    cpus: "0.30"
+    cpu_shares: 256
+
+    mem_limit: "320m"
+    mem_reservation: "220m"
+
+    env_file:
+      - /run/saerok-admin/env.prod
+
+    environment:
+      SPRING_PROFILES_ACTIVE: "prod"
+      # 프록시 뒤 HTTPS 인식 (X-Forwarded-Proto 처리)
+      SERVER_FORWARD_HEADERS_STRATEGY: "native"
+      # 자바 메모리/타임존 튜닝
+      JAVA_OPTS: >-
+        -Duser.timezone=Asia/Seoul
+        -Xms96m -Xmx160m
+        -XX:MaxMetaspaceSize=80m
+        -XX:MaxDirectMemorySize=24m
+        -XX:ReservedCodeCacheSize=48m
+        -XX:+UseSerialGC
+        -XX:+ExitOnOutOfMemoryError
