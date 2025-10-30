@@ -25,9 +25,96 @@
     const unitLabelElement = document.querySelector('[data-role="service-insight-unit"]');
     const emptyStateElement = document.getElementById('serviceInsightEmptyState');
     const canvas = document.getElementById('serviceInsightChart');
+    const chartContainer = canvas ? canvas.parentElement : null;
 
-    if (!canvas || typeof Chart === 'undefined') {
-        return;
+    let chart = null;
+    if (canvas && typeof Chart !== 'undefined') {
+        chart = new Chart(canvas.getContext('2d'), {
+            type: 'line',
+            data: {
+                datasets: []
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'nearest',
+                    intersect: false
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'day',
+                            tooltipFormat: 'yyyy-LL-dd'
+                        },
+                        ticks: {
+                            autoSkip: true,
+                            maxRotation: 0
+                        },
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.2)'
+                        }
+                    },
+                    count: {
+                        display: false,
+                        position: 'left',
+                        beginAtZero: true,
+                        ticks: {
+                            callback: value => formatCount(value)
+                        }
+                    },
+                    ratio: {
+                        display: false,
+                        position: 'right',
+                        beginAtZero: true,
+                        min: 0,
+                        max: 100,
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        ticks: {
+                            callback: value => `${value}%`
+                        }
+                    },
+                    hours: {
+                        display: false,
+                        position: 'right',
+                        beginAtZero: true,
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        ticks: {
+                            callback: value => formatHours(value)
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            boxHeight: 8,
+                            boxWidth: 8
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label(context) {
+                                const dataset = context.dataset || {};
+                                const unit = dataset._saUnit;
+                                const label = dataset.label || '';
+                                const value = context.parsed.y;
+                                const formatted = formatValue(value, unit);
+                                return label ? `${label}: ${formatted}` : formatted;
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 
     const colorPalette = [
@@ -44,93 +131,6 @@
         RATIO: 'ratio',
         HOURS: 'hours'
     };
-
-    const chart = new Chart(canvas.getContext('2d'), {
-        type: 'line',
-        data: {
-            datasets: []
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                mode: 'nearest',
-                intersect: false
-            },
-            scales: {
-                x: {
-                    type: 'time',
-                    time: {
-                        unit: 'day',
-                        tooltipFormat: 'yyyy-LL-dd'
-                    },
-                    ticks: {
-                        autoSkip: true,
-                        maxRotation: 0
-                    },
-                    grid: {
-                        color: 'rgba(148, 163, 184, 0.2)'
-                    }
-                },
-                count: {
-                    display: false,
-                    position: 'left',
-                    beginAtZero: true,
-                    ticks: {
-                        callback: value => formatCount(value)
-                    }
-                },
-                ratio: {
-                    display: false,
-                    position: 'right',
-                    beginAtZero: true,
-                    min: 0,
-                    max: 100,
-                    grid: {
-                        drawOnChartArea: false
-                    },
-                    ticks: {
-                        callback: value => `${value}%`
-                    }
-                },
-                hours: {
-                    display: false,
-                    position: 'right',
-                    beginAtZero: true,
-                    grid: {
-                        drawOnChartArea: false
-                    },
-                    ticks: {
-                        callback: value => formatHours(value)
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        usePointStyle: true,
-                        boxHeight: 8,
-                        boxWidth: 8
-                    }
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    callbacks: {
-                        label(context) {
-                            const dataset = context.dataset || {};
-                            const unit = dataset._saUnit;
-                            const label = dataset.label || '';
-                            const value = context.parsed.y;
-                            const formatted = formatValue(value, unit);
-                            return label ? `${label}: ${formatted}` : formatted;
-                        }
-                    }
-                }
-            }
-        }
-    });
 
     const activeMetrics = new Set(metricOptions
         .filter(option => Boolean(option.defaultActive))
@@ -160,9 +160,11 @@
 
     function refreshChart() {
         const datasets = buildDatasets();
-        chart.data.datasets = datasets;
-        updateAxesVisibility(new Set(datasets.map(dataset => dataset.yAxisID)));
-        chart.update();
+        if (chart) {
+            chart.data.datasets = datasets;
+            updateAxesVisibility(new Set(datasets.map(dataset => dataset.yAxisID)));
+            chart.update();
+        }
         updateUnitLabel();
         updateEmptyState(datasets);
     }
@@ -270,6 +272,9 @@
     }
 
     function updateAxesVisibility(axesInUse) {
+        if (!chart) {
+            return;
+        }
         ['count', 'ratio', 'hours'].forEach(axisKey => {
             const scale = chart.options.scales[axisKey];
             if (scale) {
@@ -301,8 +306,8 @@
         }
         const hasData = datasets.some(dataset => Array.isArray(dataset.data) && dataset.data.length > 0);
         emptyStateElement.classList.toggle('d-none', hasData);
-        if (canvas.parentElement) {
-            canvas.parentElement.classList.toggle('d-none', !hasData);
+        if (chartContainer) {
+            chartContainer.classList.toggle('d-none', !hasData);
         }
     }
 
