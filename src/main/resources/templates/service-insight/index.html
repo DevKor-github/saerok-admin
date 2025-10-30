@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+    <section class="service-insight">
+        <div class="service-insight__container">
+            <!-- 왼쪽: 질문 선택 (동시에 하나만 on) -->
+            <aside class="service-insight__metrics" aria-label="질문 선택">
+                <div class="service-insight__metric-list" role="list">
+                    <!-- Q1: 새록 비공개 사용 -->
+                    <button type="button"
+                            class="service-insight__metric-button"
+                            data-role="si-question"
+                            data-question-key="privacy"
+                            aria-controls="siq-privacy"
+                            role="listitem">
+                        <span class="service-insight__metric-label"
+                              title="새록 비공개가 얼마나 쓰이고 있을까?">새록 비공개가 얼마나 쓰이고 있을까?</span>
+                    </button>
+
+                    <!-- Q2: 동정 요청 기능 사용 -->
+                    <button type="button"
+                            class="service-insight__metric-button"
+                            data-role="si-question"
+                            data-question-key="idRequests"
+                            aria-controls="siq-idRequests"
+                            role="listitem">
+                        <span class="service-insight__metric-label"
+                              title="동정 요청 기능이 어떻게 쓰이고 있을까?">동정 요청 기능이 어떻게 쓰이고 있을까?</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- 오른쪽: 질문별 레이아웃 컨테이너 -->
+            <div class="service-insight__chart w-100">
+                <div class="card card-elevated h-100">
+                    <div class="card-body d-flex flex-column gap-4">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div class="text-muted small service-insight__unit" data-role="service-insight-unit"></div>
+                        </div>
+
+                        <!-- 질문 1: 새록 비공개 -->
+                        <div id="siq-privacy" class="d-none">
+                            <div class="siq-grid siq-grid--two">
+                                <section class="card border-subtle">
+                                    <header class="card-header d-flex justify-content-between align-items-center">
+                                        <h3 class="h6 mb-0">누적 새록 수</h3>
+                                        <span class="text-muted small">단위: 건</span>
+                                    </header>
+                                    <div class="card-body">
+                                        <div class="siq-card__surface">
+                                            <canvas id="chart-total-count"></canvas>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <section class="card border-subtle">
+                                    <header class="card-header d-flex justify-content-between align-items-center">
+                                        <h3 class="h6 mb-0">비공개 새록 비율</h3>
+                                        <span class="text-muted small">단위: %</span>
+                                    </header>
+                                    <div class="card-body">
+                                        <div class="siq-card__surface">
+                                            <canvas id="chart-private-ratio"></canvas>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                        </div>
+
+                        <!-- 질문 2: 동정 요청 -->
+                        <div id="siq-idRequests" class="d-none">
+                            <div class="siq-grid siq-grid--two">
+                                <section class="card border-subtle">
+                                    <header class="card-header d-flex justify-content-between align-items-center">
+                                        <h3 class="h6 mb-0">동정 요청·해결 추이</h3>
+                                        <span class="text-muted small">단위: 건</span>
+                                    </header>
+                                    <div class="card-body">
+                                        <div class="siq-card__surface">
+                                            <canvas id="chart-id-summary"></canvas>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <section class="card border-subtle">
+                                    <header class="card-header d-flex justify-content-between align-items-center">
+                                        <h3 class="h6 mb-0">동정 해결 시간</h3>
+                                        <span class="text-muted small">단위: 시간</span>
+                                    </header>
+                                    <div class="card-body">
+                                        <div class="siq-card__surface">
+                                            <canvas id="chart-id-resolution-time"></canvas>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                        </div>
+
+                        <div class="service-insight__empty-state text-center py-5 d-none" id="serviceInsightEmptyState">
+                            <i class="bi bi-graph-up text-muted fs-1 mb-3"></i>
+                            <p class="text-muted mb-1 fw-semibold">표시할 데이터가 없습니다.</p>
+                            <p class="text-muted small mb-0">다른 질문을 선택하거나 나중에 다시 확인해 주세요.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 서버에서 내려주는 전체 페이로드 (그대로 유지) -->
+    <script type="application/json" id="serviceInsightData"
+            th:utext="${chartDataJson}">{"metricOptions":[],"series":[],"componentLabels":{}}</script>
+
+    <!-- Chart.js & 어댑터 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.5.0/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
+
+    <!-- 본 스크립트 -->
+    <script th:src="@{/js/service-insight.js(v=${#dates.createNow().getTime()})}"></script>
+</th:block>
+</html>
