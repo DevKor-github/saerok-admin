@@ -31,6 +31,9 @@
     --spacing-md: 1.25rem;
     --spacing-lg: 2rem;
     --spacing-xl: 3rem;
+
+    /* 추가: 아바타 이미지 변수 기본값 */
+    --avatar-image: none;
 }
 
 body {
@@ -240,7 +243,6 @@ a:focus {
     .app-content .environment-badge--prod,
     .card      .environment-badge--prod  { box-shadow: 0 0 0 1px rgba(163,230,53,.35) inset; }
 }
-
 
 .table-modern thead th {
     background: var(--surface-muted);
@@ -453,7 +455,8 @@ a:focus {
     justify-content: center;
     color: var(--text-muted);
     font-size: 1.5rem;
-    background-image: var(--avatar-image);
+    /* 수정: 변수 폴백을 명시해 IDE 경고 제거 */
+    background-image: var(--avatar-image, none);
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -739,12 +742,19 @@ a:focus {
 
 .service-insight__chart-surface {
     position: relative;
-    min-height: 320px;
+    height: 360px; /* 명시적 높이 */
+}
+
+@media (min-width: 1200px) {
+    .service-insight__chart-surface {
+        height: 420px;
+    }
 }
 
 .service-insight__chart-surface canvas {
     width: 100% !important;
-    height: 100% !important;
+    height: 100%;
+    display: block;
 }
 
 .service-insight__unit {
@@ -757,8 +767,48 @@ a:focus {
     background: rgba(15, 23, 42, 0.02);
 }
 
+/* 질문형 인사이트 레이아웃 */
+.siq-grid { display: grid; gap: var(--spacing-lg); }
+@media (min-width: 992px) { .siq-grid--two { grid-template-columns: 1fr 1fr; } }
+
+.siq-card__surface {
+    position: relative;
+    height: 360px;
+}
+@media (min-width: 1200px) {
+    .siq-card__surface { height: 420px; }
+}
+.siq-card__surface canvas {
+    width: 100% !important;
+    height: 100%;
+    display: block;
+}
+
+/* ===== 질문 버튼 가독성 & 사이드 폭 확장 ===== */
+:root { --insight-sidebar-width: 360px; }              /* 기본 폭 */
+@media (min-width: 1400px) {
+    :root { --insight-sidebar-width: 420px; }            /* 넓은 화면에선 더 여유 */
+}
+
+.service-insight__metrics {
+    flex: 0 0 var(--insight-sidebar-width);
+    min-width: var(--insight-sidebar-width);
+}
+
 @media (max-width: 991.98px) {
-    .service-insight__metrics {
-        flex: 1 1 auto;
-    }
+    .service-insight__metrics { flex: 1 1 auto; min-width: 0; } /* 모바일에선 유동 */
+}
+
+.service-insight__metric-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.service-insight__metric-label {
+    white-space: nowrap;          /* 줄바꿈 금지 */
+    overflow: hidden;             /* 넘치면 숨김 */
+    text-overflow: ellipsis;      /* 말줄임표 */
+    width: 100%;
 }
