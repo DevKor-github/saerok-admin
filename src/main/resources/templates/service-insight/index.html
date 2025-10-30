@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+        <section class="service-insight">
+            <div class="service-insight__container">
+                <aside class="service-insight__metrics" aria-label="지표 선택">
+                    <div class="service-insight__metrics-header">
+                        <h2 class="h6 mb-1">지표</h2>
+                        <p class="text-muted small mb-0">보고 싶은 지표를 선택해 그래프에 추가하세요.</p>
+                    </div>
+                    <div class="service-insight__metric-list" role="list">
+                        <button type="button"
+                                class="service-insight__metric-button"
+                                th:each="metric : ${serviceInsight.metricOptions()}"
+                                th:data-metric="${metric.metric()}"
+                                th:data-unit="${metric.unit().name()}"
+                                th:data-default-active="${metric.defaultActive()}"
+                                data-role="service-insight-metric"
+                                role="listitem">
+                            <span class="service-insight__metric-label" th:text="${metric.label()}">지표 이름</span>
+                            <span class="service-insight__metric-description text-muted" th:text="${metric.description()}">설명</span>
+                            <span class="badge text-bg-light service-insight__metric-badge"
+                                  th:text="${metric.multiSeries()} ? '다중' : '단일'">단일</span>
+                        </button>
+                    </div>
+                </aside>
+                <div class="service-insight__chart">
+                    <div class="card card-elevated h-100">
+                        <div class="card-body d-flex flex-column gap-4">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                                <div>
+                                    <h2 class="h5 mb-1">시계열 그래프</h2>
+                                    <p class="text-muted mb-0 small">날짜를 기준으로 집계된 통계를 확인할 수 있습니다.</p>
+                                </div>
+                                <div class="text-muted small service-insight__unit" data-role="service-insight-unit"></div>
+                            </div>
+                            <div class="service-insight__chart-surface">
+                                <canvas id="serviceInsightChart" height="320"></canvas>
+                            </div>
+                            <div class="service-insight__empty-state text-center py-5 d-none" id="serviceInsightEmptyState">
+                                <i class="bi bi-graph-up text-muted fs-1 mb-3"></i>
+                                <p class="text-muted mb-1 fw-semibold">표시할 데이터가 없습니다.</p>
+                                <p class="text-muted small mb-0">다른 지표를 선택하거나 나중에 다시 확인해 주세요.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <script type="application/json" id="serviceInsightData" th:utext="${chartDataJson}">{"metricOptions":[],"series":[],"componentLabels":{}}</script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" integrity="sha384-cxzb+kL+gAtq1Z9AcqQ3YK+PHGhohVkkoLNd96MZgE+dXV7GZ7KbWpfwF+6xJQql" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/luxon@3.5.0/build/global/luxon.min.js" integrity="sha384-AxwO9f2veQGFr+JbAIJ4cg5hguL7jMJe7cZnfbQ3u9uNHft2HB6YHWhW27TfH6+f" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.4.0/dist/chartjs-adapter-luxon.umd.min.js" integrity="sha384-xbGVr6Ou9lfWl4jHe3iVT6lN1b6L3O4D/6TH6wIXulUBYgvEXhaHb+Rk1IXJAq2p" crossorigin="anonymous"></script>
+        <script th:src="@{/js/service-insight.js}"></script>
+</th:block>
+</html>
