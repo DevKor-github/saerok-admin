@@ -6,8 +6,8 @@ import java.util.Map;
 
 public enum StatMetric {
     COLLECTION_TOTAL_COUNT(
-            "누적 새록 수",
-            "지금까지 등록된 새록의 총 개수입니다.",
+            "새록 총 개수",
+            "등록된 새록의 총 개수",
             MetricUnit.COUNT,
             false,
             Map.of(),
@@ -15,31 +15,31 @@ public enum StatMetric {
     ),
     COLLECTION_PRIVATE_RATIO(
             "비공개 새록 비율",
-            "전체 새록 중 비공개로 설정된 비율입니다.",
+            "전체 새록 중 비공개로 설정된 비율",
             MetricUnit.RATIO,
             false,
             Map.of(),
             false
     ),
     BIRD_ID_PENDING_COUNT(
-            "진행 중인 동정 요청",
-            "아직 해결되지 않은 동정 요청 수입니다.",
+            "진행 중인 동정 요청 개수",
+            "이 날 진행 중인 동정 요청의 개수\n(= \"이름 모를 새 새록\"의 개수)",
             MetricUnit.COUNT,
             false,
             Map.of(),
             false
     ),
     BIRD_ID_RESOLVED_COUNT(
-            "누적 동정 해결 수",
-            "동정 제안이 채택되어 해결된 요청의 누적 개수입니다.",
+            "동정 의견 채택 횟수",
+            "이 날까지 동정 의견이 몇 번 채택됐는지 횟수",
             MetricUnit.COUNT,
             false,
             Map.of(),
             true
     ),
     BIRD_ID_RESOLUTION_STATS(
-            "동정 해결 시간",
-            "동정 요청이 해결되기까지 걸린 시간 통계입니다.",
+            "동정 의견 채택 시간",
+            "동정 요청 후 채택되기까지 평균적으로 걸린 시간",
             MetricUnit.HOURS,
             true,
             orderedComponentLabels(),
