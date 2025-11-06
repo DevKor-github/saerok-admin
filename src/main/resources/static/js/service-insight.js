@@ -502,12 +502,32 @@
             })
             .filter(Boolean);
     }
+    function formatHoursAdaptive(hours) {
+        if (!Number.isFinite(hours)) return '-';
+        const H_PER_DAY = 24;
+        const D_PER_MONTH = 30;
+
+        const abs = Math.abs(hours);
+        if (abs >= H_PER_DAY * D_PER_MONTH) {
+            const months = hours / (H_PER_DAY * D_PER_MONTH); // 30일=1개월
+            const sig = Math.abs(months) >= 10 ? 0 : 1;
+            return `${months.toFixed(sig)}개월`;
+        }
+        if (abs >= H_PER_DAY) {
+            const days = hours / H_PER_DAY;
+            const sig = Math.abs(days) >= 10 ? 0 : 1;
+            return `${days.toFixed(sig)}일`;
+        }
+        return `${hours.toFixed(2)}시간`;
+    }
+
     function formatValue(v, unit){
         if (!Number.isFinite(v)) return '-';
         if (unit==='RATIO') return `${v.toFixed(1)}%`;
-        if (unit==='HOURS') return `${v.toFixed(2)}시간`;
+        if (unit==='HOURS') return formatHoursAdaptive(v);
         return Math.round(v).toLocaleString();
     }
+
     function normalizeValue(num, unit){
         const v = typeof num === 'string' ? Number(num) : Number(num);
         if (!Number.isFinite(v)) return null;
@@ -550,15 +570,16 @@
                             const base = ds.label || '';
                             const v    = ctx.parsed.y;
 
-                            if (ds._boxplot && ds._boxIndex) {
+                            if (ds._boxIndex) {
                                 const x = ctx.raw?.x instanceof Date ? ctx.raw.x.getTime() : new Date(ctx.raw?.x).getTime();
                                 const st = ds._boxIndex.get(String(x));
                                 if (st) {
                                     const mean = (typeof v === 'number') ? v : null;
                                     const lo = (mean!=null && Number.isFinite(st.std)) ? (mean - st.std) : null;
                                     const hi = (mean!=null && Number.isFinite(st.std)) ? (mean + st.std) : null;
-                                    const fmt = (n)=>formatValue(n,'HOURS');
+                                    const fmt = (n)=>formatValue(n,'HOURS'); // ← 여기서 시간/일/개월 자동 환산
                                     if (mean!=null && lo!=null && hi!=null) {
+                                        // 기존 문구 스타일 유지
                                         return `${base}: 평균적으로 ${fmt(lo)} ~ ${fmt(hi)} 정도 (최소: ${fmt(st.min)}, 최대: ${fmt(st.max)})`;
                                     }
                                 }
@@ -684,7 +705,7 @@
                     _id: id,
                     label: (opt.label || '동정 해결 시간'),
                     data: meanPoints,
-                    parsing: { xAxisKey: 'x', yAxisKey: 'y' }, // ✅ 명시 파싱
+                    parsing: { xAxisKey: 'x', yAxisKey: 'y' },
                     borderColor: color,
                     backgroundColor: color,
                     tension: 0.25,
@@ -694,9 +715,9 @@
                     spanGaps: true,
                     yAxisID: 'hours',
                     _saUnit: 'HOURS',
-                    _boxplot: merged,     // { _time: Date(KST 00:00), min,max,mean,std }
-                    _boxIndex: indexMap
+                    _boxIndex: indexMap   // ← 툴팁 계산에만 사용
                 };
+
                 p.chart.data.datasets.push(ds);
                 p.datasets.add(id);
                 groupSet.add(id);
