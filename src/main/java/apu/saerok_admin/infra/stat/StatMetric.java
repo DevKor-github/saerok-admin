@@ -31,7 +31,7 @@ public enum StatMetric {
     ),
     BIRD_ID_RESOLVED_COUNT(
             "동정 의견 채택 횟수",
-            "이 날까지 동정 의견이 몇 번 채택됐는지 횟수",
+            "이 날 동정 의견이 몇 번 채택됐는지 횟수",
             MetricUnit.COUNT,
             false,
             Map.of(),
