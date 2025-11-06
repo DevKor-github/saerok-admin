@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+
+    <!-- 페이지 전용 CSS (Service Insight 전용 오버라이드) -->
+    <link th:href="@{/css/service-insight.css(v=${#dates.createNow().getTime()})}" rel="stylesheet">
+
+    <section class="service-insight">
+        <div class="service-insight__container">
+            <!-- 좌측: 데이터/그룹 패널 -->
+            <aside class="service-insight__metrics" aria-label="데이터 선택">
+                <div class="si-sidebar" id="si-sidebar">
+                    <div class="si-sidebar__header">
+                        <div class="si-sidebar__title">데이터</div>
+                        <!-- 안내 문구 제거 (요청사항) -->
+                    </div>
+                    <div class="si-groups" id="si-groups"></div>
+                </div>
+            </aside>
+
+            <!-- 우측: 플롯 영역 -->
+            <div class="service-insight__chart">
+                <div class="si-plots" id="si-plots" data-size="roomy">
+                    <div class="si-plots__toolbar">
+                        <div class="si-actions">
+                            <button type="button" class="btn btn-ghost" id="si-add-plot">
+                                <i class="bi bi-layout-text-window-reverse me-1"></i>플롯 추가
+                            </button>
+                            <button type="button" class="btn btn-ghost" id="si-clear-all">
+                                <i class="bi bi-x-circle me-1"></i>모두 지우기
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 드롭 가능한 플롯 카드 그리드 -->
+                    <div class="si-plot-grid" id="si-plot-grid"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 서버에서 내려주는 전체 페이로드 -->
+    <script type="application/json" id="serviceInsightData"
+            th:utext="${chartDataJson}">{"metricOptions":[],"series":[],"componentLabels":{}}</script>
+
+    <!-- Chart.js & Adapter -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.5.0/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
+
+    <!-- 본 스크립트 -->
+    <script th:src="@{/js/service-insight.js(v=${#dates.createNow().getTime()})}"></script>
+</th:block>
+</html>

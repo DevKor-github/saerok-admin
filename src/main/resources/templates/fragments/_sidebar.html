@@ -18,6 +18,11 @@
                 <i class="bi bi-speedometer2"></i>
                 <span>대시보드</span>
             </a>
+            <a th:href="@{/service-insight}" class="app-sidebar__link"
+               th:classappend="${activeMenu}=='serviceInsight' ? ' is-active'">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>서비스 인사이트</span>
+            </a>
             <span class="app-sidebar__link is-disabled upcoming-feature" role="button" tabindex="-1" aria-disabled="true"
                   data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="추후 제공 예정인 기능">
                 <i class="bi bi-journal-richtext"></i>
@@ -61,6 +66,11 @@
                 <a th:href="@{/}" class="app-sidebar__link" th:classappend="${activeMenu}=='dashboard' ? ' is-active fw-semibold'">
                     <i class="bi bi-speedometer2"></i>
                     <span>대시보드</span>
+                </a>
+                <a th:href="@{/service-insight}" class="app-sidebar__link"
+                   th:classappend="${activeMenu}=='serviceInsight' ? ' is-active fw-semibold'">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    <span>서비스 인사이트</span>
                 </a>
                 <span class="app-sidebar__link is-disabled upcoming-feature" role="button" tabindex="-1" aria-disabled="true"
                       data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="추후 제공 예정인 기능">
