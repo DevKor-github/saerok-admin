@@ -44,6 +44,56 @@ public enum StatMetric {
             true,
             orderedComponentLabels(),
             false
+    ),
+
+    // ===== 유저 지표 =====
+    USER_COMPLETED_TOTAL(
+            "누적 가입자 수",
+            "현재 가입된 총 사용자 수",
+            MetricUnit.COUNT,
+            false,
+            Map.of(),
+            true
+    ),
+    USER_SIGNUP_DAILY(
+            "일일 가입자 수",
+            "이 날 신규 가입한 사용자 수",
+            MetricUnit.COUNT,
+            false,
+            Map.of(),
+            false
+    ),
+    USER_WITHDRAWAL_DAILY(
+            "일일 탈퇴자 수",
+            "이 날 탈퇴한 사용자 수",
+            MetricUnit.COUNT,
+            false,
+            Map.of(),
+            false
+    ),
+    USER_DAU(
+            "DAU",
+            "일일 활성 사용자 수(그 날 서비스에 몇 명이 접속했는지 기준)",
+            MetricUnit.COUNT,
+            false,
+            Map.of(),
+            true
+    ),
+    USER_WAU(
+            "WAU",
+            "주간 활성 사용자 수(최근 7일)",
+            MetricUnit.COUNT,
+            false,
+            Map.of(),
+            false
+    ),
+    USER_MAU(
+            "MAU",
+            "월간 활성 사용자 수(최근 30일)",
+            MetricUnit.COUNT,
+            false,
+            Map.of(),
+            false
     );
 
     private final String label;
@@ -69,29 +119,12 @@ public enum StatMetric {
         this.defaultActive = defaultActive;
     }
 
-    public String label() {
-        return label;
-    }
-
-    public String description() {
-        return description;
-    }
-
-    public MetricUnit unit() {
-        return unit;
-    }
-
-    public boolean multiSeries() {
-        return multiSeries;
-    }
-
-    public Map<String, String> componentLabels() {
-        return componentLabels;
-    }
-
-    public boolean defaultActive() {
-        return defaultActive;
-    }
+    public String label() { return label; }
+    public String description() { return description; }
+    public MetricUnit unit() { return unit; }
+    public boolean multiSeries() { return multiSeries; }
+    public Map<String, String> componentLabels() { return componentLabels; }
+    public boolean defaultActive() { return defaultActive; }
 
     private static Map<String, String> orderedComponentLabels() {
         Map<String, String> labels = new LinkedHashMap<>();

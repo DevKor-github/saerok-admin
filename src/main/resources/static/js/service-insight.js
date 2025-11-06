@@ -22,7 +22,16 @@
         PENDING_COUNT:    'BIRD_ID_PENDING_COUNT',
         RESOLVED_COUNT:   'BIRD_ID_RESOLVED_COUNT',
         RESOLUTION_STATS: 'BIRD_ID_RESOLUTION_STATS', // components: min_hours, avg_hours, max_hours, stddev_hours
+
+        // ===== 유저 지표 =====
+        USER_COMPLETED_TOTAL: 'USER_COMPLETED_TOTAL',
+        USER_SIGNUP_DAILY:    'USER_SIGNUP_DAILY',
+        USER_WITHDRAWAL_DAILY:'USER_WITHDRAWAL_DAILY',
+        USER_DAU:             'USER_DAU',
+        USER_WAU:             'USER_WAU',
+        USER_MAU:             'USER_MAU',
     };
+
 
     // 컬러 팔레트
     const PALETTE = ['#2563eb','#16a34a','#dc2626','#f97316','#9333ea','#0ea5e9','#059669','#ea580c','#3b82f6','#14b8a6'];
@@ -231,6 +240,14 @@
 
     const GROUPS = [
         { key: 'privacy', name: '새록',      metrics: [METRICS.TOTAL_COUNT, METRICS.PRIVATE_RATIO] },
+        { key: 'user',    name: '유저',      metrics: [
+                METRICS.USER_COMPLETED_TOTAL,
+                METRICS.USER_SIGNUP_DAILY,
+                METRICS.USER_WITHDRAWAL_DAILY,
+                METRICS.USER_DAU,
+                METRICS.USER_WAU,
+                METRICS.USER_MAU
+            ]},
         { key: 'id',      name: '동정 요청', metrics: [METRICS.PENDING_COUNT, METRICS.RESOLVED_COUNT, METRICS.RESOLUTION_STATS] },
     ];
     const known = new Set(GROUPS.flatMap(g => g.metrics));
