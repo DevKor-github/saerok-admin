@@ -1,0 +1,111 @@
+/* ===== resources/static/css/service-insight.target.css ===== */
+/* ===== 전역(PC/모바일 공통) ===== */
+
+/* FAB는 PC 기본 숨김, 모바일 전용 CSS에서만 표출 */
+#si-fab { display: none !important; }
+
+/* "플롯 n 데이터 선택" – 인라인 타이틀 */
+.si-targettitle {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+}
+.si-targettitle__prefix,
+.si-targettitle__suffix { font-weight: 800; }
+
+/* 숫자 Select: 클릭감 강화 */
+.si-targettitle__select {
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    min-width: 4.5rem;
+    width: auto;
+    border-radius: 999px;
+    padding-inline: 1.25rem 2rem; /* 오른쪽 캐럿 공간 */
+    padding-block: .35rem;
+    line-height: 1.2;
+    border: 1px solid var(--border-strong, #c4cbd3);
+    background:
+            linear-gradient(to bottom, rgba(0,0,0,0.02), rgba(0,0,0,0)) padding-box,
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%23666' d='M3.2 6l4.8 5L12.8 6z'/%3E%3C/svg%3E")
+            no-repeat right .6rem center/12px 12px;
+    box-shadow: 0 1px 0 rgba(0,0,0,.02);
+    transition: box-shadow .15s ease, transform .04s ease, border-color .15s ease;
+    font-weight: 700;
+}
+.si-targettitle__select:hover {
+    border-color: var(--accent, #0d6efd);
+    box-shadow: 0 0 0 .2rem rgba(13,110,253,.12);
+}
+.si-targettitle__select:active { transform: translateY(1px); }
+.si-targettitle__select:focus {
+    outline: none;
+    border-color: var(--accent, #0d6efd);
+    box-shadow: 0 0 0 .24rem rgba(13,110,253,.16);
+}
+
+/* 데이터 패널 레이아웃 */
+.si-data-panel { display: flex; flex-direction: column; gap: .75rem; }
+
+/* ========== ✅ 체크 인디케이터: "오른쪽 단일"로 통일 ========== */
+/* (1) 좌측 체크를 만들던 예전 커스텀 규칙들 강제 무력화 */
+.si-data-panel .si-chip::before,
+.si-data-panel [data-si-chip]::before,
+.si-data-panel .si-chip--toggle::before { content: none !important; }
+
+/* (2) 우측 ::after 하나만 사용 (PC/모바일 공통) */
+.si-data-panel .si-chip,
+.si-data-panel [data-si-chip],
+.si-data-panel .si-chip--toggle {
+    position: relative;
+    padding-right: 28px; /* 오른쪽 체크 공간 확보 */
+}
+
+.si-data-panel .si-chip::after,
+.si-data-panel [data-si-chip]::after,
+.si-data-panel .si-chip--toggle::after {
+    content: "";
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px; height: 16px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border-subtle, #cfd4d9);
+    background: var(--surface-primary, #fff);
+    pointer-events: none; /* 클릭 간섭 방지 */
+    transition: background-color .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+
+/* (3) 활성 조건: .is-active 또는 [data-checked="true"] 중 하나라도 true면 체크 표시 */
+.si-data-panel .si-chip.is-active::after,
+.si-data-panel [data-si-chip].is-active::after,
+.si-data-panel .si-chip--toggle.is-active::after,
+.si-data-panel .si-chip[data-checked="true"]::after,
+.si-data-panel [data-si-chip][data-checked="true"]::after,
+.si-data-panel .si-chip--toggle[data-checked="true"]::after {
+    content: "✓";
+    font-weight: 700;
+    font-size: 12px;
+    text-align: center;
+    line-height: 16px;
+    color: var(--accent-contrast, #fff);
+    background: var(--accent, #0d6efd);
+    border-color: var(--accent, #0d6efd);
+    box-shadow: 0 0 0 2px rgba(13,110,253,.15);
+}
+
+/* 키보드 포커스 접근성 */
+.si-chip.si-chip--toggle:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 .2rem rgba(59,130,246,.20);
+    border-color: rgba(59,130,246,.35);
+}
+
+/* 모바일 폰트 톤 조정 */
+@media (max-width: 991.98px) {
+    .si-targettitle { font-size: 1.05rem; }
+}

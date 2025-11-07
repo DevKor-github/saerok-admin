@@ -1,3 +1,4 @@
+<!-- ===== resources/templates/fragments/_navbar.html ===== -->
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <body>
@@ -14,7 +15,8 @@
                 <button class="btn p-0 border-0 bg-transparent d-flex align-items-center text-decoration-none dropdown-toggle dropdown-toggle-no-caret"
                         type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <img th:src="${currentAdminProfile.profileImageUrl()}" th:alt="${currentAdminProfile.nickname()}" src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1" alt="관리자" class="rounded-circle" width="40" height="40">
-                    <div class="ms-2 text-start">
+                    <!-- 모바일에서는 텍스트 숨김, 데스크탑 이상에서만 표출 -->
+                    <div class="ms-2 text-start d-none d-lg-block">
                         <div class="fw-semibold" th:text="${currentAdminProfile.nickname()}">운영자</div>
                         <small class="text-muted" th:text="${currentAdminProfile.email()}">admin@saerok.app</small>
                         <div class="text-muted small" th:if="${currentAdminProfile.hasRoleDescriptions()}"

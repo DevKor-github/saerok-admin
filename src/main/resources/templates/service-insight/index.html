@@ -3,19 +3,38 @@
       th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
 <th:block th:fragment="content">
 
-    <!-- 페이지 전용 CSS (Service Insight 전용 오버라이드) -->
+    <!-- 페이지 전용 CSS -->
     <link th:href="@{/css/service-insight.css(v=${#dates.createNow().getTime()})}" rel="stylesheet">
+    <!-- 공통 타깃/타이틀 스타일 -->
+    <link th:href="@{/css/service-insight.target.css(v=${#dates.createNow().getTime()})}" rel="stylesheet">
+    <!-- 모바일 오버라이드 -->
+    <link th:href="@{/css/service-insight.mobile.css(v=${#dates.createNow().getTime()})}" rel="stylesheet" media="(max-width: 991.98px)">
 
     <section class="service-insight">
         <div class="service-insight__container">
-            <!-- 좌측: 데이터/그룹 패널 -->
+            <!-- 좌측: 데이터/그룹 패널 (모바일에서는 숨김) -->
             <aside class="service-insight__metrics" aria-label="데이터 선택">
                 <div class="si-sidebar" id="si-sidebar">
                     <div class="si-sidebar__header">
-                        <div class="si-sidebar__title">데이터</div>
-                        <!-- 안내 문구 제거 (요청사항) -->
+                        <!-- 단일 표시 지점(PC용 앵커) -->
+                        <div id="si-target-title-desktop-anchor">
+                            <div id="si-target-title" class="si-targettitle" role="heading" aria-level="2">
+                                <span class="si-targettitle__prefix">플롯</span>
+                                <select id="si-target-select" class="form-select form-select-sm si-targettitle__select" aria-label="적용 대상 플롯(숫자 선택)">
+                                    <!-- 옵션은 JS에서 동기화 -->
+                                </select>
+                                <span class="si-targettitle__suffix">데이터 선택</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="si-groups" id="si-groups"></div>
+
+                    <!-- 데스크톱 앵커: 모바일에선 #si-data-panel 전체가 시트로 이동 -->
+                    <div id="si-groups-desktop-anchor">
+                        <div id="si-data-panel" class="si-data-panel">
+                            <!-- 그룹 목록 -->
+                            <div class="si-groups" id="si-groups"></div>
+                        </div>
+                    </div>
                 </div>
             </aside>
 
@@ -40,6 +59,30 @@
         </div>
     </section>
 
+    <!-- 📱 FAB: 모바일 전용(PC에서는 전역 CSS로 기본 숨김) -->
+    <button id="si-fab"
+            class="btn btn-primary rounded-circle shadow-soft"
+            type="button"
+            data-bs-toggle="offcanvas"
+            data-bs-target="#siDataPicker"
+            aria-controls="siDataPicker"
+            aria-label="데이터 선택 열기">
+        <i class="bi bi-sliders2"></i>
+    </button>
+
+    <!-- 📱 데이터 선택 바텀 시트(Offcanvas) -->
+    <div class="offcanvas offcanvas-bottom" tabindex="-1" id="siDataPicker" aria-labelledby="siDataPickerLabel">
+        <div class="offcanvas-header">
+            <!-- 단일 표시 지점(모바일용 앵커) -->
+            <div id="si-target-title-mobile-host"></div>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="닫기"></button>
+        </div>
+        <div class="offcanvas-body">
+            <!-- 모바일 시 #si-data-panel 전체가 여기로 이동 -->
+            <div id="si-data-panel-mobile-host"></div>
+        </div>
+    </div>
+
     <!-- 서버에서 내려주는 전체 페이로드 -->
     <script type="application/json" id="serviceInsightData"
             th:utext="${chartDataJson}">{"metricOptions":[],"series":[],"componentLabels":{}}</script>
@@ -51,5 +94,9 @@
 
     <!-- 본 스크립트 -->
     <script th:src="@{/js/service-insight.js(v=${#dates.createNow().getTime()})}"></script>
+    <!-- 모바일 전용 보조 스크립트(패널/타이틀 이동) -->
+    <script th:src="@{/js/service-insight.mobile.js(v=${#dates.createNow().getTime()})}"></script>
+    <!-- 공통 타깃 제어 스크립트(PC/모바일) -->
+    <script th:src="@{/js/service-insight.target.js(v=${#dates.createNow().getTime()})}"></script>
 </th:block>
 </html>
