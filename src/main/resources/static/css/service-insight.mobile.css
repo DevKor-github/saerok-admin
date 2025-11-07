@@ -1,0 +1,41 @@
+/* ===== Service Insight: 모바일 전용 오버라이드 =====
+   - 사이드바 숨김, DnD 힌트 제거, 차트 컴팩트, FAB(모바일만) 등
+*/
+
+.service-insight__container { height: auto !important; overflow: visible !important; }
+.service-insight__metrics,
+.service-insight__chart    { height: auto !important; min-height: 0 !important; overflow: visible !important; }
+
+/* 사이드바는 모바일에서 숨김(바텀시트 이용) */
+.service-insight__metrics { display: none !important; }
+
+/* DnD affordance 제거 */
+.service-insight .si-plot__datasets,
+.service-insight .si-dropzone { display: none !important; }
+
+/* 차트 높이 컴팩트 */
+.si-plots .si-plot__surface { height: 280px !important; }
+
+/* FAB: 모바일에서만 표출 */
+#si-fab {
+    display: inline-flex !important;
+    position: fixed; right: max(16px, env(safe-area-inset-right));
+    bottom: calc(max(16px, env(safe-area-inset-bottom)) + 8px);
+    width: 56px; height: 56px; z-index: 1055;
+    align-items: center; justify-content: center;
+    border-radius: 50%; padding: 0; line-height: 1;
+}
+
+/* 바텀시트 */
+.offcanvas.offcanvas-bottom#siDataPicker {
+    height: 75vh; border-top-left-radius: 1rem; border-top-right-radius: 1rem;
+    box-shadow: var(--shadow-overlay);
+}
+.offcanvas.offcanvas-bottom#siDataPicker .offcanvas-header { padding: 0.75rem 1rem; }
+.offcanvas.offcanvas-bottom#siDataPicker .offcanvas-body   { padding: 0.5rem 1rem 1rem; overflow: auto; }
+
+/* 툴바 줄바꿈 */
+.si-plots__toolbar .si-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+
+/* 안전 여백 */
+.service-insight { padding-bottom: max(72px, env(safe-area-inset-bottom)); }

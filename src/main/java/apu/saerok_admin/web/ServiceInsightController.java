@@ -6,6 +6,8 @@ import apu.saerok_admin.web.view.ServiceInsightViewModel;
 import apu.saerok_admin.web.view.ToastMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -27,7 +29,10 @@ public class ServiceInsightController {
 
     public ServiceInsightController(ServiceInsightService serviceInsightService, ObjectMapper objectMapper) {
         this.serviceInsightService = serviceInsightService;
-        this.objectMapper = objectMapper;
+        // ObjectMapper 설정 강화
+        this.objectMapper = objectMapper.copy()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
     @GetMapping("/service-insight")
@@ -43,6 +48,8 @@ public class ServiceInsightController {
         ServiceInsightViewModel viewModel;
         try {
             viewModel = serviceInsightService.loadViewModel();
+            log.info("Successfully loaded service insight view model with {} metrics",
+                    viewModel.metricOptions().size());
         } catch (RestClientResponseException exception) {
             log.warn(
                     "Failed to load service insight stats. status={}, body={}",
@@ -59,7 +66,11 @@ public class ServiceInsightController {
         }
 
         model.addAttribute("serviceInsight", viewModel);
-        model.addAttribute("chartDataJson", toJson(viewModel));
+        String chartDataJson = toJson(viewModel);
+        model.addAttribute("chartDataJson", chartDataJson);
+
+        log.debug("Chart data JSON length: {}", chartDataJson.length());
+
         return "service-insight/index";
     }
 
@@ -92,9 +103,11 @@ public class ServiceInsightController {
 
     private String toJson(ServiceInsightViewModel viewModel) {
         try {
-            return objectMapper.writeValueAsString(viewModel);
+            String json = objectMapper.writeValueAsString(viewModel);
+            log.debug("Serialized view model to JSON successfully");
+            return json;
         } catch (JsonProcessingException exception) {
-            log.warn("Failed to serialize service insight payload.", exception);
+            log.error("Failed to serialize service insight payload.", exception);
             return "{\"metricOptions\":[],\"series\":[],\"componentLabels\":{}}";
         }
     }
