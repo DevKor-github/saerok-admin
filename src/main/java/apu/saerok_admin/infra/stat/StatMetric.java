@@ -37,9 +37,11 @@ public enum StatMetric {
             Map.of(),
             true
     ),
-    BIRD_ID_RESOLUTION_STATS(
+
+    // ✅ 누적 메트릭 제거, 최근 28일 전용만 유지
+    BIRD_ID_RESOLUTION_STATS_28D(
             "동정 의견 채택 시간",
-            "동정 요청 후 채택되기까지 평균적으로 걸린 시간",
+            "동정 요청 후 유저가 의견을 채택하기까지 걸린 시간 (28일 이동 평균)",
             MetricUnit.HOURS,
             true,
             orderedComponentLabels(),
