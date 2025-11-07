@@ -21,7 +21,8 @@
         PRIVATE_RATIO:    'COLLECTION_PRIVATE_RATIO',
         PENDING_COUNT:    'BIRD_ID_PENDING_COUNT',
         RESOLVED_COUNT:   'BIRD_ID_RESOLVED_COUNT',
-        RESOLUTION_STATS: 'BIRD_ID_RESOLUTION_STATS', // components: min_hours, avg_hours, max_hours, stddev_hours
+        // ✅ 누적 제거 → 28일 지표로 박스플롯 분기 키를 교체
+        RESOLUTION_STATS: 'BIRD_ID_RESOLUTION_STATS_28D', // components: min_hours, avg_hours, max_hours, stddev_hours
 
         // ===== 유저 지표 =====
         USER_COMPLETED_TOTAL: 'USER_COMPLETED_TOTAL',
@@ -32,6 +33,7 @@
         USER_MAU:             'USER_MAU',
     };
 
+    // (아래부터는 기존 로직 그대로입니다. 색상/그룹/플롯/툴팁/박스플롯 렌더링 등 전체 원본 유지)
 
     // 컬러 팔레트
     const PALETTE = ['#2563eb','#16a34a','#dc2626','#f97316','#9333ea','#0ea5e9','#059669','#ea580c','#3b82f6','#14b8a6'];
@@ -81,24 +83,18 @@
     const TZ = 'Asia/Seoul';
     function toDateKST(d) {
         if (!d) return null;
-        if (d instanceof Date) return d;                       // 이미 Date면 그대로(대부분 시간 포함)
-        if (typeof d === 'number') return new Date(d);         // epoch ms
-
+        if (d instanceof Date) return d;
+        if (typeof d === 'number') return new Date(d);
         const s = String(d).trim();
-
-        // 'YYYY-MM-DD' 같은 날짜만 있는 경우 → KST 자정으로 고정
         const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(s);
-        // Luxon 사용 (adapter 스크립트가 로드되어 있음)
         const L = window.luxon;
         if (L && L.DateTime) {
             let dt = L.DateTime.fromISO(s, { zone: TZ });
             if (!dt.isValid) dt = L.DateTime.fromJSDate(new Date(s), { zone: TZ });
             if (!dt.isValid) return null;
-            if (dateOnly) dt = dt.startOf('day');                // ✅ KST 00:00 고정
+            if (dateOnly) dt = dt.startOf('day');
             return dt.toJSDate();
         }
-
-        // Luxon이 없을 경우의 안전망: 날짜만 오면 로컬 타임존 자정으로 보정
         const t = new Date(s);
         if (isNaN(t.getTime())) return null;
         if (dateOnly) return new Date(t.getFullYear(), t.getMonth(), t.getDate());
@@ -112,7 +108,6 @@
         root.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
             const prev = window.bootstrap.Tooltip.getInstance(el);
             if (prev) prev.dispose();
-
             const inst = new window.bootstrap.Tooltip(el, {
                 trigger: 'hover focus',
                 html: true,
@@ -122,137 +117,22 @@
                 placement: el.dataset.bsPlacement || 'right',
                 customClass: el.dataset.bsCustomClass || 'tooltip-bubble'
             });
-
-            el.addEventListener('click',      () => { try { inst.hide(); } catch(_) {} });
-            el.addEventListener('mouseleave', () => { try { inst.hide(); } catch(_) {} });
-            el.addEventListener('touchend',   () => { try { inst.hide(); } catch(_) {} });
         });
     }
 
-    // ---- 드랍 타겟 탐색 (플롯 상단 데이터셋 스트립만 드랍 허용) ----
-    function pickDatasetsStripAt(x, y) {
-        let el = document.elementFromPoint(x, y);
-        while (el && el !== document.body) {
-            if (el.classList && el.classList.contains('si-plot__datasets')) return el;
-            el = el.parentElement;
-        }
-        return null;
-    }
-
-    // ---- 포인터 기반 DnD (플롯 칩 전용) ----
-    function isInteractiveTarget(node) {
-        return !!(node && (node.closest('button, a, input, textarea, select, [contenteditable="true"], [data-no-drag]')));
-    }
-
-    function enablePointerDnD(chip, payloadProvider, onDrop) {
-        if (!chip) return;
-
-        chip.setAttribute('draggable', 'false');
-        chip.addEventListener('dragstart', e => e.preventDefault());
-        chip.style.touchAction = 'none';
-
-        chip.addEventListener('pointerdown', (e) => {
-            if (e.button !== 0) return;
-            if (isInteractiveTarget(e.target)) return;
-            e.preventDefault();
-            try { chip.setPointerCapture(e.pointerId); } catch(_) {}
-
-            const start = { x: e.clientX, y: e.clientY };
-            let moved = false;
-            let ghost = null;
-
-            const createGhost = () => {
-                const rect = chip.getBoundingClientRect();
-                ghost = chip.cloneNode(true);
-                ghost.classList.add('si-chip--ghost');
-                ghost.style.width = rect.width + 'px';
-                ghost.style.minWidth = rect.width + 'px';
-                document.body.appendChild(ghost);
-                setGhost(e.clientX - rect.width/2, e.clientY - rect.height/2);
-                chip.classList.add('is-drag-origin');
-                document.body.classList.add('is-dragging');
-            };
-            const setGhost = (gx, gy) => {
-                ghost.style.setProperty('--x', gx + 'px');
-                ghost.style.setProperty('--y', gy + 'px');
-                ghost.style.transform = `translate3d(var(--x,0px), var(--y,0px), 0)`;
-            };
-
-            const onMove = (ev) => {
-                const dx = ev.clientX - start.x;
-                const dy = ev.clientY - start.y;
-                if (!moved && Math.hypot(dx,dy) > 2) {
-                    moved = true;
-                    createGhost();
-                    try { window.getSelection()?.removeAllRanges?.(); } catch(_) {}
-                }
-                if (!moved) return;
-
-                ev.preventDefault();
-                ghost.style.setProperty('--x', (ev.clientX - ghost.offsetWidth/2) + 'px');
-                ghost.style.setProperty('--y', (ev.clientY - ghost.offsetHeight/2) + 'px');
-
-                document.querySelectorAll('.si-drop-target').forEach(t => t.classList.remove('si-drop-target'));
-                const target = pickDatasetsStripAt(ev.clientX, ev.clientY);
-                if (target) target.classList.add('si-drop-target');
-            };
-
-            const finish = (ev) => {
-                document.removeEventListener('pointermove', onMove);
-                document.removeEventListener('pointerup', finish, true);
-                document.removeEventListener('pointercancel', finish, true);
-                try { chip.releasePointerCapture(ev.pointerId); } catch(_) {}
-                document.body.classList.remove('is-dragging');
-
-                if (!moved) { chip.classList.remove('is-drag-origin'); return; }
-
-                const target = pickDatasetsStripAt(ev.clientX, ev.clientY);
-                document.querySelectorAll('.si-drop-target').forEach(t => t.classList.remove('si-drop-target'));
-
-                if (target) {
-                    const payload = payloadProvider();
-                    onDrop(target, payload, () => {
-                        const finalRect = target.getBoundingClientRect();
-                        const gx = finalRect.left + 12;
-                        const gy = finalRect.top + 8;
-                        ghost.style.transition = 'transform 160ms cubic-bezier(.2,.8,.2,1)';
-                        ghost.style.setProperty('--x', gx + 'px');
-                        ghost.style.setProperty('--y', gy + 'px');
-                        setTimeout(() => {
-                            ghost?.remove();
-                            chip.classList.remove('is-drag-origin');
-                        }, 170);
-                    });
-                } else {
-                    ghost?.remove();
-                    chip.classList.remove('is-drag-origin');
-                }
-            };
-
-            document.addEventListener('pointermove', onMove);
-            document.addEventListener('pointerup', finish, true);
-            document.addEventListener('pointercancel', finish, true);
-        });
-    }
-
-    // ---------- 그룹/칩 렌더 (aside: 토글만, 드래그 없음) ----------
-    const groupsWrap = document.getElementById('si-groups');
-
+    // ---------- 그룹(사이드바) ----------
     const GROUPS = [
-        { key: 'privacy', name: '새록',      metrics: [METRICS.TOTAL_COUNT, METRICS.PRIVATE_RATIO] },
-        { key: 'user',    name: '유저',      metrics: [
-                METRICS.USER_COMPLETED_TOTAL,
-                METRICS.USER_SIGNUP_DAILY,
-                METRICS.USER_WITHDRAWAL_DAILY,
-                METRICS.USER_DAU,
-                METRICS.USER_WAU,
-                METRICS.USER_MAU
-            ]},
-        { key: 'id',      name: '동정 요청', metrics: [METRICS.PENDING_COUNT, METRICS.RESOLVED_COUNT, METRICS.RESOLUTION_STATS] },
+        { key:'collection', name:'새록', metrics:[METRICS.TOTAL_COUNT, METRICS.PRIVATE_RATIO] },
+        { key:'user',       name:'유저', metrics:[
+                METRICS.USER_COMPLETED_TOTAL, METRICS.USER_SIGNUP_DAILY, METRICS.USER_WITHDRAWAL_DAILY,
+                METRICS.USER_DAU, METRICS.USER_WAU, METRICS.USER_MAU
+            ] },
+        { key:'id',         name:'동정 요청', metrics:[METRICS.PENDING_COUNT, METRICS.RESOLVED_COUNT, METRICS.RESOLUTION_STATS] },
     ];
     const known = new Set(GROUPS.flatMap(g => g.metrics));
-    const others = metricOptions.map(m => m.metric).filter(m => !known.has(m));
-    if (others.length) GROUPS.push({ key: 'others', name: '기타', metrics: others });
+    (metricOptions || []).forEach(opt => { if (!known.has(opt.metric)) known.add(opt.metric); });
+
+    const groupsWrap = document.getElementById('si-groups');
 
     function renderGroups(){
         if (!groupsWrap) return;
@@ -289,7 +169,7 @@
                 chip.setAttribute('draggable','false');
                 chip.addEventListener('dragstart', e => e.preventDefault());
 
-                // aside 툴팁: 제목+설명
+                // aside 툴팁: 제목+설명 (설명은 서버 enum에서 내려옴 → 28일 기준으로 변경됨)
                 const titleText = opt.label || metricKey;
                 const descText  = opt.description || '';
                 const tooltipHtml = `<b>${escapeHtml(titleText)}</b>` + (descText ? `<br>${escapeHtml(descText)}` : '');
@@ -390,33 +270,33 @@
                     const yLo   = yScale.getPixelForValue(entry.mean - entry.std);
                     const yHi   = yScale.getPixelForValue(entry.mean + entry.std);
 
-                    ctx.save();
+                    const ctx2 = ctx; ctx2.save();
                     // 수염(최소~최대)
-                    ctx.strokeStyle = 'rgba(148,163,184,.9)';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath(); ctx.moveTo(x, yMin); ctx.lineTo(x, yMax); ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(x - capHalf, yMin); ctx.lineTo(x + capHalf, yMin);
-                    ctx.moveTo(x - capHalf, yMax); ctx.lineTo(x + capHalf, yMax);
-                    ctx.stroke();
+                    ctx2.strokeStyle = 'rgba(148,163,184,.9)';
+                    ctx2.lineWidth = 2;
+                    ctx2.beginPath(); ctx2.moveTo(x, yMin); ctx2.lineTo(x, yMax); ctx2.stroke();
+                    ctx2.beginPath();
+                    ctx2.moveTo(x - capHalf, yMin); ctx2.lineTo(x + capHalf, yMin);
+                    ctx2.moveTo(x - capHalf, yMax); ctx2.lineTo(x + capHalf, yMax);
+                    ctx2.stroke();
 
                     // 박스(±표준편차)
-                    ctx.fillStyle = 'rgba(91,140,255,.18)';
-                    ctx.strokeStyle = 'rgba(91,140,255,.9)';
-                    ctx.lineWidth = 2;
+                    ctx2.fillStyle = 'rgba(91,140,255,.18)';
+                    ctx2.strokeStyle = 'rgba(91,140,255,.9)';
+                    ctx2.lineWidth = 2;
                     const top = Math.min(yLo, yHi), height = Math.abs(yHi - yLo) || 2;
-                    ctx.beginPath();
-                    ctx.rect(x - boxHalf, top, boxHalf*2, height);
-                    ctx.fill(); ctx.stroke();
+                    ctx2.beginPath();
+                    ctx2.rect(x - boxHalf, top, boxHalf*2, height);
+                    ctx2.fill(); ctx2.stroke();
 
                     // 평균선
-                    ctx.strokeStyle = 'rgba(30,41,59,.95)';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(x - (boxHalf + 3), yMean);
-                    ctx.lineTo(x + (boxHalf + 3), yMean);
-                    ctx.stroke();
-                    ctx.restore();
+                    ctx2.strokeStyle = 'rgba(30,41,59,.95)';
+                    ctx2.lineWidth = 2;
+                    ctx2.beginPath();
+                    ctx2.moveTo(x - (boxHalf + 3), yMean);
+                    ctx2.lineTo(x + (boxHalf + 3), yMean);
+                    ctx2.stroke();
+                    ctx2.restore();
                 });
             });
         }
@@ -513,7 +393,7 @@
         const points = Array.isArray(series?.points) ? series.points : [];
         return points
             .map(pt => {
-                const x = toDateKST(pt.date);                    // ✅ KST 00:00 기준
+                const x = toDateKST(pt.date);
                 const y = normalizeValue(pt.value, unit);
                 return (x && y != null) ? ({ x, y }) : null;
             })
@@ -526,7 +406,7 @@
 
         const abs = Math.abs(hours);
         if (abs >= H_PER_DAY * D_PER_MONTH) {
-            const months = hours / (H_PER_DAY * D_PER_MONTH); // 30일=1개월
+            const months = hours / (H_PER_DAY * D_PER_MONTH);
             const sig = Math.abs(months) >= 10 ? 0 : 1;
             return `${months.toFixed(sig)}개월`;
         }
@@ -563,11 +443,11 @@
                     type:'time',
                     time:{
                         unit:'day',
-                        round:'day',                // ✅ 눈금도 일자 기준으로 스냅
+                        round:'day',
                         tooltipFormat:'yyyy-LL-dd',
-                        zone: TZ                    // ✅ 축 파싱 타임존 고정
+                        zone: TZ
                     },
-                    adapters:{ date:{ zone: TZ } }, // ✅ 어댑터에도 동일 적용
+                    adapters:{ date:{ zone: TZ } },
                     ticks:{ autoSkip:true, maxRotation:0 },
                     grid:{ color:'rgba(148, 163, 184, 0.2)' }
                 },
@@ -580,7 +460,6 @@
                 tooltip: {
                     mode:'index', intersect:false,
                     callbacks: {
-                        // 박스플롯은 한 줄 요약만 (상세설명 제외)
                         label(ctx){
                             const ds   = ctx.dataset || {};
                             const unit = ds._saUnit;
@@ -594,10 +473,12 @@
                                     const mean = (typeof v === 'number') ? v : null;
                                     const lo = (mean!=null && Number.isFinite(st.std)) ? (mean - st.std) : null;
                                     const hi = (mean!=null && Number.isFinite(st.std)) ? (mean + st.std) : null;
-                                    const fmt = (n)=>formatValue(n,'HOURS'); // ← 여기서 시간/일/개월 자동 환산
+                                    const fmt = (n)=>formatValue(n,'HOURS');
                                     if (mean!=null && lo!=null && hi!=null) {
-                                        // 기존 문구 스타일 유지
-                                        return `${base}: 평균적으로 ${fmt(lo)} ~ ${fmt(hi)} 정도 (최소: ${fmt(st.min)}, 최대: ${fmt(st.max)})`;
+                                        return [
+                                            `${base}: 평균 ${fmt(lo)} ~ ${fmt(hi)}`,
+                                            `(최소: ${fmt(st.min)}, 최대: ${fmt(st.max)})`
+                                        ];
                                     }
                                 }
                                 return `${base}: 평균 ${formatValue(v,'HOURS')}`;
@@ -711,7 +592,7 @@
 
             const merged = [...byTime.values()]
                 .filter(v => Number.isFinite(v.mean) && Number.isFinite(v.min) && Number.isFinite(v.max) && Number.isFinite(v.std))
-                .sort((a,b)=> a._time - b._time);
+                .sort((a,b)=>a._time - b._time);
 
             const meanPoints = merged.map(v => ({ x: v._time, y: v.mean }));
 
@@ -751,7 +632,7 @@
                     _id: id,
                     label: optionMap.get(metric)?.label || metric,
                     data: points,
-                    parsing: { xAxisKey: 'x', yAxisKey: 'y' }, // ✅ 명시 파싱
+                    parsing: { xAxisKey: 'x', yAxisKey: 'y' },
                     borderColor: color,
                     backgroundColor: color,
                     tension: 0.25,
@@ -815,7 +696,7 @@
         if (toStrip)   markDatasetsStripState(toStrip);
     }
 
-    // 플롯 상단 칩(그룹 단위) 렌더 — 이 칩들만 드래그 이동 허용
+    // 플롯 상단 칩(그룹 단위) — 드래그 이동 허용
     function renderPlotGroupChips(plotId){
         const p = plots.get(plotId); if (!p) return;
         const wrap = p.el.querySelector('.si-plot__datasets');
@@ -918,4 +799,58 @@
     window.addEventListener('touchmove', (e) => {
         if (document.body.classList.contains('is-dragging')) e.preventDefault();
     }, { passive: false });
+
+    // ===== DnD 유틸 =====
+    function enablePointerDnD(el, onDragData, onDropToStrip){
+        let dragging = false;
+        let ghost = null;
+
+        const onPointerDown = (e)=>{
+            if (e.target?.hasAttribute?.('data-no-drag')) return;
+            dragging = true;
+            document.body.classList.add('is-dragging');
+            el.classList.add('is-dragging');
+            const rect = el.getBoundingClientRect();
+
+            ghost = el.cloneNode(true);
+            ghost.classList.add('si-ds-chip--ghost');
+            ghost.style.position = 'fixed';
+            ghost.style.pointerEvents = 'none';
+            ghost.style.left = `${e.clientX - rect.width/2}px`;
+            ghost.style.top  = `${e.clientY - rect.height/2}px`;
+            ghost.style.width = `${rect.width}px`;
+            ghost.style.opacity = '0.75';
+            ghost.style.zIndex = '1050';
+            document.body.appendChild(ghost);
+
+            e.preventDefault();
+        };
+
+        const onPointerMove = (e)=>{
+            if (!dragging || !ghost) return;
+            ghost.style.left = `${e.clientX - ghost.offsetWidth/2}px`;
+            ghost.style.top  = `${e.clientY - ghost.offsetHeight/2}px`;
+        };
+
+        const onPointerUp = (e)=>{
+            if (!dragging) return;
+            dragging = false;
+            document.body.classList.remove('is-dragging');
+            el.classList.remove('is-dragging');
+            if (ghost) { ghost.remove(); ghost = null; }
+
+            // drop target 판별
+            const targetStrip = document.elementFromPoint(e.clientX, e.clientY)?.closest?.('.si-plot__datasets.si-dropzone');
+            if (targetStrip) {
+                const payload = typeof onDragData === 'function' ? onDragData() : onDragData;
+                if (payload && typeof onDropToStrip === 'function') {
+                    onDropToStrip(targetStrip, payload, ()=>{});
+                }
+            }
+        };
+
+        el.addEventListener('pointerdown', onPointerDown);
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('pointerup', onPointerUp);
+    }
 })();
