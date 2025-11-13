@@ -42,6 +42,10 @@
                 <i class="bi bi-megaphone"></i>
                 <span>시스템 알림 발송</span>
             </span>
+            <a th:href="@{/ads}" class="app-sidebar__link" th:classappend="${activeMenu}=='ads' ? ' is-active'">
+                <i class="bi bi-badge-ad"></i>
+                <span>광고 관리</span>
+            </a>
         </nav>
         <div class="app-sidebar__footer">
             <div>버전 0.1.0</div>
@@ -91,6 +95,10 @@
                     <i class="bi bi-megaphone"></i>
                     <span>시스템 알림 발송</span>
                 </span>
+                <a th:href="@{/ads}" class="app-sidebar__link" th:classappend="${activeMenu}=='ads' ? ' is-active fw-semibold'">
+                    <i class="bi bi-badge-ad"></i>
+                    <span>광고 관리</span>
+                </a>
             </nav>
         </div>
     </div>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+    <div class="card card-elevated">
+        <div class="card-header card-header-tight">
+            <h1 class="h5 mb-0" th:text="${form.id() == null} ? '새 광고 등록' : '광고 수정'">새 광고 등록</h1>
+        </div>
+        <div class="card-body card-body-comfy">
+            <form th:action="${form.id() == null} ? @{/ads} : @{/ads/edit}" method="post" class="vstack gap-4" id="adForm">
+                <input type="hidden" name="id" th:value="${form.id()}" th:if="${form.id() != null}">
+                <input type="hidden" name="objectKey" id="adObjectKey" th:value="${form.objectKey()}">
+                <input type="hidden" name="contentType" id="adContentType" th:value="${form.contentType()}">
+
+                <div>
+                    <label for="adName" class="form-label">광고 이름</label>
+                    <input type="text" class="form-control" id="adName" name="name" th:value="${form.name()}" required>
+                </div>
+
+                <div>
+                    <label for="adTargetUrl" class="form-label">이동할 링크(URL)</label>
+                    <input type="url" class="form-control" id="adTargetUrl" name="targetUrl" th:value="${form.targetUrl()}" required>
+                    <div class="form-text">광고 클릭 시 이동할 주소를 입력하세요.</div>
+                </div>
+
+                <div>
+                    <label for="adImageFile" class="form-label">광고 이미지 업로드</label>
+                    <div class="d-flex flex-column flex-md-row gap-3 align-items-start">
+                        <div class="flex-shrink-0">
+                            <div class="ratio ratio-4x3 border rounded" style="width: 200px;" id="adImagePreviewContainer">
+                                <img th:if="${form.hasExistingImage()}" th:src="${form.imageUrl()}" alt="광고 미리보기"
+                                     id="adImagePreview" class="media-thumb w-100 h-100">
+                                <img th:if="${!form.hasExistingImage()}" src="https://placehold.co/400x300?text=Preview"
+                                     alt="광고 미리보기" id="adImagePreview" class="media-thumb w-100 h-100">
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 w-100">
+                            <input type="file" class="form-control" id="adImageFile" accept="image/*">
+                            <div class="form-text">이미지 선택 시 자동으로 업로드됩니다. 최소 1200x628 이상의 이미지를 권장합니다.</div>
+                            <div id="adImageUploadStatus" class="text-muted small mt-2">
+                                <span th:text="${form.hasUploadedImage() || form.hasExistingImage()} ? '이미지가 준비되었습니다.' : '아직 업로드된 이미지가 없습니다.'">이미지를 업로드해주세요.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="adMemo" class="form-label">메모 (내부 참고용)</label>
+                    <textarea class="form-control" id="adMemo" name="memo" rows="4"
+                              th:text="${form.memo()}"></textarea>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a class="btn btn-outline-secondary" th:href="@{/ads(tab='ads')}">취소</a>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script th:src="@{/js/ads-image-upload.js}"></script>
+</th:block>
+</html>

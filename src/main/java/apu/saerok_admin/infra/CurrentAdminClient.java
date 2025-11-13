@@ -12,11 +12,11 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriBuilder;
-import org.springframework.util.StringUtils;
 
 @Component
 public class CurrentAdminClient {
@@ -57,11 +57,14 @@ public class CurrentAdminClient {
                 return Optional.empty();
             }
 
+            List<String> roles = response.roles() != null ? List.copyOf(response.roles()) : List.of();
+
             return Optional.of(new CurrentAdminProfile(
                     response.nickname(),
                     response.email(),
                     response.profileImageUrl(),
-                    toRoleDescriptions(response.roles())
+                    toRoleDescriptions(roles),
+                    normalizeRoleCodes(roles)
             ));
         } catch (RestClientResponseException exception) {
             log.warn(
@@ -117,5 +120,22 @@ public class CurrentAdminClient {
         }
 
         return descriptions.isEmpty() ? List.of() : List.copyOf(descriptions);
+    }
+
+    private List<String> normalizeRoleCodes(List<String> roles) {
+        if (roles == null || roles.isEmpty()) {
+            return List.of();
+        }
+        Set<String> normalized = new LinkedHashSet<>();
+        for (String role : roles) {
+            if (!StringUtils.hasText(role)) {
+                continue;
+            }
+            normalized.add(role.toUpperCase(Locale.ROOT));
+        }
+        if (normalized.isEmpty()) {
+            return List.of();
+        }
+        return List.copyOf(normalized);
     }
 }

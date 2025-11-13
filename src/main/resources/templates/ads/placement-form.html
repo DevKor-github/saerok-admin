@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+    <div class="card card-elevated">
+        <div class="card-header card-header-tight">
+            <h1 class="h5 mb-0" th:text="${form.isEdit()} ? '스케줄 수정' : '새 스케줄 등록'">새 스케줄 등록</h1>
+        </div>
+        <div class="card-body card-body-comfy">
+            <form th:action="${form.isEdit()} ? @{/ads/placements/edit} : @{/ads/placements}" method="post" class="vstack gap-4">
+                <input type="hidden" name="id" th:value="${form.id()}" th:if="${form.isEdit()}">
+
+                <div>
+                    <label for="placementAdId" class="form-label">광고 선택</label>
+                    <select id="placementAdId" name="adId" class="form-select" required th:disabled="${form.isEdit()}">
+                        <option value="" th:selected="${form.adId() == null}">광고를 선택하세요</option>
+                        <option th:each="ad : ${adOptions}" th:value="${ad.id()}"
+                                th:selected="${form.adId() != null} ? ${ad.id()} == ${form.adId()} : false"
+                                th:text="${ad.name()}">광고</option>
+                    </select>
+                    <div class="form-text" th:if="${form.isEdit()}">광고는 수정할 수 없습니다. 새 스케줄을 등록하세요.</div>
+                </div>
+
+                <div>
+                    <label for="placementSlotId" class="form-label">광고 위치 선택</label>
+                    <select id="placementSlotId" name="slotId" class="form-select" required>
+                        <option value="" th:selected="${form.slotId() == null}">광고 위치를 선택하세요</option>
+                        <option th:each="slot : ${slotOptions}" th:value="${slot.id()}"
+                                th:selected="${form.slotId() != null} ? ${slot.id()} == ${form.slotId()} : false"
+                                th:text="${slot.code()}">광고 위치</option>
+                    </select>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label for="startDate" class="form-label">광고 노출 기간</label>
+                        <input type="date" class="form-control" id="startDate" name="startDate"
+                               th:value="${form.startDate()}" required>
+                        <div class="form-text">시작일</div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label invisible">종료일</label>
+                        <input type="date" class="form-control" id="endDate" name="endDate"
+                               th:value="${form.endDate()}" required>
+                        <div class="form-text">종료일</div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label for="weight" class="form-label">노출 강도(1~5)</label>
+                        <input type="number" class="form-control" id="weight" name="weight" min="1" max="5"
+                               th:value="${form.weight() != null ? form.weight() : 1}" required>
+                    </div>
+                    <div class="col-12 col-md-6 d-flex align-items-end">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="enabledSwitch" name="enabled"
+                                   value="true" th:checked="${form.enabled() == null} ? true : ${form.enabled()}">
+                            <label class="form-check-label" for="enabledSwitch">노출 상태</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a class="btn btn-outline-secondary" th:href="@{/ads(tab='placements')}">취소</a>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</th:block>
+</html>
