@@ -16,10 +16,16 @@ public record AdPlacementGroup(
     }
 
     public String fallbackProbabilityLabel() {
+        if (!hasPlacements()) {
+            return "100%";
+        }
         return Math.round(fallbackRatioPercent) + "%";
     }
 
     public boolean hasFallbackProbability() {
+        if (!hasPlacements()) {
+            return true;
+        }
         return fallbackRatioPercent > 0.0;
     }
 }

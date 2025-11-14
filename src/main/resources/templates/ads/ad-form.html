@@ -39,7 +39,7 @@
                         </div>
                         <div class="flex-grow-1 w-100">
                             <input type="file" class="form-control" id="adImageFile" accept="image/*">
-                            <div class="form-text">이미지 선택 시 자동으로 업로드됩니다. 최소 1200x628 이상의 이미지를 권장합니다.</div>
+                            <div class="form-text">이미지 선택 시 자동으로 업로드됩니다.</div>
                             <div id="adImageUploadStatus" class="ads-upload-status text-muted small mt-2">
                                 <span th:text="${form.hasUploadedImage() || form.hasExistingImage()} ? '이미지가 준비되었습니다.' : '아직 업로드된 이미지가 없습니다.'">이미지를 업로드해주세요.</span>
                             </div>
