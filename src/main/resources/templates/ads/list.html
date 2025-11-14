@@ -2,7 +2,10 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
       th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
 <th:block th:fragment="content">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <link th:href="@{/css/ads.css(v=${#dates.createNow().getTime()})}" rel="stylesheet">
+
+    <div class="ads-page">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 ads-page-header">
         <div>
             <h1 class="h3 mb-1 fw-semibold">광고 관리</h1>
             <p class="text-muted-soft mb-0">광고, 광고 위치, 노출 스케줄을 한 곳에서 관리합니다.</p>
@@ -23,32 +26,41 @@
         </div>
     </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-12 col-md-4">
-            <div class="card card-elevated h-100">
-                <div class="card-body">
-                    <div class="text-muted small mb-1">등록된 광고</div>
-                    <div class="display-6 fw-semibold" th:text="${summary.adCount()}">0</div>
+        <div class="row g-3 mb-4 ads-summary-row">
+            <div class="col-12 col-md-4">
+                <div class="card ads-summary-card ads-summary-card--ads h-100">
+                    <div class="card-body">
+                        <div class="ads-summary-icon">
+                            <i class="bi bi-images"></i>
+                        </div>
+                        <div class="ads-summary-label">등록된 광고</div>
+                        <div class="ads-summary-value" th:text="${summary.adCount()}">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card ads-summary-card ads-summary-card--slots h-100">
+                    <div class="card-body">
+                        <div class="ads-summary-icon">
+                            <i class="bi bi-grid-1x2"></i>
+                        </div>
+                        <div class="ads-summary-label">광고 위치</div>
+                        <div class="ads-summary-value" th:text="${summary.slotCount()}">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card ads-summary-card ads-summary-card--placements h-100">
+                    <div class="card-body">
+                        <div class="ads-summary-icon">
+                            <i class="bi bi-calendar3"></i>
+                        </div>
+                        <div class="ads-summary-label">활성 스케줄</div>
+                        <div class="ads-summary-value" th:text="${summary.activePlacementCount()}">0</div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-4">
-            <div class="card card-elevated h-100">
-                <div class="card-body">
-                    <div class="text-muted small mb-1">광고 위치</div>
-                    <div class="display-6 fw-semibold" th:text="${summary.slotCount()}">0</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-md-4">
-            <div class="card card-elevated h-100">
-                <div class="card-body">
-                    <div class="text-muted small mb-1">활성 스케줄</div>
-                    <div class="display-6 fw-semibold" th:text="${summary.activePlacementCount()}">0</div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <div th:if="${flashMessage}" class="alert alert-elevated d-flex align-items-center"
          th:classappend="${flashStatus} == 'success' ? ' alert-success' : ' alert-danger'">
@@ -56,8 +68,8 @@
         <span th:text="${flashMessage}">처리가 완료되었습니다.</span>
     </div>
 
-    <div class="mb-3">
-        <ul class="nav nav-tabs nav-tabs-line">
+        <div class="mb-3">
+            <ul class="nav nav-tabs nav-tabs-line ads-tabs">
             <li class="nav-item">
                 <a class="nav-link" th:classappend="${tab} == 'ads' ? ' active'"
                    th:href="@{/ads(tab='ads')}">
@@ -76,11 +88,11 @@
                     광고 노출 스케줄
                 </a>
             </li>
-        </ul>
-    </div>
+            </ul>
+        </div>
 
     <div th:if="${tab} == 'ads'">
-        <div class="card card-elevated mb-4">
+        <div class="card card-elevated ads-panel mb-4">
             <div class="card-body card-body-comfy">
                 <form class="row g-3 align-items-center" method="get">
                     <input type="hidden" name="tab" value="ads">
@@ -106,7 +118,7 @@
             <span th:text="${adsLoadError}">광고 목록을 불러오지 못했습니다.</span>
         </div>
 
-        <div class="card card-elevated">
+        <div class="card card-elevated ads-panel">
             <div class="card-header card-header-tight d-flex justify-content-between align-items-center">
                 <div>
                     <h2 class="h6 mb-1 fw-semibold">광고</h2>
@@ -120,7 +132,7 @@
                 </div>
             </div>
             <div class="table-responsive">
-                <table class="table align-middle mb-0">
+                <table class="table align-middle mb-0 ads-table">
                     <thead>
                     <tr>
                         <th scope="col">광고 이미지</th>
@@ -137,12 +149,11 @@
                     </tr>
                     <tr th:each="ad : ${ads}">
                         <td>
-                            <div class="ratio ratio-4x3" style="width: 120px;" th:if="${ad.hasImage()}">
+                            <div class="ratio ratio-4x3 ads-thumb-surface ads-thumb-surface--lg" th:if="${ad.hasImage()}">
                                 <img th:src="${ad.imageUrl()}" alt="광고 이미지" class="media-thumb w-100 h-100">
                             </div>
-                            <div class="d-flex align-items-center justify-content-center bg-light border rounded"
-                                 style="width: 120px; height: 90px;" th:if="${!ad.hasImage()}">
-                                <i class="bi bi-image text-muted"></i>
+                            <div class="ads-thumb-placeholder ads-thumb-placeholder--lg" th:if="${!ad.hasImage()}">
+                                <i class="bi bi-image"></i>
                             </div>
                         </td>
                         <td class="fw-semibold" th:text="${ad.name()}">광고 이름</td>
@@ -185,7 +196,7 @@
             <span th:text="${slotsLoadError}">광고 위치를 불러오지 못했습니다.</span>
         </div>
 
-        <div class="card card-elevated">
+        <div class="card card-elevated ads-panel">
             <div class="card-header card-header-tight d-flex justify-content-between align-items-center">
                 <div>
                     <h2 class="h6 mb-1 fw-semibold">광고 위치</h2>
@@ -199,7 +210,7 @@
                 </div>
             </div>
             <div class="table-responsive">
-                <table class="table align-middle mb-0">
+                <table class="table align-middle mb-0 ads-table">
                     <thead>
                     <tr>
                         <th scope="col">광고 위치 코드</th>
@@ -249,7 +260,7 @@
     </div>
 
     <div th:if="${tab} == 'placements'">
-        <div class="card card-elevated mb-4">
+        <div class="card card-elevated ads-panel mb-4">
             <div class="card-body card-body-comfy">
                 <form class="row g-3 align-items-end" method="get">
                     <input type="hidden" name="tab" value="placements">
@@ -297,13 +308,13 @@
             <span th:text="${placementsLoadError}">광고 노출 스케줄을 불러오지 못했습니다.</span>
         </div>
 
-        <div th:if="${placementGroups.isEmpty()}" class="card card-elevated">
+        <div th:if="${placementGroups.isEmpty()}" class="card card-elevated ads-panel">
             <div class="card-body text-center py-5 text-muted">
                 등록된 광고 노출 스케줄이 없습니다.
             </div>
         </div>
 
-        <div th:each="group : ${placementGroups}" class="card card-elevated mb-4">
+        <div th:each="group : ${placementGroups}" class="card card-elevated ads-panel mb-4">
             <div class="card-header card-header-tight d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <div>
                     <h3 class="h6 mb-1 fw-semibold" th:text="${group.slotCode()}">HOME_TOP</h3>
@@ -319,7 +330,7 @@
                 </div>
             </div>
             <div class="table-responsive">
-                <table class="table align-middle mb-0">
+                <table class="table align-middle mb-0 ads-table">
                     <thead>
                     <tr>
                         <th scope="col">광고</th>
@@ -337,12 +348,11 @@
                     <tr th:each="placement : ${group.placements()}">
                         <td>
                             <div class="d-flex align-items-center gap-3">
-                                <div class="ratio ratio-1x1 flex-shrink-0" style="width: 64px;" th:if="${placement.hasImage()}">
+                                <div class="ratio ratio-1x1 ads-thumb-surface ads-thumb-surface--sm flex-shrink-0" th:if="${placement.hasImage()}">
                                     <img th:src="${placement.adImageUrl()}" alt="광고 미리보기" class="media-thumb w-100 h-100">
                                 </div>
-                                <div class="d-flex align-items-center justify-content-center bg-light border rounded flex-shrink-0"
-                                     style="width: 64px; height: 64px;" th:if="${!placement.hasImage()}">
-                                    <i class="bi bi-image text-muted"></i>
+                                <div class="ads-thumb-placeholder ads-thumb-placeholder--sm flex-shrink-0" th:if="${!placement.hasImage()}">
+                                    <i class="bi bi-image"></i>
                                 </div>
                                 <div class="fw-semibold" th:text="${placement.adName()}">광고 이름</div>
                             </div>
@@ -393,6 +403,7 @@
                 </table>
             </div>
         </div>
+    </div>
     </div>
 </th:block>
 </html>

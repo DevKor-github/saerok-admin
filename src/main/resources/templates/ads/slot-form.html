@@ -2,12 +2,15 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
       th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
 <th:block th:fragment="content">
-    <div class="card card-elevated">
-        <div class="card-header card-header-tight">
-            <h1 class="h5 mb-0" th:text="${form.isEdit()} ? '광고 위치 수정' : '새 광고 위치 추가'">새 광고 위치 추가</h1>
-        </div>
-        <div class="card-body card-body-comfy">
-            <form th:action="${form.isEdit()} ? @{/ads/slots/edit} : @{/ads/slots}" method="post" class="vstack gap-4" id="slotForm">
+    <link th:href="@{/css/ads.css(v=${#dates.createNow().getTime()})}" rel="stylesheet">
+
+    <div class="ads-page ads-form-page">
+        <div class="card card-elevated ads-form-card">
+            <div class="card-header card-header-tight ads-form-card__header">
+                <h1 class="h5 mb-0" th:text="${form.isEdit()} ? '광고 위치 수정' : '새 광고 위치 추가'">새 광고 위치 추가</h1>
+            </div>
+            <div class="card-body card-body-comfy ads-form-card__body">
+                <form th:action="${form.isEdit()} ? @{/ads/slots/edit} : @{/ads/slots}" method="post" class="vstack gap-4" id="slotForm">
                 <input type="hidden" name="id" th:value="${form.id()}" th:if="${form.isEdit()}">
 
                 <div>
@@ -25,7 +28,7 @@
 
                 <div>
                     <label for="fallbackRatioInput" class="form-label">기본 광고 표시 비율(%)</label>
-                    <div class="row g-2 align-items-center">
+                    <div class="row g-2 align-items-center ads-slider-group">
                         <div class="col-12 col-md">
                             <input type="range" class="form-range" min="0" max="100" step="1"
                                    id="fallbackRatioInput" th:value="${form.fallbackRatioPercent() != null ? form.fallbackRatioPercent() : 0}">
@@ -46,11 +49,12 @@
                            th:value="${form.ttlSeconds() != null ? form.ttlSeconds() : 60}" required>
                 </div>
 
-                <div class="d-flex justify-content-end gap-2">
+                <div class="d-flex justify-content-end gap-2 ads-form-actions">
                     <a class="btn btn-outline-secondary" th:href="@{/ads(tab='slots')}">취소</a>
                     <button type="submit" class="btn btn-primary">저장</button>
                 </div>
             </form>
+        </div>
         </div>
     </div>
 
