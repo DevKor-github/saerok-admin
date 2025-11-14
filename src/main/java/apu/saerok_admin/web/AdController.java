@@ -69,10 +69,6 @@ public class AdController {
 
     @GetMapping
     public String index(@RequestParam(name = "tab", defaultValue = "ads") String tab,
-                        @RequestParam(name = "adQuery", required = false) String adQuery,
-                        @RequestParam(name = "slotFilter", required = false) Long slotFilter,
-                        @RequestParam(name = "period", defaultValue = "all") String periodFilter,
-                        @RequestParam(name = "status", defaultValue = "all") String statusFilter,
                         Model model) {
         model.addAttribute("pageTitle", "광고 관리");
         model.addAttribute("activeMenu", "ads");
@@ -144,12 +140,10 @@ public class AdController {
             slotsLoadError = "광고 위치 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.";
         }
 
-        List<AdListItem> filteredAds = filterAds(adItems, adQuery);
-        List<AdPlacementItem> filteredPlacements = filterPlacements(placementItems, slotFilter, periodFilter, statusFilter, today);
         Map<Long, AdSlotListItem> slotMap = slotItems.stream()
                 .collect(Collectors.toMap(AdSlotListItem::id, item -> item, (left, right) -> left, LinkedHashMap::new));
 
-        List<AdPlacementGroup> placementGroups = buildPlacementGroups(slotItems, slotMap, filteredPlacements, slotFilter);
+        List<AdPlacementGroup> placementGroups = buildPlacementGroups(slotItems, slotMap, placementItems);
 
         int activePlacementCount = (int) placementItems.stream()
                 .filter(item -> item.enabled() && item.timeStatus() == PlacementTimeStatus.ACTIVE)
@@ -158,17 +152,13 @@ public class AdController {
 
         model.addAttribute("tab", normalizeTab(tab));
         model.addAttribute("summary", summaryMetrics);
-        model.addAttribute("ads", filteredAds);
+        model.addAttribute("ads", adItems);
         model.addAttribute("adsLoadError", adsLoadError);
-        model.addAttribute("adQuery", adQuery != null ? adQuery : "");
         model.addAttribute("slots", slotItems);
         model.addAttribute("slotsLoadError", slotsLoadError);
         model.addAttribute("placementsLoadError", placementsLoadError);
         model.addAttribute("placementGroups", placementGroups);
-        model.addAttribute("placementFilterSlot", slotFilter);
-        model.addAttribute("placementFilterPeriod", normalizePeriod(periodFilter));
-        model.addAttribute("placementFilterStatus", normalizeStatus(statusFilter));
-        model.addAttribute("hasPlacements", !filteredPlacements.isEmpty());
+        model.addAttribute("hasPlacements", !placementItems.isEmpty());
         model.addAttribute("toastMessages", List.of());
 
         return "ads/list";
@@ -466,17 +456,23 @@ public class AdController {
                              @RequestParam(name = "description", required = false) String description,
                              @RequestParam("fallbackRatio") Double fallbackRatioPercent,
                              @RequestParam("ttlSeconds") Integer ttlSeconds,
+                             @RequestParam(name = "redirectTab", defaultValue = "slots") String redirectTab,
                              RedirectAttributes redirectAttributes) {
+        String normalizedRedirectTab = normalizeTab(redirectTab);
+        boolean redirectToPlacements = "placements".equals(normalizedRedirectTab);
+        String successRedirect = redirectToPlacements ? "redirect:/ads?tab=placements" : "redirect:/ads?tab=slots";
+        String failureRedirect = redirectToPlacements ? "redirect:/ads?tab=placements" : "redirect:/ads/slots/edit?id=" + slotId;
+
         if (!currentAdminProfile.isAdminEditor()) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 위치를 수정할 권한이 없습니다.");
-            return "redirect:/ads?tab=slots";
+            return successRedirect;
         }
 
         if (fallbackRatioPercent == null || ttlSeconds == null) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "필수 입력값을 모두 채워주세요.");
-            return "redirect:/ads/slots/edit?id=" + slotId;
+            return failureRedirect;
         }
 
         double normalizedFallback = Math.max(0, Math.min(100, fallbackRatioPercent));
@@ -486,7 +482,7 @@ public class AdController {
             adminAdClient.updateSlot(slotId, new AdminUpdateSlotRequest(trimToNull(description), fallbackRatio, ttlSeconds));
             redirectAttributes.addFlashAttribute("flashStatus", "success");
             redirectAttributes.addFlashAttribute("flashMessage", "저장되었습니다.");
-            return "redirect:/ads?tab=slots";
+            return successRedirect;
         } catch (RestClientResponseException exception) {
             log.warn("Failed to update slot. status={}, body={}", exception.getStatusCode(), exception.getResponseBodyAsString(), exception);
         } catch (RestClientException | IllegalStateException exception) {
@@ -495,7 +491,7 @@ public class AdController {
 
         redirectAttributes.addFlashAttribute("flashStatus", "error");
         redirectAttributes.addFlashAttribute("flashMessage", "광고 위치 수정에 실패했습니다. 잠시 후 다시 시도해주세요.");
-        return "redirect:/ads/slots/edit?id=" + slotId;
+        return failureRedirect;
     }
 
     @PostMapping("/slots/delete")
@@ -801,89 +797,6 @@ public class AdController {
         };
     }
 
-    private String normalizePeriod(String period) {
-        if (!StringUtils.hasText(period)) {
-            return "all";
-        }
-        return switch (period.toLowerCase(Locale.ROOT)) {
-            case "today" -> "today";
-            case "next7", "seven", "upcoming" -> "next7";
-            default -> "all";
-        };
-    }
-
-    private String normalizeStatus(String status) {
-        if (!StringUtils.hasText(status)) {
-            return "all";
-        }
-        return switch (status.toLowerCase(Locale.ROOT)) {
-            case "active" -> "active";
-            case "upcoming" -> "upcoming";
-            case "ended", "past" -> "ended";
-            default -> "all";
-        };
-    }
-
-    private List<AdListItem> filterAds(List<AdListItem> ads, String query) {
-        if (!StringUtils.hasText(query)) {
-            return ads;
-        }
-        String normalized = query.trim().toLowerCase(Locale.ROOT);
-        return ads.stream()
-                .filter(item -> containsIgnoreCase(item.name(), normalized)
-                        || containsIgnoreCase(item.targetUrl(), normalized)
-                        || containsIgnoreCase(item.memo(), normalized))
-                .toList();
-    }
-
-    private List<AdPlacementItem> filterPlacements(List<AdPlacementItem> placements,
-                                                   Long slotFilter,
-                                                   String periodFilter,
-                                                   String statusFilter,
-                                                   LocalDate today) {
-        String normalizedPeriod = normalizePeriod(periodFilter);
-        String normalizedStatus = normalizeStatus(statusFilter);
-        return placements.stream()
-                .filter(item -> slotFilter == null || Objects.equals(item.slotId(), slotFilter))
-                .filter(item -> matchesPeriod(item, normalizedPeriod, today))
-                .filter(item -> matchesStatus(item, normalizedStatus))
-                .sorted(Comparator.comparing(AdPlacementItem::startDate, Comparator.nullsLast(Comparator.naturalOrder())))
-                .toList();
-    }
-
-    private boolean matchesPeriod(AdPlacementItem item, String period, LocalDate today) {
-        if ("today".equals(period)) {
-            if (item.startDate() == null || item.endDate() == null) {
-                return false;
-            }
-            return !today.isBefore(item.startDate()) && !today.isAfter(item.endDate());
-        }
-        if ("next7".equals(period)) {
-            if (item.startDate() == null || item.endDate() == null) {
-                return false;
-            }
-            LocalDate rangeEnd = today.plusDays(7);
-            return !item.endDate().isBefore(today) && !item.startDate().isAfter(rangeEnd);
-        }
-        return true;
-    }
-
-    private boolean matchesStatus(AdPlacementItem item, String status) {
-        return switch (status) {
-            case "active" -> item.timeStatus() == PlacementTimeStatus.ACTIVE;
-            case "upcoming" -> item.timeStatus() == PlacementTimeStatus.UPCOMING;
-            case "ended" -> item.timeStatus() == PlacementTimeStatus.ENDED;
-            default -> true;
-        };
-    }
-
-    private boolean containsIgnoreCase(String text, String query) {
-        if (!StringUtils.hasText(text) || !StringUtils.hasText(query)) {
-            return false;
-        }
-        return text.toLowerCase(Locale.ROOT).contains(query);
-    }
-
     private AdListItem toAdListItem(AdminAdListResponse.Item item) {
         return new AdListItem(
                 item.id(),
@@ -930,7 +843,8 @@ public class AdController {
                 enabled,
                 item.createdAt(),
                 item.updatedAt(),
-                timeStatus
+                timeStatus,
+                0.0
         );
     }
 
@@ -951,19 +865,23 @@ public class AdController {
 
     private List<AdPlacementGroup> buildPlacementGroups(List<AdSlotListItem> slotItems,
                                                         Map<Long, AdSlotListItem> slotMap,
-                                                        List<AdPlacementItem> filteredPlacements,
-                                                        Long slotFilter) {
-        Map<Long, List<AdPlacementItem>> placementsBySlot = filteredPlacements.stream()
+                                                        List<AdPlacementItem> placements) {
+        Map<Long, List<AdPlacementItem>> placementsBySlot = placements.stream()
                 .collect(Collectors.groupingBy(AdPlacementItem::slotId, LinkedHashMap::new, Collectors.toCollection(ArrayList::new)));
 
         List<AdPlacementGroup> groups = new ArrayList<>();
         for (AdSlotListItem slot : slotItems) {
-            if (slotFilter != null && !Objects.equals(slot.id(), slotFilter)) {
-                continue;
-            }
-            List<AdPlacementItem> placements = new ArrayList<>(placementsBySlot.getOrDefault(slot.id(), List.of()));
-            placements.sort(Comparator.comparing(AdPlacementItem::startDate, Comparator.nullsLast(Comparator.naturalOrder())));
-            groups.add(new AdPlacementGroup(slot.id(), slot.code(), slot.description(), List.copyOf(placements)));
+            List<AdPlacementItem> slotPlacements = new ArrayList<>(placementsBySlot.getOrDefault(slot.id(), List.of()));
+            slotPlacements.sort(Comparator.comparing(AdPlacementItem::startDate, Comparator.nullsLast(Comparator.naturalOrder())));
+            List<AdPlacementItem> enrichedPlacements = applyProbability(slot.fallbackRatioPercent(), slotPlacements);
+            groups.add(new AdPlacementGroup(
+                    slot.id(),
+                    slot.code(),
+                    slot.description(),
+                    slot.fallbackRatioPercent(),
+                    slot.ttlSeconds(),
+                    List.copyOf(enrichedPlacements)
+            ));
         }
 
         // Placements whose slot is missing from slot list
@@ -971,15 +889,32 @@ public class AdController {
             if (slotId == null || slotMap.containsKey(slotId)) {
                 return;
             }
-            if (slotFilter != null && !Objects.equals(slotId, slotFilter)) {
-                return;
-            }
             items.sort(Comparator.comparing(AdPlacementItem::startDate, Comparator.nullsLast(Comparator.naturalOrder())));
+            List<AdPlacementItem> enrichedPlacements = applyProbability(0.0, items);
             AdPlacementItem sample = items.get(0);
-            groups.add(new AdPlacementGroup(slotId, sample.slotName(), null, List.copyOf(items)));
+            groups.add(new AdPlacementGroup(slotId, sample.slotName(), null, 0.0, 0, List.copyOf(enrichedPlacements)));
         });
 
         return groups;
+    }
+
+    private List<AdPlacementItem> applyProbability(double fallbackRatioPercent, List<AdPlacementItem> placements) {
+        double normalizedFallback = Math.max(0.0, Math.min(100.0, fallbackRatioPercent));
+        double remainingRatio = Math.max(0.0, 100.0 - normalizedFallback);
+        double totalWeight = placements.stream()
+                .filter(AdPlacementItem::isProbabilityEligible)
+                .mapToDouble(AdPlacementItem::weight)
+                .sum();
+
+        List<AdPlacementItem> results = new ArrayList<>(placements.size());
+        for (AdPlacementItem item : placements) {
+            double probability = 0.0;
+            if (item.isProbabilityEligible() && totalWeight > 0.0) {
+                probability = remainingRatio * (item.weight() / totalWeight);
+            }
+            results.add(item.withDisplayProbability(probability));
+        }
+        return results;
     }
 
     private List<AdListItem> fetchAdOptions() {
