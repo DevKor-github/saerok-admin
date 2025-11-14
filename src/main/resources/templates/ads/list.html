@@ -337,7 +337,7 @@
                             <td>
                                 <div class="fw-semibold mb-2" th:text="${placement.periodLabel()}">2025.01.01 ~ 2025.01.31</div>
                                 <span class="badge ads-period-badge"
-                                      th:classappend="' ' + placement.timeStatusBadgeClass()"
+                                      th:classappend="${placement.timeStatusBadgeClass()}"
                                       th:text="${placement.timeStatusLabel()}">노출 중</span>
                             </td>
                             <td>
@@ -351,7 +351,7 @@
                             </td>
                             <td>
                                 <span class="badge ads-status-badge"
-                                      th:classappend="' ' + placement.statusBadgeClass()"
+                                      th:classappend="${placement.statusBadgeClass()}"
                                       th:text="${placement.displayStatusLabel()}">노출 중</span>
                             </td>
                             <td class="text-end" th:if="${currentAdminProfile.isAdminEditor()}">
