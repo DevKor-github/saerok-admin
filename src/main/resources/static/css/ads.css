@@ -557,12 +557,6 @@
     font-weight: 600;
 }
 
-.ads-card__badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
 .ads-card__actions {
     display: flex;
     flex-wrap: wrap;
@@ -619,5 +613,20 @@
 
     .ads-form-actions .btn {
         width: 100%;
+    }
+}
+
+@media (min-width: 768px) {
+    .ads-card__actions {
+        justify-content: flex-end;
+    }
+
+    .ads-card__actions .btn,
+    .ads-card__action-form {
+        flex: 0 0 auto;
+    }
+
+    .ads-card__action-form .btn {
+        width: auto;
     }
 }
