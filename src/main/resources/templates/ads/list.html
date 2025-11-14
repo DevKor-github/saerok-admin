@@ -94,27 +94,6 @@
 
         <!-- 광고 탭 -->
         <div th:if="${tab} == 'ads'">
-            <div class="card card-elevated ads-panel mb-4">
-                <div class="card-body card-body-comfy">
-                    <form class="row g-3 align-items-center" method="get">
-                        <input type="hidden" name="tab" value="ads">
-                        <div class="col-12 col-md-8">
-                            <label for="ad-search" class="form-label mb-1">검색 (이름/링크/메모)</label>
-                            <input id="ad-search" type="search" class="form-control"
-                                   name="adQuery" placeholder="광고 이름, 링크 또는 메모로 검색"
-                                   th:value="${adQuery}">
-                        </div>
-                        <div class="col-12 col-md-auto d-flex align-items-end gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-search me-1"></i>
-                                <span>검색</span>
-                            </button>
-                            <a class="btn btn-outline-secondary" th:href="@{/ads(tab='ads')}">초기화</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
             <div th:if="${adsLoadError}" class="alert alert-danger alert-elevated d-flex align-items-center mb-3">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
                 <span th:text="${adsLoadError}">광고 목록을 불러오지 못했습니다.</span>
@@ -141,13 +120,15 @@
                             <th scope="col">광고 이름</th>
                             <th scope="col">이동할 링크(URL)</th>
                             <th scope="col">메모</th>
-                            <th scope="col">등록일 / 수정일</th>
                             <th scope="col" class="text-end" th:if="${currentAdminProfile.isAdminEditor()}">액션</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr th:if="${ads.isEmpty()}">
-                            <td colspan="6" class="text-center py-5 text-muted">등록된 광고가 없습니다.</td>
+                            <td class="text-center py-5 text-muted"
+                                th:attr="colspan=${currentAdminProfile.isAdminEditor()} ? 5 : 4">
+                                등록된 광고가 없습니다.
+                            </td>
                         </tr>
                         <tr th:each="ad : ${ads}">
                             <td>
@@ -168,14 +149,6 @@
                                 </a>
                             </td>
                             <td th:text="${#strings.isEmpty(ad.memo()) ? '-' : ad.memo()}">메모</td>
-                            <td>
-                                <div class="text-muted small">등록
-                                    <span th:text="${ad.createdAt() != null ? #temporals.format(ad.createdAt(), 'yyyy.MM.dd HH:mm') : '-'}">-</span>
-                                </div>
-                                <div class="text-muted small">수정
-                                    <span th:text="${ad.updatedAt() != null ? #temporals.format(ad.updatedAt(), 'yyyy.MM.dd HH:mm') : '-'}">-</span>
-                                </div>
-                            </td>
                             <td class="text-end" th:if="${currentAdminProfile.isAdminEditor()}">
                                 <div class="d-inline-flex gap-2">
                                     <a class="btn btn-sm btn-outline-primary"
@@ -250,6 +223,13 @@
                                 <div class="d-inline-flex gap-2">
                                     <a class="btn btn-sm btn-outline-primary"
                                        th:href="@{/ads/slots/edit(id=${slot.id()})}">설정</a>
+                                    <form th:action="@{/ads/slots/delete}" method="post" class="d-inline">
+                                        <input type="hidden" name="id" th:value="${slot.id()}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                th:onclick="|return confirm('정말 삭제하시겠습니까? 삭제하면 되돌릴 수 없습니다.');|">
+                                            삭제
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -261,53 +241,6 @@
 
         <!-- 노출 스케줄 탭 -->
         <div th:if="${tab} == 'placements'">
-            <div class="card card-elevated ads-panel mb-4">
-                <div class="card-body card-body-comfy">
-                    <form class="row g-3 align-items-end" method="get">
-                        <input type="hidden" name="tab" value="placements">
-                        <div class="col-12 col-md-4">
-                            <label for="slotFilter" class="form-label">광고 위치</label>
-                            <select id="slotFilter" name="slotFilter" class="form-select">
-                                <!-- 여기만 수정: th:value -> value -->
-                                <option value="" th:selected="${placementFilterSlot == null}">전체 광고 위치</option>
-                                <option th:each="slot : ${slots}"
-                                        th:value="${slot.id()}"
-                                        th:selected="${slot.id() == placementFilterSlot}"
-                                        th:text="${slot.code()}">
-                                    위치
-                                </option>
-                            </select>
-                        </div>
-                        <div class="col-12 col-md-4">
-                            <label for="periodFilter" class="form-label">기간 필터</label>
-                            <select id="periodFilter" name="period" class="form-select">
-                                <option value="all" th:selected="${placementFilterPeriod == 'all'}">전체 기간</option>
-                                <option value="active" th:selected="${placementFilterPeriod == 'active'}">진행 중</option>
-                                <option value="upcoming" th:selected="${placementFilterPeriod == 'upcoming'}">시작 예정
-                                </option>
-                                <option value="past" th:selected="${placementFilterPeriod == 'past'}">종료됨</option>
-                            </select>
-                        </div>
-                        <div class="col-12 col-md-4">
-                            <label for="statusFilter" class="form-label">노출 상태</label>
-                            <select id="statusFilter" name="status" class="form-select">
-                                <option value="all" th:selected="${placementFilterStatus == 'all'}">전체 상태</option>
-                                <option value="enabled" th:selected="${placementFilterStatus == 'enabled'}">노출 중</option>
-                                <option value="disabled" th:selected="${placementFilterStatus == 'disabled'}">일시 중지
-                                </option>
-                                <option value="ended" th:selected="${placementFilterStatus == 'ended'}">종료</option>
-                            </select>
-                        </div>
-                        <div class="col-12 col-md-auto">
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="bi bi-funnel me-1"></i>
-                                <span>필터 적용</span>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
             <div th:if="${placementsLoadError}"
                  class="alert alert-danger alert-elevated d-flex align-items-center mb-3">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
@@ -344,14 +277,47 @@
                             <th scope="col">광고</th>
                             <th scope="col">노출 기간</th>
                             <th scope="col">노출 강도</th>
+                            <th scope="col">노출 확률</th>
                             <th scope="col">노출 상태</th>
-                            <th scope="col">등록일 / 수정일</th>
                             <th scope="col" class="text-end" th:if="${currentAdminProfile.isAdminEditor()}">액션</th>
                         </tr>
                         </thead>
                         <tbody>
+                        <tr class="ads-fallback-row">
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="ads-fallback-icon flex-shrink-0">
+                                        <i class="bi bi-stars"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold">기본 광고</div>
+                                        <div class="text-muted small">광고가 없을 때 표시되는 기본 콘텐츠입니다.</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-muted">-</td>
+                            <td class="text-muted">-</td>
+                            <td>
+                                <span class="badge ads-probability-badge"
+                                      th:classappend="${group.hasFallbackProbability()} ? ' ads-probability-badge--active' : ' ads-probability-badge--muted'"
+                                      th:text="${group.fallbackProbabilityLabel()}">50%</span>
+                            </td>
+                            <td class="text-muted">-</td>
+                            <td class="text-end" th:if="${currentAdminProfile.isAdminEditor()}">
+                                <div class="d-inline-flex gap-2" th:if="${group.slotId() != null && group.slotCode() != null}">
+                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#fallbackRatioModal"
+                                            th:attr="data-slot-id=${group.slotId()}, data-slot-code=${group.slotCode()}, data-fallback-ratio=${group.fallbackRatioPercent()}, data-slot-description=${group.slotDescription() == null ? '' : group.slotDescription()}, data-slot-ttl=${group.slotTtlSeconds()}"
+                                            >기본 확률 수정</button>
+                                </div>
+                            </td>
+                        </tr>
                         <tr th:if="${!group.hasPlacements()}">
-                            <td colspan="6" class="text-center py-4 text-muted">등록된 스케줄이 없습니다.</td>
+                            <td class="text-center py-4 text-muted"
+                                th:attr="colspan=${currentAdminProfile.isAdminEditor()} ? 6 : 5">
+                                등록된 스케줄이 없습니다.
+                            </td>
                         </tr>
                         <tr th:each="placement : ${group.placements()}">
                             <td>
@@ -369,29 +335,29 @@
                                 </div>
                             </td>
                             <td>
-                                <div class="fw-semibold" th:text="${placement.periodLabel()}">2025.01.01 ~ 2025.01.31</div>
-                                <div class="text-muted small" th:text="${placement.timeStatusLabel()}">노출 중</div>
+                                <div class="fw-semibold mb-2" th:text="${placement.periodLabel()}">2025.01.01 ~ 2025.01.31</div>
+                                <span class="badge ads-period-badge"
+                                      th:classappend="' ' + placement.timeStatusBadgeClass()"
+                                      th:text="${placement.timeStatusLabel()}">노출 중</span>
                             </td>
                             <td>
                                 <span class="badge text-bg-primary-subtle text-primary"
                                       th:text="${placement.weightLabel()}">1</span>
                             </td>
                             <td>
-                                <span class="badge"
-                                      th:classappend="${placement.enabled()} ? ' text-bg-success' : ' text-bg-secondary'"
-                                      th:text="${placement.displayStatusLabel()}">노출 중</span>
+                                <span class="badge ads-probability-badge"
+                                      th:classappend="${placement.hasPositiveProbability()} ? ' ads-probability-badge--active' : ' ads-probability-badge--muted'"
+                                      th:text="${placement.probabilityLabel()}">0%</span>
                             </td>
                             <td>
-                                <div class="text-muted small">등록
-                                    <span th:text="${placement.createdAt() != null ? #temporals.format(placement.createdAt(), 'yyyy.MM.dd HH:mm') : '-'}">-</span>
-                                </div>
-                                <div class="text-muted small">수정
-                                    <span th:text="${placement.updatedAt() != null ? #temporals.format(placement.updatedAt(), 'yyyy.MM.dd HH:mm') : '-'}">-</span>
-                                </div>
+                                <span class="badge ads-status-badge"
+                                      th:classappend="' ' + placement.statusBadgeClass()"
+                                      th:text="${placement.displayStatusLabel()}">노출 중</span>
                             </td>
                             <td class="text-end" th:if="${currentAdminProfile.isAdminEditor()}">
-                                <div class="d-inline-flex gap-2">
-                                    <form th:action="@{/ads/placements/toggle}" method="post" class="d-inline">
+                                <div class="d-inline-flex flex-wrap gap-2">
+                                    <form th:if="${placement.canToggle()}" th:action="@{/ads/placements/toggle}"
+                                          method="post" class="d-inline">
                                         <input type="hidden" name="id" th:value="${placement.id()}">
                                         <input type="hidden" name="enabled" th:value="${!placement.enabled()}">
                                         <button type="submit" class="btn btn-sm"
@@ -417,6 +383,98 @@
                 </div>
             </div>
         </div>
+
+        <div class="modal fade" id="fallbackRatioModal" tabindex="-1" aria-hidden="true"
+             th:if="${currentAdminProfile.isAdminEditor()}">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form th:action="@{/ads/slots/edit}" method="post" class="needs-validation" novalidate>
+                        <div class="modal-header">
+                            <h5 class="modal-title">기본 광고 노출 확률 수정</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="id">
+                            <input type="hidden" name="description">
+                            <input type="hidden" name="ttlSeconds">
+                            <input type="hidden" name="redirectTab" value="placements">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">광고 위치</label>
+                                <div class="fw-semibold fallback-slot-code">-</div>
+                                <div class="text-muted small fallback-slot-description"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="fallbackRatioInput" class="form-label">기본 광고 노출 확률 (%)</label>
+                                <input type="number" class="form-control" id="fallbackRatioInput" name="fallbackRatio"
+                                       min="0" max="100" step="1" required>
+                                <div class="form-text">현재 설정값: <span class="fallback-current-ratio">0%</span></div>
+                                <div class="invalid-feedback">0에서 100 사이의 값을 입력하세요.</div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                            <button type="submit" class="btn btn-primary">저장</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            var fallbackModal = document.getElementById('fallbackRatioModal');
+            if (!fallbackModal) {
+                return;
+            }
+            fallbackModal.addEventListener('show.bs.modal', function (event) {
+                var trigger = event.relatedTarget;
+                if (!trigger) {
+                    return;
+                }
+
+                var slotId = trigger.getAttribute('data-slot-id');
+                var slotCode = trigger.getAttribute('data-slot-code');
+                var fallbackRatio = trigger.getAttribute('data-fallback-ratio');
+                var slotDescription = trigger.getAttribute('data-slot-description') || '';
+                var slotTtl = trigger.getAttribute('data-slot-ttl') || '0';
+
+                var idInput = fallbackModal.querySelector('input[name="id"]');
+                var ratioInput = fallbackModal.querySelector('input[name="fallbackRatio"]');
+                var descriptionInput = fallbackModal.querySelector('input[name="description"]');
+                var ttlInput = fallbackModal.querySelector('input[name="ttlSeconds"]');
+                if (idInput) {
+                    idInput.value = slotId || '';
+                }
+                if (ratioInput) {
+                    ratioInput.value = fallbackRatio || '';
+                }
+                if (descriptionInput) {
+                    descriptionInput.value = slotDescription;
+                }
+                if (ttlInput) {
+                    ttlInput.value = slotTtl;
+                }
+
+                var codeLabel = fallbackModal.querySelector('.fallback-slot-code');
+                if (codeLabel) {
+                    codeLabel.textContent = slotCode || '-';
+                }
+
+                var descriptionLabel = fallbackModal.querySelector('.fallback-slot-description');
+                if (descriptionLabel) {
+                    descriptionLabel.textContent = slotDescription || '설명이 없습니다.';
+                }
+
+                var currentRatioLabel = fallbackModal.querySelector('.fallback-current-ratio');
+                if (currentRatioLabel) {
+                    var ratioNumber = Number(fallbackRatio);
+                    currentRatioLabel.textContent = Number.isFinite(ratioNumber)
+                        ? Math.round(ratioNumber) + '%'
+                        : '-';
+                }
+            });
+        });
+        </script>
 
     </div>
 </th:block>

@@ -312,6 +312,70 @@
     font-weight: 600;
 }
 
+.ads-period-badge,
+.ads-status-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.ads-status-badge {
+    font-size: 0.8rem;
+}
+
+.ads-probability-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 3.25rem;
+    padding: 0.45rem 0.95rem;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ads-probability-badge--active {
+    background: linear-gradient(135deg, #1d4ed8, #6366f1);
+    color: #ffffff;
+    box-shadow: 0 14px 28px rgba(99, 102, 241, 0.3);
+}
+
+.ads-probability-badge--active:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 36px rgba(99, 102, 241, 0.35);
+}
+
+.ads-probability-badge--muted {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.ads-fallback-row {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.08), rgba(14, 165, 233, 0.05));
+}
+
+.ads-fallback-row td {
+    border-top: none;
+}
+
+.ads-fallback-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(99, 102, 241, 0.18));
+    color: #1d4ed8;
+    font-size: 1.5rem;
+    box-shadow: 0 14px 28px rgba(59, 130, 246, 0.18);
+}
+
 @media (max-width: 991.98px) {
     .ads-tabs {
         width: 100%;

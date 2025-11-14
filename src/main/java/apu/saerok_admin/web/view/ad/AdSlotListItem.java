@@ -16,4 +16,8 @@ public record AdSlotListItem(
     public String fallbackRatioLabel() {
         return String.format("%.1f%%", fallbackRatioPercent);
     }
+
+    public String fallbackProbabilityLabel() {
+        return Math.round(fallbackRatioPercent) + "%";
+    }
 }
