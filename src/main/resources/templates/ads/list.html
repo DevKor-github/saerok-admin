@@ -270,7 +270,7 @@
                             <option th:value="" th:selected="${placementFilterSlot == null}">전체 광고 위치</option>
                             <option th:each="slot : ${slots}"
                                     th:value="${slot.id()}"
-                                    th:selected="${placementFilterSlot != null} ? ${slot.id()} == ${placementFilterSlot} : false"
+                                    th:selected="${placementFilterSlot != null} ? slot.id() == placementFilterSlot : false"
                                     th:text="${slot.code()}">
                                 위치
                             </option>
