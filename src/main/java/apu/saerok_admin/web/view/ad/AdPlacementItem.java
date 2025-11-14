@@ -23,6 +23,22 @@ public record AdPlacementItem(
     private static final DateTimeFormatter PERIOD_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd");
 
     public String periodLabel() {
+        // 시작/종료일이 모두 없는 경우
+        if (startDate == null && endDate == null) {
+            return "기간 미지정";
+        }
+
+        // 시작일만 없는 경우: 열린 시작
+        if (startDate == null) {
+            return "~ " + PERIOD_FORMATTER.format(endDate);
+        }
+
+        // 종료일만 없는 경우: 열린 종료
+        if (endDate == null) {
+            return PERIOD_FORMATTER.format(startDate) + " ~";
+        }
+
+        // 둘 다 있는 경우
         return PERIOD_FORMATTER.format(startDate) + " ~ " + PERIOD_FORMATTER.format(endDate);
     }
 

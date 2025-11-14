@@ -9,8 +9,8 @@
                 <span class="app-sidebar__title mb-0">새록 어드민</span>
                 <span class="environment-badge"
                       th:if="${environmentProfileBadge != null}"
-                      th:classappend="${environmentProfileBadge != null} ? ' ' + ${environmentProfileBadge.cssClass} : ''"
-                      th:text="${environmentProfileBadge != null} ? ${environmentProfileBadge.label} : '운영'">운영</span>
+                      th:classappend="${environmentProfileBadge != null} ? ' ' + environmentProfileBadge.cssClass : ''"
+                      th:text="${environmentProfileBadge != null} ? environmentProfileBadge.label : '운영'">운영</span>
             </div>
         </div>
         <nav class="app-sidebar__nav">
@@ -60,8 +60,8 @@
                 <h5 class="offcanvas-title mb-0">새록 어드민</h5>
                 <span class="environment-badge"
                       th:if="${environmentProfileBadge != null}"
-                      th:classappend="${environmentProfileBadge != null} ? ' ' + ${environmentProfileBadge.cssClass} : ''"
-                      th:text="${environmentProfileBadge != null} ? ${environmentProfileBadge.label} : '운영'">운영</span>
+                      th:classappend="${environmentProfileBadge != null} ? ' ' + environmentProfileBadge.cssClass : ''"
+                      th:text="${environmentProfileBadge != null} ? environmentProfileBadge.label : '운영'">운영</span>
             </div>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
@@ -105,3 +105,5 @@
 </div>
 </body>
 </html>
+
+

@@ -1,3 +1,4 @@
+
 package apu.saerok_admin.web;
 
 import apu.saerok_admin.infra.ad.AdminAdClient;
@@ -461,11 +462,11 @@ public class AdController {
 
     @PostMapping("/slots/edit")
     public String updateSlot(@ModelAttribute("currentAdminProfile") CurrentAdminProfile currentAdminProfile,
-                              @RequestParam("id") Long slotId,
-                              @RequestParam(name = "description", required = false) String description,
-                              @RequestParam("fallbackRatio") Double fallbackRatioPercent,
-                              @RequestParam("ttlSeconds") Integer ttlSeconds,
-                              RedirectAttributes redirectAttributes) {
+                             @RequestParam("id") Long slotId,
+                             @RequestParam(name = "description", required = false) String description,
+                             @RequestParam("fallbackRatio") Double fallbackRatioPercent,
+                             @RequestParam("ttlSeconds") Integer ttlSeconds,
+                             RedirectAttributes redirectAttributes) {
         if (!currentAdminProfile.isAdminEditor()) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 위치를 수정할 권한이 없습니다.");
@@ -499,8 +500,8 @@ public class AdController {
 
     @PostMapping("/slots/delete")
     public String deleteSlot(@ModelAttribute("currentAdminProfile") CurrentAdminProfile currentAdminProfile,
-                              @RequestParam("id") Long slotId,
-                              RedirectAttributes redirectAttributes) {
+                             @RequestParam("id") Long slotId,
+                             RedirectAttributes redirectAttributes) {
         if (!currentAdminProfile.isAdminEditor()) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 위치를 삭제할 권한이 없습니다.");
@@ -554,13 +555,13 @@ public class AdController {
 
     @PostMapping("/placements")
     public String createPlacement(@ModelAttribute("currentAdminProfile") CurrentAdminProfile currentAdminProfile,
-                                   @RequestParam("adId") Long adId,
-                                   @RequestParam("slotId") Long slotId,
-                                   @RequestParam("startDate") String startDate,
-                                   @RequestParam("endDate") String endDate,
-                                   @RequestParam("weight") Short weight,
-                                   @RequestParam(name = "enabled", defaultValue = "false") boolean enabled,
-                                   RedirectAttributes redirectAttributes) {
+                                  @RequestParam("adId") Long adId,
+                                  @RequestParam("slotId") Long slotId,
+                                  @RequestParam("startDate") String startDate,
+                                  @RequestParam("endDate") String endDate,
+                                  @RequestParam("weight") Short weight,
+                                  @RequestParam(name = "enabled", defaultValue = "false") boolean enabled,
+                                  RedirectAttributes redirectAttributes) {
         if (!currentAdminProfile.isAdminEditor()) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 노출 스케줄을 등록할 권한이 없습니다.");
@@ -650,13 +651,13 @@ public class AdController {
 
     @PostMapping("/placements/edit")
     public String updatePlacement(@ModelAttribute("currentAdminProfile") CurrentAdminProfile currentAdminProfile,
-                                   @RequestParam("id") Long placementId,
-                                   @RequestParam("slotId") Long slotId,
-                                   @RequestParam("startDate") String startDate,
-                                   @RequestParam("endDate") String endDate,
-                                   @RequestParam("weight") Short weight,
-                                   @RequestParam(name = "enabled", defaultValue = "false") boolean enabled,
-                                   RedirectAttributes redirectAttributes) {
+                                  @RequestParam("id") Long placementId,
+                                  @RequestParam("slotId") Long slotId,
+                                  @RequestParam("startDate") String startDate,
+                                  @RequestParam("endDate") String endDate,
+                                  @RequestParam("weight") Short weight,
+                                  @RequestParam(name = "enabled", defaultValue = "false") boolean enabled,
+                                  RedirectAttributes redirectAttributes) {
         if (!currentAdminProfile.isAdminEditor()) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 노출 스케줄을 수정할 권한이 없습니다.");
@@ -686,8 +687,8 @@ public class AdController {
 
     @PostMapping("/placements/delete")
     public String deletePlacement(@ModelAttribute("currentAdminProfile") CurrentAdminProfile currentAdminProfile,
-                                   @RequestParam("id") Long placementId,
-                                   RedirectAttributes redirectAttributes) {
+                                  @RequestParam("id") Long placementId,
+                                  RedirectAttributes redirectAttributes) {
         if (!currentAdminProfile.isAdminEditor()) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 노출 스케줄을 삭제할 권한이 없습니다.");
@@ -713,9 +714,9 @@ public class AdController {
 
     @PostMapping("/placements/toggle")
     public String togglePlacement(@ModelAttribute("currentAdminProfile") CurrentAdminProfile currentAdminProfile,
-                                   @RequestParam("id") Long placementId,
-                                   @RequestParam("enabled") boolean enabled,
-                                   RedirectAttributes redirectAttributes) {
+                                  @RequestParam("id") Long placementId,
+                                  @RequestParam("enabled") boolean enabled,
+                                  RedirectAttributes redirectAttributes) {
         if (!currentAdminProfile.isAdminEditor()) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 노출 상태를 변경할 권한이 없습니다.");
@@ -949,9 +950,9 @@ public class AdController {
     }
 
     private List<AdPlacementGroup> buildPlacementGroups(List<AdSlotListItem> slotItems,
-                                                         Map<Long, AdSlotListItem> slotMap,
-                                                         List<AdPlacementItem> filteredPlacements,
-                                                         Long slotFilter) {
+                                                        Map<Long, AdSlotListItem> slotMap,
+                                                        List<AdPlacementItem> filteredPlacements,
+                                                        Long slotFilter) {
         Map<Long, List<AdPlacementItem>> placementsBySlot = filteredPlacements.stream()
                 .collect(Collectors.groupingBy(AdPlacementItem::slotId, LinkedHashMap::new, Collectors.toCollection(ArrayList::new)));
 
@@ -960,7 +961,7 @@ public class AdController {
             if (slotFilter != null && !Objects.equals(slot.id(), slotFilter)) {
                 continue;
             }
-            List<AdPlacementItem> placements = placementsBySlot.getOrDefault(slot.id(), List.of());
+            List<AdPlacementItem> placements = new ArrayList<>(placementsBySlot.getOrDefault(slot.id(), List.of()));
             placements.sort(Comparator.comparing(AdPlacementItem::startDate, Comparator.nullsLast(Comparator.naturalOrder())));
             groups.add(new AdPlacementGroup(slot.id(), slot.code(), slot.description(), List.copyOf(placements)));
         }
@@ -1021,3 +1022,5 @@ public class AdController {
         return trimmed.isEmpty() ? null : trimmed;
     }
 }
+
+

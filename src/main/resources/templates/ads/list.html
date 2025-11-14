@@ -6,25 +6,25 @@
 
     <div class="ads-page">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 ads-page-header">
-        <div>
-            <h1 class="h3 mb-1 fw-semibold">광고 관리</h1>
-            <p class="text-muted-soft mb-0">광고, 광고 위치, 노출 스케줄을 한 곳에서 관리합니다.</p>
+            <div>
+                <h1 class="h3 mb-1 fw-semibold">광고 관리</h1>
+                <p class="text-muted-soft mb-0">광고, 광고 위치, 노출 스케줄을 한 곳에서 관리합니다.</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2" th:if="${currentAdminProfile.isAdminEditor()}">
+                <a class="btn btn-primary" th:href="@{/ads/new}">
+                    <i class="bi bi-plus-circle me-1"></i>
+                    <span>새 광고 등록</span>
+                </a>
+                <a class="btn btn-outline-primary" th:href="@{/ads/slots/new}">
+                    <i class="bi bi-pin-map me-1"></i>
+                    <span>새 광고 위치 추가</span>
+                </a>
+                <a class="btn btn-outline-success" th:href="@{/ads/placements/new}">
+                    <i class="bi bi-calendar-plus me-1"></i>
+                    <span>새 스케줄 등록</span>
+                </a>
+            </div>
         </div>
-        <div class="d-flex flex-wrap gap-2" th:if="${currentAdminProfile.isAdminEditor()}">
-            <a class="btn btn-primary" th:href="@{/ads/new}">
-                <i class="bi bi-plus-circle me-1"></i>
-                <span>새 광고 등록</span>
-            </a>
-            <a class="btn btn-outline-primary" th:href="@{/ads/slots/new}">
-                <i class="bi bi-pin-map me-1"></i>
-                <span>새 광고 위치 추가</span>
-            </a>
-            <a class="btn btn-outline-success" th:href="@{/ads/placements/new}">
-                <i class="bi bi-calendar-plus me-1"></i>
-                <span>새 스케줄 등록</span>
-            </a>
-        </div>
-    </div>
 
         <div class="row g-3 mb-4 ads-summary-row">
             <div class="col-12 col-md-4">
@@ -62,348 +62,362 @@
             </div>
         </div>
 
-    <div th:if="${flashMessage}" class="alert alert-elevated d-flex align-items-center"
-         th:classappend="${flashStatus} == 'success' ? ' alert-success' : ' alert-danger'">
-        <i class="bi" th:classappend="${flashStatus} == 'success' ? ' bi-check-circle-fill me-2' : ' bi-exclamation-triangle-fill me-2'"></i>
-        <span th:text="${flashMessage}">처리가 완료되었습니다.</span>
-    </div>
+        <div th:if="${flashMessage}" class="alert alert-elevated d-flex align-items-center"
+             th:classappend="${flashStatus} == 'success' ? ' alert-success' : ' alert-danger'">
+            <i class="bi"
+               th:classappend="${flashStatus} == 'success' ? ' bi-check-circle-fill me-2' : ' bi-exclamation-triangle-fill me-2'"></i>
+            <span th:text="${flashMessage}">처리가 완료되었습니다.</span>
+        </div>
 
         <div class="mb-3">
             <ul class="nav nav-tabs nav-tabs-line ads-tabs">
-            <li class="nav-item">
-                <a class="nav-link" th:classappend="${tab} == 'ads' ? ' active'"
-                   th:href="@{/ads(tab='ads')}">
-                    광고
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:classappend="${tab} == 'slots' ? ' active'"
-                   th:href="@{/ads(tab='slots')}">
-                    광고 위치
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:classappend="${tab} == 'placements' ? ' active'"
-                   th:href="@{/ads(tab='placements')}">
-                    광고 노출 스케줄
-                </a>
-            </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${tab} == 'ads' ? ' active'"
+                       th:href="@{/ads(tab='ads')}">
+                        광고
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${tab} == 'slots' ? ' active'"
+                       th:href="@{/ads(tab='slots')}">
+                        광고 위치
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${tab} == 'placements' ? ' active'"
+                       th:href="@{/ads(tab='placements')}">
+                        광고 노출 스케줄
+                    </a>
+                </li>
             </ul>
         </div>
 
-    <div th:if="${tab} == 'ads'">
-        <div class="card card-elevated ads-panel mb-4">
-            <div class="card-body card-body-comfy">
-                <form class="row g-3 align-items-center" method="get">
-                    <input type="hidden" name="tab" value="ads">
-                    <div class="col-12 col-md-8">
-                        <label for="ad-search" class="form-label mb-1">검색 (이름/링크/메모)</label>
-                        <input id="ad-search" type="search" class="form-control"
-                               name="adQuery" placeholder="광고 이름, 링크 또는 메모로 검색"
-                               th:value="${adQuery}">
-                    </div>
-                    <div class="col-12 col-md-auto d-flex align-items-end gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-search me-1"></i>
-                            <span>검색</span>
-                        </button>
-                        <a class="btn btn-outline-secondary" th:href="@{/ads(tab='ads')}">초기화</a>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div th:if="${adsLoadError}" class="alert alert-danger alert-elevated d-flex align-items-center mb-3">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <span th:text="${adsLoadError}">광고 목록을 불러오지 못했습니다.</span>
-        </div>
-
-        <div class="card card-elevated ads-panel">
-            <div class="card-header card-header-tight d-flex justify-content-between align-items-center">
-                <div>
-                    <h2 class="h6 mb-1 fw-semibold">광고</h2>
-                    <p class="text-muted small mb-0">노출할 광고의 이름, 링크, 이미지를 설정합니다.</p>
-                </div>
-                <div th:if="${currentAdminProfile.isAdminEditor()}">
-                    <a class="btn btn-sm btn-primary" th:href="@{/ads/new}">
-                        <i class="bi bi-plus-circle me-1"></i>
-                        <span>새 광고 등록</span>
-                    </a>
+        <!-- 광고 탭 -->
+        <div th:if="${tab} == 'ads'">
+            <div class="card card-elevated ads-panel mb-4">
+                <div class="card-body card-body-comfy">
+                    <form class="row g-3 align-items-center" method="get">
+                        <input type="hidden" name="tab" value="ads">
+                        <div class="col-12 col-md-8">
+                            <label for="ad-search" class="form-label mb-1">검색 (이름/링크/메모)</label>
+                            <input id="ad-search" type="search" class="form-control"
+                                   name="adQuery" placeholder="광고 이름, 링크 또는 메모로 검색"
+                                   th:value="${adQuery}">
+                        </div>
+                        <div class="col-12 col-md-auto d-flex align-items-end gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search me-1"></i>
+                                <span>검색</span>
+                            </button>
+                            <a class="btn btn-outline-secondary" th:href="@{/ads(tab='ads')}">초기화</a>
+                        </div>
+                    </form>
                 </div>
             </div>
-            <div class="table-responsive">
-                <table class="table align-middle mb-0 ads-table">
-                    <thead>
-                    <tr>
-                        <th scope="col">광고 이미지</th>
-                        <th scope="col">광고 이름</th>
-                        <th scope="col">이동할 링크(URL)</th>
-                        <th scope="col">메모</th>
-                        <th scope="col">등록일 / 수정일</th>
-                        <th scope="col" class="text-end" th:if="${currentAdminProfile.isAdminEditor()}">액션</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:if="${ads.isEmpty()}">
-                        <td colspan="6" class="text-center py-5 text-muted">등록된 광고가 없습니다.</td>
-                    </tr>
-                    <tr th:each="ad : ${ads}">
-                        <td>
-                            <div class="ratio ratio-4x3 ads-thumb-surface ads-thumb-surface--lg" th:if="${ad.hasImage()}">
-                                <img th:src="${ad.imageUrl()}" alt="광고 이미지" class="media-thumb w-100 h-100">
-                            </div>
-                            <div class="ads-thumb-placeholder ads-thumb-placeholder--lg" th:if="${!ad.hasImage()}">
-                                <i class="bi bi-image"></i>
-                            </div>
-                        </td>
-                        <td class="fw-semibold" th:text="${ad.name()}">광고 이름</td>
-                        <td>
-                            <a th:href="${ad.targetUrl()}" th:text="${ad.targetUrl()}" class="text-break" target="_blank" rel="noopener">
-                                https://example.com
-                            </a>
-                        </td>
-                        <td th:text="${#strings.isEmpty(ad.memo()) ? '-' : ad.memo()}">메모</td>
-                        <td>
-                            <div class="text-muted small">등록
-                                <span th:text="${ad.createdAt() != null ? #temporals.format(ad.createdAt(), 'yyyy.MM.dd HH:mm') : '-'}">-</span>
-                            </div>
-                            <div class="text-muted small">수정
-                                <span th:text="${ad.updatedAt() != null ? #temporals.format(ad.updatedAt(), 'yyyy.MM.dd HH:mm') : '-'}">-</span>
-                            </div>
-                        </td>
-                        <td class="text-end" th:if="${currentAdminProfile.isAdminEditor()}">
-                            <div class="d-inline-flex gap-2">
-                                <a class="btn btn-sm btn-outline-primary" th:href="@{/ads/edit(id=${ad.id()})}">수정</a>
-                                <form th:action="@{/ads/delete}" method="post" class="d-inline">
-                                    <input type="hidden" name="id" th:value="${ad.id()}">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger"
-                                            th:onclick="|return confirm('정말 삭제하시겠습니까? 삭제하면 되돌릴 수 없습니다.');|">
-                                        삭제
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
 
-    <div th:if="${tab} == 'slots'">
-        <div th:if="${slotsLoadError}" class="alert alert-danger alert-elevated d-flex align-items-center mb-3">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <span th:text="${slotsLoadError}">광고 위치를 불러오지 못했습니다.</span>
-        </div>
-
-        <div class="card card-elevated ads-panel">
-            <div class="card-header card-header-tight d-flex justify-content-between align-items-center">
-                <div>
-                    <h2 class="h6 mb-1 fw-semibold">광고 위치</h2>
-                    <p class="text-muted small mb-0">광고가 표시될 화면 위치를 등록하고, 기본 광고 표시 비율 등을 설정합니다.</p>
-                </div>
-                <div th:if="${currentAdminProfile.isAdminEditor()}">
-                    <a class="btn btn-sm btn-primary" th:href="@{/ads/slots/new}">
-                        <i class="bi bi-plus-circle me-1"></i>
-                        <span>새 광고 위치 추가</span>
-                    </a>
-                </div>
+            <div th:if="${adsLoadError}" class="alert alert-danger alert-elevated d-flex align-items-center mb-3">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span th:text="${adsLoadError}">광고 목록을 불러오지 못했습니다.</span>
             </div>
-            <div class="table-responsive">
-                <table class="table align-middle mb-0 ads-table">
-                    <thead>
-                    <tr>
-                        <th scope="col">광고 위치 코드</th>
-                        <th scope="col">광고 위치 설명</th>
-                        <th scope="col">기본 광고 표시 비율(%)</th>
-                        <th scope="col">같은 광고 유지 시간(초)</th>
-                        <th scope="col">연결된 스케줄</th>
-                        <th scope="col">등록일 / 수정일</th>
-                        <th scope="col" class="text-end" th:if="${currentAdminProfile.isAdminEditor()}">액션</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:if="${slots.isEmpty()}">
-                        <td colspan="7" class="text-center py-5 text-muted">등록된 광고 위치가 없습니다.</td>
-                    </tr>
-                    <tr th:each="slot : ${slots}">
-                        <td class="fw-semibold" th:text="${slot.code()}">HOME_TOP</td>
-                        <td th:text="${#strings.isEmpty(slot.description()) ? '-' : slot.description()}">설명</td>
-                        <td th:text="${slot.fallbackRatioLabel()}">0%</td>
-                        <td th:text="${slot.ttlSeconds()}">0</td>
-                        <td th:text="${slot.connectedScheduleCount()}">0</td>
-                        <td>
-                            <div class="text-muted small">등록
-                                <span th:text="${slot.createdAt() != null ? #temporals.format(slot.createdAt(), 'yyyy.MM.dd HH:mm') : '-'}">-</span>
-                            </div>
-                            <div class="text-muted small">수정
-                                <span th:text="${slot.updatedAt() != null ? #temporals.format(slot.updatedAt(), 'yyyy.MM.dd HH:mm') : '-'}">-</span>
-                            </div>
-                        </td>
-                        <td class="text-end" th:if="${currentAdminProfile.isAdminEditor()}">
-                            <div class="d-inline-flex gap-2">
-                                <a class="btn btn-sm btn-outline-primary" th:href="@{/ads/slots/edit(id=${slot.id()})}">수정</a>
-                                <form th:action="@{/ads/slots/delete}" method="post" class="d-inline">
-                                    <input type="hidden" name="id" th:value="${slot.id()}">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger"
-                                            th:onclick="|return confirm('정말 삭제하시겠습니까? 삭제하면 되돌릴 수 없습니다.');|">
-                                        삭제
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
 
-    <div th:if="${tab} == 'placements'">
-        <div class="card card-elevated ads-panel mb-4">
-            <div class="card-body card-body-comfy">
-                <form class="row g-3 align-items-end" method="get">
-                    <input type="hidden" name="tab" value="placements">
-                    <div class="col-12 col-md-4">
-                        <label for="slotFilter" class="form-label">광고 위치 선택</label>
-                        <select id="slotFilter" name="slotFilter" class="form-select">
-                            <option th:value="" th:selected="${placementFilterSlot == null}">전체 광고 위치</option>
-                            <option th:each="slot : ${slots}"
-                                    th:value="${slot.id()}"
-                                    th:selected="${placementFilterSlot != null} ? slot.id() == placementFilterSlot : false"
-                                    th:text="${slot.code()}">
-                                위치
-                            </option>
-                        </select>
+            <div class="card card-elevated ads-panel">
+                <div class="card-header card-header-tight d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="h6 mb-1 fw-semibold">광고</h2>
+                        <p class="text-muted small mb-0">노출할 광고의 이름, 링크, 이미지를 설정합니다.</p>
                     </div>
-                    <div class="col-12 col-md-4">
-                        <label for="periodFilter" class="form-label">기간 필터</label>
-                        <select id="periodFilter" name="period" class="form-select">
-                            <option value="all" th:selected="${placementFilterPeriod == 'all'}">전체</option>
-                            <option value="today" th:selected="${placementFilterPeriod == 'today'}">오늘</option>
-                            <option value="next7" th:selected="${placementFilterPeriod == 'next7'}">향후 7일</option>
-                        </select>
+                    <div th:if="${currentAdminProfile.isAdminEditor()}">
+                        <a class="btn btn-sm btn-primary" th:href="@{/ads/new}">
+                            <i class="bi bi-plus-circle me-1"></i>
+                            <span>새 광고 등록</span>
+                        </a>
                     </div>
-                    <div class="col-12 col-md-4">
-                        <label for="statusFilter" class="form-label">상태</label>
-                        <select id="statusFilter" name="status" class="form-select">
-                            <option value="all" th:selected="${placementFilterStatus == 'all'}">전체</option>
-                            <option value="active" th:selected="${placementFilterStatus == 'active'}">노출 중</option>
-                            <option value="upcoming" th:selected="${placementFilterStatus == 'upcoming'}">예정</option>
-                            <option value="ended" th:selected="${placementFilterStatus == 'ended'}">종료</option>
-                        </select>
-                    </div>
-                    <div class="col-12 col-md-auto">
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-funnel me-1"></i>
-                            <span>필터 적용</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div th:if="${placementsLoadError}" class="alert alert-danger alert-elevated d-flex align-items-center mb-3">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <span th:text="${placementsLoadError}">광고 노출 스케줄을 불러오지 못했습니다.</span>
-        </div>
-
-        <div th:if="${placementGroups.isEmpty()}" class="card card-elevated ads-panel">
-            <div class="card-body text-center py-5 text-muted">
-                등록된 광고 노출 스케줄이 없습니다.
-            </div>
-        </div>
-
-        <div th:each="group : ${placementGroups}" class="card card-elevated ads-panel mb-4">
-            <div class="card-header card-header-tight d-flex flex-wrap justify-content-between align-items-center gap-2">
-                <div>
-                    <h3 class="h6 mb-1 fw-semibold" th:text="${group.slotCode()}">HOME_TOP</h3>
-                    <p class="text-muted small mb-0" th:text="${#strings.isEmpty(group.slotDescription()) ? '설명이 없습니다.' : group.slotDescription()}">
-                        광고 위치 설명
-                    </p>
                 </div>
-                <div th:if="${currentAdminProfile.isAdminEditor()}">
-                    <a class="btn btn-sm btn-outline-primary" th:href="@{/ads/placements/new(slotId=${group.slotId()})}">
-                        <i class="bi bi-plus-circle me-1"></i>
-                        <span>새 스케줄 등록</span>
-                    </a>
-                </div>
-            </div>
-            <div class="table-responsive">
-                <table class="table align-middle mb-0 ads-table">
-                    <thead>
-                    <tr>
-                        <th scope="col">광고</th>
-                        <th scope="col">노출 기간</th>
-                        <th scope="col">노출 강도</th>
-                        <th scope="col">노출 상태</th>
-                        <th scope="col">등록일 / 수정일</th>
-                        <th scope="col" class="text-end" th:if="${currentAdminProfile.isAdminEditor()}">액션</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:if="${!group.hasPlacements()}">
-                        <td colspan="6" class="text-center py-4 text-muted">등록된 스케줄이 없습니다.</td>
-                    </tr>
-                    <tr th:each="placement : ${group.placements()}">
-                        <td>
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="ratio ratio-1x1 ads-thumb-surface ads-thumb-surface--sm flex-shrink-0" th:if="${placement.hasImage()}">
-                                    <img th:src="${placement.adImageUrl()}" alt="광고 미리보기" class="media-thumb w-100 h-100">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0 ads-table">
+                        <thead>
+                        <tr>
+                            <th scope="col">광고 이미지</th>
+                            <th scope="col">광고 이름</th>
+                            <th scope="col">이동할 링크(URL)</th>
+                            <th scope="col">메모</th>
+                            <th scope="col">등록일 / 수정일</th>
+                            <th scope="col" class="text-end" th:if="${currentAdminProfile.isAdminEditor()}">액션</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${ads.isEmpty()}">
+                            <td colspan="6" class="text-center py-5 text-muted">등록된 광고가 없습니다.</td>
+                        </tr>
+                        <tr th:each="ad : ${ads}">
+                            <td>
+                                <div class="ratio ratio-4x3 ads-thumb-surface ads-thumb-surface--lg"
+                                     th:if="${ad.hasImage()}">
+                                    <img th:src="${ad.imageUrl()}" alt="광고 이미지" class="media-thumb w-100 h-100">
                                 </div>
-                                <div class="ads-thumb-placeholder ads-thumb-placeholder--sm flex-shrink-0" th:if="${!placement.hasImage()}">
+                                <div class="ads-thumb-placeholder ads-thumb-placeholder--lg"
+                                     th:if="${!ad.hasImage()}">
                                     <i class="bi bi-image"></i>
                                 </div>
-                                <div class="fw-semibold" th:text="${placement.adName()}">광고 이름</div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="fw-semibold" th:text="${placement.periodLabel()}">2025.01.01 ~ 2025.01.31</div>
-                            <div class="text-muted small" th:text="${placement.timeStatusLabel()}">노출 중</div>
-                        </td>
-                        <td>
-                            <span class="badge text-bg-primary-subtle text-primary" th:text="${placement.weightLabel()}">1</span>
-                        </td>
-                        <td>
-                            <span class="badge"
-                                  th:classappend="${placement.enabled()} ? ' text-bg-success' : ' text-bg-secondary'"
-                                  th:text="${placement.displayStatusLabel()}">노출 중</span>
-                        </td>
-                        <td>
-                            <div class="text-muted small">등록
-                                <span th:text="${placement.createdAt() != null ? #temporals.format(placement.createdAt(), 'yyyy.MM.dd HH:mm') : '-'}">-</span>
-                            </div>
-                            <div class="text-muted small">수정
-                                <span th:text="${placement.updatedAt() != null ? #temporals.format(placement.updatedAt(), 'yyyy.MM.dd HH:mm') : '-'}">-</span>
-                            </div>
-                        </td>
-                        <td class="text-end" th:if="${currentAdminProfile.isAdminEditor()}">
-                            <div class="d-inline-flex gap-2">
-                                <form th:action="@{/ads/placements/toggle}" method="post" class="d-inline">
-                                    <input type="hidden" name="id" th:value="${placement.id()}">
-                                    <input type="hidden" name="enabled" th:value="${!placement.enabled()}">
-                                    <button type="submit" class="btn btn-sm"
-                                            th:classappend="${placement.enabled()} ? ' btn-outline-warning' : ' btn-outline-success'"
-                                            th:onclick="${placement.enabled()} ? 'return confirm(\'이 스케줄을 일시 중지하면 광고가 노출되지 않습니다. 계속하시겠습니까?\');' : 'return confirm(\'이 스케줄을 다시 활성화합니다.\');'">
-                                        <span th:text="${placement.enabled() ? '일시 중지' : '다시 활성화'}">일시 중지</span>
-                                    </button>
-                                </form>
-                                <a class="btn btn-sm btn-outline-primary" th:href="@{/ads/placements/edit(id=${placement.id()})}">수정</a>
-                                <form th:action="@{/ads/placements/delete}" method="post" class="d-inline">
-                                    <input type="hidden" name="id" th:value="${placement.id()}">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger"
-                                            th:onclick="|return confirm('정말 삭제하시겠습니까? 삭제하면 되돌릴 수 없습니다.');|">
-                                        삭제
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+                            </td>
+                            <td class="fw-semibold" th:text="${ad.name()}">광고 이름</td>
+                            <td>
+                                <a th:href="${ad.targetUrl()}" th:text="${ad.targetUrl()}" class="text-break"
+                                   target="_blank" rel="noopener">
+                                    https://example.com
+                                </a>
+                            </td>
+                            <td th:text="${#strings.isEmpty(ad.memo()) ? '-' : ad.memo()}">메모</td>
+                            <td>
+                                <div class="text-muted small">등록
+                                    <span th:text="${ad.createdAt() != null ? #temporals.format(ad.createdAt(), 'yyyy.MM.dd HH:mm') : '-'}">-</span>
+                                </div>
+                                <div class="text-muted small">수정
+                                    <span th:text="${ad.updatedAt() != null ? #temporals.format(ad.updatedAt(), 'yyyy.MM.dd HH:mm') : '-'}">-</span>
+                                </div>
+                            </td>
+                            <td class="text-end" th:if="${currentAdminProfile.isAdminEditor()}">
+                                <div class="d-inline-flex gap-2">
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       th:href="@{/ads/edit(id=${ad.id()})}">수정</a>
+                                    <form th:action="@{/ads/delete}" method="post" class="d-inline">
+                                        <input type="hidden" name="id" th:value="${ad.id()}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                th:onclick="|return confirm('정말 삭제하시겠습니까? 삭제하면 되돌릴 수 없습니다.');|">
+                                            삭제
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
+
+        <!-- 광고 위치 탭 -->
+        <div th:if="${tab} == 'slots'">
+            <div th:if="${slotsLoadError}"
+                 class="alert alert-danger alert-elevated d-flex align-items-center mb-3">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span th:text="${slotsLoadError}">광고 위치를 불러오지 못했습니다.</span>
+            </div>
+
+            <div class="card card-elevated ads-panel">
+                <div class="card-header card-header-tight d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="h6 mb-1 fw-semibold">광고 위치</h2>
+                        <p class="text-muted small mb-0">
+                            광고가 표시될 화면 위치를 등록하고, 기본 광고 표시 비율 등을 설정합니다.
+                        </p>
+                    </div>
+                    <div th:if="${currentAdminProfile.isAdminEditor()}">
+                        <a class="btn btn-sm btn-primary" th:href="@{/ads/slots/new}">
+                            <i class="bi bi-plus-circle me-1"></i>
+                            <span>새 광고 위치 추가</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0 ads-table">
+                        <thead>
+                        <tr>
+                            <th scope="col">광고 위치 코드</th>
+                            <th scope="col">설명</th>
+                            <th scope="col">기본 노출 비율</th>
+                            <th scope="col">노출 중인 스케줄 수</th>
+                            <th scope="col" class="text-end" th:if="${currentAdminProfile.isAdminEditor()}">액션</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${slots.isEmpty()}">
+                            <td colspan="5" class="text-center py-5 text-muted">등록된 광고 위치가 없습니다.</td>
+                        </tr>
+                        <tr th:each="slot : ${slots}">
+                            <td class="fw-semibold" th:text="${slot.code()}">HOME_TOP</td>
+                            <td th:text="${#strings.isEmpty(slot.description()) ? '설명이 없습니다.' : slot.description()}">
+                                설명
+                            </td>
+                            <td>
+                                <span class="badge text-bg-primary-subtle text-primary"
+                                      th:text="${slot.fallbackRatioLabel()}">50%</span>
+                            </td>
+                            <td>
+                                <span th:text="${slot.connectedScheduleCount()}">0</span>
+                            </td>
+                            <td class="text-end" th:if="${currentAdminProfile.isAdminEditor()}">
+                                <div class="d-inline-flex gap-2">
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       th:href="@{/ads/slots/edit(id=${slot.id()})}">설정</a>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 노출 스케줄 탭 -->
+        <div th:if="${tab} == 'placements'">
+            <div class="card card-elevated ads-panel mb-4">
+                <div class="card-body card-body-comfy">
+                    <form class="row g-3 align-items-end" method="get">
+                        <input type="hidden" name="tab" value="placements">
+                        <div class="col-12 col-md-4">
+                            <label for="slotFilter" class="form-label">광고 위치</label>
+                            <select id="slotFilter" name="slotFilter" class="form-select">
+                                <!-- 여기만 수정: th:value -> value -->
+                                <option value="" th:selected="${placementFilterSlot == null}">전체 광고 위치</option>
+                                <option th:each="slot : ${slots}"
+                                        th:value="${slot.id()}"
+                                        th:selected="${slot.id() == placementFilterSlot}"
+                                        th:text="${slot.code()}">
+                                    위치
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label for="periodFilter" class="form-label">기간 필터</label>
+                            <select id="periodFilter" name="period" class="form-select">
+                                <option value="all" th:selected="${placementFilterPeriod == 'all'}">전체 기간</option>
+                                <option value="active" th:selected="${placementFilterPeriod == 'active'}">진행 중</option>
+                                <option value="upcoming" th:selected="${placementFilterPeriod == 'upcoming'}">시작 예정
+                                </option>
+                                <option value="past" th:selected="${placementFilterPeriod == 'past'}">종료됨</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label for="statusFilter" class="form-label">노출 상태</label>
+                            <select id="statusFilter" name="status" class="form-select">
+                                <option value="all" th:selected="${placementFilterStatus == 'all'}">전체 상태</option>
+                                <option value="enabled" th:selected="${placementFilterStatus == 'enabled'}">노출 중</option>
+                                <option value="disabled" th:selected="${placementFilterStatus == 'disabled'}">일시 중지
+                                </option>
+                                <option value="ended" th:selected="${placementFilterStatus == 'ended'}">종료</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-auto">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-funnel me-1"></i>
+                                <span>필터 적용</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div th:if="${placementsLoadError}"
+                 class="alert alert-danger alert-elevated d-flex align-items-center mb-3">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span th:text="${placementsLoadError}">광고 노출 스케줄을 불러오지 못했습니다.</span>
+            </div>
+
+            <div th:if="${placementGroups.isEmpty()}" class="card card-elevated ads-panel">
+                <div class="card-body text-center py-5 text-muted">
+                    등록된 광고 노출 스케줄이 없습니다.
+                </div>
+            </div>
+
+            <div th:each="group : ${placementGroups}" class="card card-elevated ads-panel mb-4">
+                <div class="card-header card-header-tight d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <h3 class="h6 mb-1 fw-semibold" th:text="${group.slotCode()}">HOME_TOP</h3>
+                        <p class="text-muted small mb-0"
+                           th:text="${#strings.isEmpty(group.slotDescription()) ? '설명이 없습니다.' : group.slotDescription()}">
+                            광고 위치 설명
+                        </p>
+                    </div>
+                    <div th:if="${currentAdminProfile.isAdminEditor()}">
+                        <a class="btn btn-sm btn-outline-primary"
+                           th:href="@{/ads/placements/new(slotId=${group.slotId()})}">
+                            <i class="bi bi-plus-circle me-1"></i>
+                            <span>새 스케줄 등록</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0 ads-table">
+                        <thead>
+                        <tr>
+                            <th scope="col">광고</th>
+                            <th scope="col">노출 기간</th>
+                            <th scope="col">노출 강도</th>
+                            <th scope="col">노출 상태</th>
+                            <th scope="col">등록일 / 수정일</th>
+                            <th scope="col" class="text-end" th:if="${currentAdminProfile.isAdminEditor()}">액션</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${!group.hasPlacements()}">
+                            <td colspan="6" class="text-center py-4 text-muted">등록된 스케줄이 없습니다.</td>
+                        </tr>
+                        <tr th:each="placement : ${group.placements()}">
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="ratio ratio-1x1 ads-thumb-surface ads-thumb-surface--sm flex-shrink-0"
+                                         th:if="${placement.hasImage()}">
+                                        <img th:src="${placement.adImageUrl()}" alt="광고 미리보기"
+                                             class="media-thumb w-100 h-100">
+                                    </div>
+                                    <div class="ads-thumb-placeholder ads-thumb-placeholder--sm flex-shrink-0"
+                                         th:if="${!placement.hasImage()}">
+                                        <i class="bi bi-image"></i>
+                                    </div>
+                                    <div class="fw-semibold" th:text="${placement.adName()}">광고 이름</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold" th:text="${placement.periodLabel()}">2025.01.01 ~ 2025.01.31</div>
+                                <div class="text-muted small" th:text="${placement.timeStatusLabel()}">노출 중</div>
+                            </td>
+                            <td>
+                                <span class="badge text-bg-primary-subtle text-primary"
+                                      th:text="${placement.weightLabel()}">1</span>
+                            </td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${placement.enabled()} ? ' text-bg-success' : ' text-bg-secondary'"
+                                      th:text="${placement.displayStatusLabel()}">노출 중</span>
+                            </td>
+                            <td>
+                                <div class="text-muted small">등록
+                                    <span th:text="${placement.createdAt() != null ? #temporals.format(placement.createdAt(), 'yyyy.MM.dd HH:mm') : '-'}">-</span>
+                                </div>
+                                <div class="text-muted small">수정
+                                    <span th:text="${placement.updatedAt() != null ? #temporals.format(placement.updatedAt(), 'yyyy.MM.dd HH:mm') : '-'}">-</span>
+                                </div>
+                            </td>
+                            <td class="text-end" th:if="${currentAdminProfile.isAdminEditor()}">
+                                <div class="d-inline-flex gap-2">
+                                    <form th:action="@{/ads/placements/toggle}" method="post" class="d-inline">
+                                        <input type="hidden" name="id" th:value="${placement.id()}">
+                                        <input type="hidden" name="enabled" th:value="${!placement.enabled()}">
+                                        <button type="submit" class="btn btn-sm"
+                                                th:classappend="${placement.enabled()} ? ' btn-outline-warning' : ' btn-outline-success'"
+                                                th:onclick="${placement.enabled()} ? 'return confirm(\'이 스케줄을 일시 중지하면 광고가 노출되지 않습니다. 계속하시겠습니까?\');' : 'return confirm(\'이 스케줄을 다시 활성화합니다.\');'">
+                                            <span th:text="${placement.enabled() ? '일시 중지' : '다시 활성화'}">일시 중지</span>
+                                        </button>
+                                    </form>
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       th:href="@{/ads/placements/edit(id=${placement.id()})}">수정</a>
+                                    <form th:action="@{/ads/placements/delete}" method="post" class="d-inline">
+                                        <input type="hidden" name="id" th:value="${placement.id()}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                th:onclick="|return confirm('정말 삭제하시겠습니까? 삭제하면 되돌릴 수 없습니다.');|">
+                                            삭제
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 </th:block>
 </html>
