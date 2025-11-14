@@ -128,6 +128,17 @@ public record AdPlacementItem(
         };
     }
 
+    public String priorityBadgeClass() {
+        return switch (weight) {
+            case 1 -> "ads-priority-badge--very-low";
+            case 2 -> "ads-priority-badge--low";
+            case 3 -> "ads-priority-badge--medium";
+            case 4 -> "ads-priority-badge--high";
+            case 5 -> "ads-priority-badge--very-high";
+            default -> "ads-priority-badge--unknown";
+        };
+    }
+
     public boolean hasImage() {
         return adImageUrl != null && !adImageUrl.isBlank();
     }

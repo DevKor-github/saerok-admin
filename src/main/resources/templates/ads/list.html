@@ -253,7 +253,8 @@
                                 <div class="fw-semibold" th:text="${placement.periodLabel()}">2025.01.01 ~ 2025.01.31</div>
                             </td>
                             <td>
-                                <span class="badge text-bg-primary-subtle text-primary"
+                                <span class="badge ads-priority-badge"
+                                      th:classappend="${placement.priorityBadgeClass()}"
                                       th:text="${placement.weightLabel()}">매우 낮음</span>
                             </td>
                             <td>
