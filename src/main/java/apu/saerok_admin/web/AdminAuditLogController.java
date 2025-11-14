@@ -30,16 +30,28 @@ public class AdminAuditLogController {
     private static final Logger log = LoggerFactory.getLogger(AdminAuditLogController.class);
     private static final int DEFAULT_PAGE_SIZE = 20;
     private static final List<Integer> PAGE_SIZE_OPTIONS = List.of(10, 20, 50);
-    private static final Map<String, ActionPresentation> ACTION_PRESENTATIONS = Map.of(
-            "REPORT_IGNORED", new ActionPresentation("신고 무시", "신고를 추가 조치 없이 마감했습니다.", "text-bg-secondary"),
-            "COLLECTION_DELETED", new ActionPresentation("컬렉션 삭제", "신고된 컬렉션을 삭제했습니다.", "text-bg-danger"),
-            "COMMENT_DELETED", new ActionPresentation("댓글 삭제", "신고된 댓글을 삭제했습니다.", "text-bg-danger")
+    private static final Map<String, ActionPresentation> ACTION_PRESENTATIONS = Map.ofEntries(
+            Map.entry("REPORT_IGNORED", new ActionPresentation("신고 무시", "신고를 추가 조치 없이 마감했습니다.", "text-bg-secondary")),
+            Map.entry("COLLECTION_DELETED", new ActionPresentation("새록 삭제", "신고된 새록을 삭제했습니다.", "text-bg-danger")),
+            Map.entry("COMMENT_DELETED", new ActionPresentation("댓글 삭제", "신고된 댓글을 삭제했습니다.", "text-bg-danger")),
+            Map.entry("AD_CREATED", new ActionPresentation("광고 등록", "새 광고를 등록했습니다.", "text-bg-success")),
+            Map.entry("AD_UPDATED", new ActionPresentation("광고 수정", "기존 광고 정보를 수정했습니다.", "text-bg-info")),
+            Map.entry("AD_DELETED", new ActionPresentation("광고 삭제", "광고를 삭제했습니다.", "text-bg-danger")),
+            Map.entry("SLOT_CREATED", new ActionPresentation("광고 위치 등록", "새 광고 위치를 등록했습니다.", "text-bg-success")),
+            Map.entry("SLOT_UPDATED", new ActionPresentation("광고 위치 수정", "광고 위치 정보를 수정했습니다.", "text-bg-info")),
+            Map.entry("SLOT_DELETED", new ActionPresentation("광고 위치 삭제", "광고 위치를 삭제했습니다.", "text-bg-danger")),
+            Map.entry("AD_PLACEMENT_CREATED", new ActionPresentation("광고 스케줄 등록", "새 광고 스케줄을 등록했습니다.", "text-bg-success")),
+            Map.entry("AD_PLACEMENT_UPDATED", new ActionPresentation("광고 스케줄 수정", "광고 스케줄을 수정했습니다.", "text-bg-info")),
+            Map.entry("AD_PLACEMENT_DELETED", new ActionPresentation("광고 스케줄 삭제", "광고 스케줄을 삭제했습니다.", "text-bg-danger"))
     );
-    private static final Map<String, String> TARGET_LABELS = Map.of(
-            "REPORT_COLLECTION", "컬렉션 신고",
-            "REPORT_COMMENT", "댓글 신고",
-            "COLLECTION", "컬렉션",
-            "COMMENT", "댓글"
+    private static final Map<String, String> TARGET_LABELS = Map.ofEntries(
+            Map.entry("REPORT_COLLECTION", "새록 신고"),
+            Map.entry("REPORT_COMMENT", "댓글 신고"),
+            Map.entry("COLLECTION", "새록"),
+            Map.entry("COMMENT", "댓글"),
+            Map.entry("AD", "광고"),
+            Map.entry("SLOT", "광고 위치"),
+            Map.entry("AD_PLACEMENT", "광고 스케줄")
     );
     private static final String UNKNOWN_ACTION_LABEL = "기록되지 않은 작업";
     private static final String UNKNOWN_ACTION_DESCRIPTION = "정의되지 않은 관리자 활동입니다.";
