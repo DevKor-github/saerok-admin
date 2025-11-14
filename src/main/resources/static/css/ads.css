@@ -610,7 +610,7 @@
 
     .ads-card__metric {
         flex-direction: row;
-        align-items: center;
+        align-items: stretch;
         justify-content: space-between;
         padding: 0.85rem 1rem;
         border-radius: 0.9rem;
@@ -634,7 +634,7 @@
 
     .ads-card__metric--probability .ads-card__metric-value {
         justify-content: flex-end;
-        width: 100%;
+        width: 50%;
     }
 }
 
