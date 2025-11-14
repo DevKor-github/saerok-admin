@@ -192,11 +192,15 @@
                                     <div class="text-muted small">광고가 없을 때 표시되는 기본 콘텐츠입니다.</div>
                                 </div>
                             </div>
-                            <div class="ads-card__meta">
-                                <div class="ads-card__meta-label">광고가 뜰 확률</div>
-                                <span class="badge ads-probability-badge"
-                                      th:classappend="${group.hasFallbackProbability()} ? ' ads-probability-badge--active' : ' ads-probability-badge--muted'"
-                                      th:text="${group.fallbackProbabilityLabel()}">50%</span>
+                            <div class="ads-card__metrics">
+                                <div class="ads-card__metric ads-card__metric--probability">
+                                    <div class="ads-card__metric-label">광고가 뜰 확률</div>
+                                    <div class="ads-card__metric-value">
+                                        <span class="badge ads-probability-badge"
+                                              th:classappend="${group.hasFallbackProbability()} ? ' ads-probability-badge--active' : ' ads-probability-badge--muted'"
+                                              th:text="${group.fallbackProbabilityLabel()}">50%</span>
+                                    </div>
+                                </div>
                             </div>
                             <div class="ads-card__actions"
                                  th:if="${currentAdminProfile.isAdminEditor() && group.slotId() != null && group.slotCode() != null}">
@@ -228,29 +232,37 @@
                                 <div class="ads-card__body">
                                     <div class="ads-card__meta-label">광고</div>
                                     <div class="fw-semibold" th:text="${placement.adName()}">광고 이름</div>
-                                    <div class="ads-card__meta">
-                                        <div class="ads-card__meta-label">진행 상태</div>
+                                </div>
+                            </div>
+                            <div class="ads-card__metrics">
+                                <div class="ads-card__metric">
+                                    <div class="ads-card__metric-label">진행 상태</div>
+                                    <div class="ads-card__metric-value">
                                         <span class="badge ads-status-badge"
                                               th:classappend="${placement.statusBadgeClass()}"
                                               th:text="${placement.displayStatusLabel()}">진행 중</span>
+                                    </div>
+                                </div>
+                                <div class="ads-card__metric">
+                                    <div class="ads-card__metric-label">우선순위</div>
+                                    <div class="ads-card__metric-value">
+                                        <span class="badge ads-priority-badge"
+                                              th:classappend="${placement.priorityBadgeClass()}"
+                                              th:text="${placement.weightLabel()}">매우 낮음</span>
+                                    </div>
+                                </div>
+                                <div class="ads-card__metric ads-card__metric--probability">
+                                    <div class="ads-card__metric-label">광고가 뜰 확률</div>
+                                    <div class="ads-card__metric-value">
+                                        <span class="badge ads-probability-badge"
+                                              th:classappend="${placement.hasPositiveProbability()} ? ' ads-probability-badge--active' : ' ads-probability-badge--muted'"
+                                              th:text="${placement.probabilityLabel()}">0%</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="ads-card__meta">
                                 <div class="ads-card__meta-label">진행 기간</div>
                                 <div class="fw-semibold" th:text="${placement.periodLabel()}">2025.01.01 ~ 2025.01.31</div>
-                            </div>
-                            <div class="ads-card__meta">
-                                <div class="ads-card__meta-label">우선순위</div>
-                                <span class="badge ads-priority-badge"
-                                      th:classappend="${placement.priorityBadgeClass()}"
-                                      th:text="${placement.weightLabel()}">매우 낮음</span>
-                            </div>
-                            <div class="ads-card__meta">
-                                <div class="ads-card__meta-label">광고가 뜰 확률</div>
-                                <span class="badge ads-probability-badge"
-                                      th:classappend="${placement.hasPositiveProbability()} ? ' ads-probability-badge--active' : ' ads-probability-badge--muted'"
-                                      th:text="${placement.probabilityLabel()}">0%</span>
                             </div>
                             <div class="ads-card__actions" th:if="${currentAdminProfile.isAdminEditor()}">
                                 <form th:if="${placement.canToggle()}" th:action="@{/ads/placements/toggle}"

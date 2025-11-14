@@ -412,6 +412,7 @@
     border-radius: 999px;
     font-size: 0.95rem;
     font-weight: 700;
+    font-variant-numeric: tabular-nums;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -549,12 +550,31 @@
     gap: 0.35rem;
 }
 
-.ads-card__meta-label {
+.ads-card__meta-label,
+.ads-card__metric-label {
     font-size: 0.75rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: #64748b;
     font-weight: 600;
+}
+
+.ads-card__metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.ads-card__metric {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.ads-card__metric-value {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .ads-card__actions {
@@ -578,6 +598,44 @@
 .ads-card--fallback .ads-card__content {
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(14, 165, 233, 0.06));
     border-color: rgba(99, 102, 241, 0.2);
+}
+
+@media (min-width: 992px) {
+    .ads-card__metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.85rem;
+        align-items: stretch;
+    }
+
+    .ads-card__metric {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.85rem 1rem;
+        border-radius: 0.9rem;
+        background: linear-gradient(135deg, rgba(226, 232, 240, 0.35), rgba(248, 250, 252, 0.4));
+        box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+        gap: 0.75rem;
+    }
+
+    .ads-card__metric-value {
+        margin-left: auto;
+    }
+
+    .ads-card__metric--probability {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(56, 189, 248, 0.18));
+        box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.26);
+    }
+
+    .ads-card__metric--probability .ads-card__metric-label {
+        color: #4338ca;
+    }
+
+    .ads-card__metric--probability .ads-card__metric-value {
+        justify-content: flex-end;
+        width: 100%;
+    }
 }
 
 @media (max-width: 575.98px) {
