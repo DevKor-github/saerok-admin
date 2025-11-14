@@ -19,7 +19,7 @@
                         <div class="ads-summary-icon">
                             <i class="bi bi-calendar3"></i>
                         </div>
-                        <div class="ads-summary-label">지금 노출되고 있는 광고 수</div>
+                        <div class="ads-summary-label">지금 진행 중인 광고 수</div>
                         <div class="ads-summary-value" th:text="${summary.activePlacementCount()}">0</div>
                     </div>
                 </div>
@@ -205,7 +205,7 @@
                                         <i class="bi bi-stars"></i>
                                     </div>
                                     <div>
-                                        <div class="fw-semibold">기본 광고</div>
+                                        <div class="fw-semibold">기본 광고 (Kakao AdFit)</div>
                                         <div class="text-muted small">광고가 없을 때 표시되는 기본 콘텐츠입니다.</div>
                                     </div>
                                 </div>
@@ -224,7 +224,7 @@
                                             data-bs-toggle="modal"
                                             data-bs-target="#fallbackRatioModal"
                                             th:attr="data-slot-id=${group.slotId()}, data-slot-code=${group.slotCode()}, data-fallback-ratio=${group.fallbackRatioPercent()}, data-slot-description=${group.slotDescription() == null ? '' : group.slotDescription()}, data-slot-ttl=${group.slotTtlSeconds()}"
-                                            >기본 광고가 뜰 확률 수정</button>
+                                            >기본 광고 표시 확률 수정</button>
                                 </div>
                             </td>
                         </tr>
@@ -310,7 +310,7 @@
                 <div class="modal-content">
                     <form th:action="@{/ads/slots/edit}" method="post" class="needs-validation" novalidate>
                         <div class="modal-header">
-                            <h5 class="modal-title">기본 광고 노출 확률 수정</h5>
+                            <h5 class="modal-title">기본 광고 표시 확률 수정</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
@@ -324,7 +324,7 @@
                                 <div class="text-muted small fallback-slot-description"></div>
                             </div>
                             <div class="mb-3">
-                                <label for="fallbackRatioInput" class="form-label">기본 광고 노출 확률 (%)</label>
+                                <label for="fallbackRatioInput" class="form-label">기본 광고 표시 확률 (%)</label>
                                 <input type="number" class="form-control" id="fallbackRatioInput" name="fallbackRatio"
                                        min="0" max="100" step="1" required>
                                 <div class="form-text">현재 설정값: <span class="fallback-current-ratio">0%</span></div>
