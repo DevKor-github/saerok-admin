@@ -36,7 +36,7 @@
 
                     <div class="row g-3">
                         <div class="col-12 col-md-6">
-                            <label for="startDate" class="form-label">광고 노출 기간</label>
+                            <label for="startDate" class="form-label">진행 기간</label>
                             <input type="date" class="form-control" id="startDate" name="startDate"
                                    th:value="${form.startDate()}" required>
                             <div class="form-text">시작일</div>
@@ -51,36 +51,36 @@
 
                     <div class="row g-4 align-items-center">
                         <div class="col-12 col-lg-8">
-                            <label class="form-label d-block">노출 강도(1~5)</label>
-                            <div class="btn-group ads-weight-group" role="group" aria-label="노출 강도 선택">
+                            <label class="form-label d-block">우선순위(1~5)</label>
+                            <div class="btn-group ads-weight-group" role="group" aria-label="우선순위 선택">
                                 <input type="radio" class="btn-check" name="weight" id="weight1" value="1"
                                        th:checked="${form.weight() == null or form.weight() == 1}" required>
-                                <label class="btn btn-outline-primary" for="weight1">1</label>
+                                <label class="btn btn-outline-primary" for="weight1">매우 낮음</label>
 
                                 <input type="radio" class="btn-check" name="weight" id="weight2" value="2"
                                        th:checked="${form.weight() == 2}">
-                                <label class="btn btn-outline-primary" for="weight2">2</label>
+                                <label class="btn btn-outline-primary" for="weight2">낮음</label>
 
                                 <input type="radio" class="btn-check" name="weight" id="weight3" value="3"
                                        th:checked="${form.weight() == 3}">
-                                <label class="btn btn-outline-primary" for="weight3">3</label>
+                                <label class="btn btn-outline-primary" for="weight3">보통</label>
 
                                 <input type="radio" class="btn-check" name="weight" id="weight4" value="4"
                                        th:checked="${form.weight() == 4}">
-                                <label class="btn btn-outline-primary" for="weight4">4</label>
+                                <label class="btn btn-outline-primary" for="weight4">높음</label>
 
                                 <input type="radio" class="btn-check" name="weight" id="weight5" value="5"
                                        th:checked="${form.weight() == 5}">
-                                <label class="btn btn-outline-primary" for="weight5">5</label>
+                                <label class="btn btn-outline-primary" for="weight5">매우 높음</label>
                             </div>
-                            <div class="form-text">노출 강도가 높을수록 화면에 등장하는 빈도가 늘어납니다.</div>
+                            <div class="form-text">우선순위가 높을수록 화면에 등장하는 빈도가 늘어납니다.</div>
                         </div>
                         <div class="col-12 col-lg-4">
-                            <label for="enabledSwitch" class="form-label">노출 상태</label>
+                            <label for="enabledSwitch" class="form-label">진행 상태</label>
                             <div class="form-check form-switch ads-status-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" id="enabledSwitch" name="enabled"
                                        value="true" th:checked="${form.enabled() == null or form.enabled()}">
-                                <label class="form-check-label" for="enabledSwitch">노출 중으로 유지</label>
+                                <label class="form-check-label" for="enabledSwitch">진행 중으로 유지</label>
                             </div>
                             <div class="form-text">꺼짐으로 전환하면 이 스케줄이 즉시 일시 중지됩니다.</div>
                         </div>
