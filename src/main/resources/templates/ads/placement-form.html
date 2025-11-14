@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+    <link th:href="@{/css/ads.css(v=${#dates.createNow().getTime()})}" rel="stylesheet">
+
+    <div class="ads-page ads-form-page">
+        <div class="card card-elevated ads-form-card">
+            <div class="card-header card-header-tight ads-form-card__header">
+                <h1 class="h5 mb-0" th:text="${form.isEdit()} ? '스케줄 수정' : '새 스케줄 등록'">새 스케줄 등록</h1>
+            </div>
+            <div class="card-body card-body-comfy ads-form-card__body">
+                <form th:action="${form.isEdit()} ? @{/ads/placements/edit} : @{/ads/placements}" method="post" class="vstack gap-4">
+                    <input type="hidden" name="id" th:value="${form.id()}" th:if="${form.isEdit()}">
+
+                    <div>
+                        <label for="placementAdId" class="form-label">광고 선택</label>
+                        <select id="placementAdId" name="adId" class="form-select" required th:disabled="${form.isEdit()}">
+                            <option value="" th:selected="${form.adId() == null}">광고를 선택하세요</option>
+                            <option th:each="ad : ${adOptions}" th:value="${ad.id()}"
+                                    th:selected="${ad.id() == form.adId()}"
+                                    th:text="${ad.name()}">광고</option>
+                        </select>
+                        <div class="form-text" th:if="${form.isEdit()}">광고는 수정할 수 없습니다. 새 스케줄을 등록하세요.</div>
+                    </div>
+
+                    <div>
+                        <label for="placementSlotId" class="form-label">광고 위치 선택</label>
+                        <select id="placementSlotId" name="slotId" class="form-select" required>
+                            <option value="" th:selected="${form.slotId() == null}">광고 위치를 선택하세요</option>
+                            <option th:each="slot : ${slotOptions}" th:value="${slot.id()}"
+                                    th:selected="${slot.id() == form.slotId()}"
+                                    th:text="${slot.code()}">광고 위치</option>
+                        </select>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label for="startDate" class="form-label">광고 노출 기간</label>
+                            <input type="date" class="form-control" id="startDate" name="startDate"
+                                   th:value="${form.startDate()}" required>
+                            <div class="form-text">시작일</div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label invisible">종료일</label>
+                            <input type="date" class="form-control" id="endDate" name="endDate"
+                                   th:value="${form.endDate()}" required>
+                            <div class="form-text">종료일</div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 align-items-center">
+                        <div class="col-12 col-lg-8">
+                            <label class="form-label d-block">노출 강도(1~5)</label>
+                            <div class="btn-group ads-weight-group" role="group" aria-label="노출 강도 선택">
+                                <input type="radio" class="btn-check" name="weight" id="weight1" value="1"
+                                       th:checked="${form.weight() == null or form.weight() == 1}" required>
+                                <label class="btn btn-outline-primary" for="weight1">1</label>
+
+                                <input type="radio" class="btn-check" name="weight" id="weight2" value="2"
+                                       th:checked="${form.weight() == 2}">
+                                <label class="btn btn-outline-primary" for="weight2">2</label>
+
+                                <input type="radio" class="btn-check" name="weight" id="weight3" value="3"
+                                       th:checked="${form.weight() == 3}">
+                                <label class="btn btn-outline-primary" for="weight3">3</label>
+
+                                <input type="radio" class="btn-check" name="weight" id="weight4" value="4"
+                                       th:checked="${form.weight() == 4}">
+                                <label class="btn btn-outline-primary" for="weight4">4</label>
+
+                                <input type="radio" class="btn-check" name="weight" id="weight5" value="5"
+                                       th:checked="${form.weight() == 5}">
+                                <label class="btn btn-outline-primary" for="weight5">5</label>
+                            </div>
+                            <div class="form-text">노출 강도가 높을수록 화면에 등장하는 빈도가 늘어납니다.</div>
+                        </div>
+                        <div class="col-12 col-lg-4">
+                            <label for="enabledSwitch" class="form-label">노출 상태</label>
+                            <div class="form-check form-switch ads-status-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="enabledSwitch" name="enabled"
+                                       value="true" th:checked="${form.enabled() == null or form.enabled()}">
+                                <label class="form-check-label" for="enabledSwitch">노출 중으로 유지</label>
+                            </div>
+                            <div class="form-text">꺼짐으로 전환하면 이 스케줄이 즉시 일시 중지됩니다.</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 ads-form-actions">
+                        <a class="btn btn-outline-secondary" th:href="@{/ads(tab='placements')}">취소</a>
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    </div>
+</th:block>
+</html>
+
+

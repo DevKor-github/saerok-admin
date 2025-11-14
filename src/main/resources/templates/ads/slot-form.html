@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+    <link th:href="@{/css/ads.css(v=${#dates.createNow().getTime()})}" rel="stylesheet">
+
+    <div class="ads-page ads-form-page">
+        <div class="card card-elevated ads-form-card">
+            <div class="card-header card-header-tight ads-form-card__header">
+                <h1 class="h5 mb-0" th:text="${form.isEdit()} ? '광고 위치 수정' : '새 광고 위치 추가'">새 광고 위치 추가</h1>
+            </div>
+            <div class="card-body card-body-comfy ads-form-card__body">
+                <form th:action="${form.isEdit()} ? @{/ads/slots/edit} : @{/ads/slots}" method="post" class="vstack gap-4" id="slotForm">
+                <input type="hidden" name="id" th:value="${form.id()}" th:if="${form.isEdit()}">
+
+                <div>
+                    <label for="slotCode" class="form-label">광고 위치 코드</label>
+                    <input type="text" class="form-control" id="slotCode" name="code"
+                           th:value="${form.code()}" th:readonly="${form.isEdit()}" required>
+                    <div class="form-text">예: HOME_TOP, COLLECTION_DETAIL_RIGHT 등</div>
+                </div>
+
+                <div>
+                    <label for="slotDescription" class="form-label">광고 위치 설명</label>
+                    <textarea class="form-control" id="slotDescription" name="description" rows="4"
+                              th:text="${form.description()}"></textarea>
+                </div>
+
+                <div>
+                    <label for="fallbackRatioInput" class="form-label">기본 광고 표시 비율(%)</label>
+                    <div class="row g-2 align-items-center ads-slider-group">
+                        <div class="col-12 col-md">
+                            <input type="range" class="form-range" min="0" max="100" step="1"
+                                   id="fallbackRatioInput" th:value="${form.fallbackRatioPercent() != null ? form.fallbackRatioPercent() : 0}">
+                        </div>
+                        <div class="col-4 col-md-auto">
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="fallbackRatioNumber" name="fallbackRatio" min="0" max="100" step="1"
+                                       th:value="${form.fallbackRatioPercent() != null ? form.fallbackRatioPercent() : 0}" required>
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="ttlSeconds" class="form-label">같은 광고 유지 시간(초)</label>
+                    <input type="number" class="form-control" id="ttlSeconds" name="ttlSeconds" min="0"
+                           th:value="${form.ttlSeconds() != null ? form.ttlSeconds() : 60}" required>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 ads-form-actions">
+                    <a class="btn btn-outline-secondary" th:href="@{/ads(tab='slots')}">취소</a>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var rangeInput = document.getElementById('fallbackRatioInput');
+            var numberInput = document.getElementById('fallbackRatioNumber');
+            if (!rangeInput || !numberInput) {
+                return;
+            }
+            var syncFromRange = function () {
+                numberInput.value = rangeInput.value;
+            };
+            var syncFromNumber = function () {
+                var value = Number(numberInput.value);
+                if (Number.isNaN(value)) {
+                    value = 0;
+                }
+                value = Math.min(100, Math.max(0, value));
+                numberInput.value = value;
+                rangeInput.value = value;
+            };
+            rangeInput.addEventListener('input', syncFromRange);
+            numberInput.addEventListener('input', syncFromNumber);
+            syncFromNumber();
+        });
+    </script>
+</th:block>
+</html>
