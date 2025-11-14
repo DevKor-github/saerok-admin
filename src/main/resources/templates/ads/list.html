@@ -10,52 +10,16 @@
                 <h1 class="h3 mb-1 fw-semibold">광고 관리</h1>
                 <p class="text-muted-soft mb-0">광고와 광고 스케줄을 한 곳에서 관리합니다.</p>
             </div>
-            <div class="d-flex flex-wrap gap-2" th:if="${currentAdminProfile.isAdminEditor()}">
-                <a class="btn btn-primary" th:href="@{/ads/new}">
-                    <i class="bi bi-plus-circle me-1"></i>
-                    <span>새 광고 등록</span>
-                </a>
-                <a class="btn btn-outline-primary" th:href="@{/ads/slots/new}">
-                    <i class="bi bi-pin-map me-1"></i>
-                    <span>새 광고 위치 추가</span>
-                </a>
-                <a class="btn btn-outline-success" th:href="@{/ads/placements/new}">
-                    <i class="bi bi-calendar-plus me-1"></i>
-                    <span>새 스케줄 등록</span>
-                </a>
-            </div>
         </div>
 
         <div class="row g-3 mb-4 ads-summary-row">
-            <div class="col-12 col-md-4">
-                <div class="card ads-summary-card ads-summary-card--ads h-100">
-                    <div class="card-body">
-                        <div class="ads-summary-icon">
-                            <i class="bi bi-images"></i>
-                        </div>
-                        <div class="ads-summary-label">등록된 광고</div>
-                        <div class="ads-summary-value" th:text="${summary.adCount()}">0</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-md-4">
-                <div class="card ads-summary-card ads-summary-card--slots h-100">
-                    <div class="card-body">
-                        <div class="ads-summary-icon">
-                            <i class="bi bi-grid-1x2"></i>
-                        </div>
-                        <div class="ads-summary-label">광고 위치</div>
-                        <div class="ads-summary-value" th:text="${summary.slotCount()}">0</div>
-                    </div>
-                </div>
-            </div>
             <div class="col-12 col-md-4">
                 <div class="card ads-summary-card ads-summary-card--placements h-100">
                     <div class="card-body">
                         <div class="ads-summary-icon">
                             <i class="bi bi-calendar3"></i>
                         </div>
-                        <div class="ads-summary-label">활성 스케줄</div>
+                        <div class="ads-summary-label">지금 노출되고 있는 광고 수</div>
                         <div class="ads-summary-value" th:text="${summary.activePlacementCount()}">0</div>
                     </div>
                 </div>
@@ -165,6 +129,13 @@
 
         <!-- 광고 스케줄 탭 -->
         <div th:if="${tab} == 'schedule'">
+            <div class="card card-elevated ads-panel mb-4">
+                <div class="card-body">
+                    <h2 class="h6 mb-1 fw-semibold">광고 스케줄</h2>
+                    <p class="text-muted small mb-0">광고를 노출할 스케줄을 설정합니다.</p>
+                </div>
+            </div>
+
             <div th:if="${placementsLoadError}"
                  class="alert alert-danger alert-elevated d-flex align-items-center mb-3">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
@@ -275,10 +246,7 @@
                                 </div>
                             </td>
                             <td>
-                                <div class="fw-semibold mb-2" th:text="${placement.periodLabel()}">2025.01.01 ~ 2025.01.31</div>
-                                <span class="badge ads-period-badge"
-                                      th:classappend="${placement.timeStatusBadgeClass()}"
-                                      th:text="${placement.timeStatusLabel()}">노출 중</span>
+                                <div class="fw-semibold" th:text="${placement.periodLabel()}">2025.01.01 ~ 2025.01.31</div>
                             </td>
                             <td>
                                 <span class="badge text-bg-primary-subtle text-primary"
@@ -323,8 +291,8 @@
                 </div>
             </div>
 
-            <div class="d-flex justify-content-end mt-3" th:if="${currentAdminProfile.isAdminEditor()}">
-                <a class="btn btn-outline-primary" th:href="@{/ads/slots/new}">
+            <div class="mt-3" th:if="${currentAdminProfile.isAdminEditor()}">
+                <a class="btn btn-outline-primary w-100" th:href="@{/ads/slots/new}">
                     <i class="bi bi-plus-circle me-1"></i>
                     <span>새 광고 위치 추가</span>
                 </a>
