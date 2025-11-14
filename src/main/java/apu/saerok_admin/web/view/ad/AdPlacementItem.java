@@ -81,18 +81,18 @@ public record AdPlacementItem(
 
     public String displayStatusLabel() {
         if (isActiveNow()) {
-            return enabled ? "노출 중" : "일시 중지";
+            return enabled ? "진행 중" : "일시 중지";
         }
         return switch (timeStatus) {
             case UPCOMING -> "시작 예정";
             case ENDED -> "종료";
-            case ACTIVE -> "노출 중";
+            case ACTIVE -> "진행 중";
         };
     }
 
     public String timeStatusLabel() {
         return switch (timeStatus) {
-            case ACTIVE -> "노출 중";
+            case ACTIVE -> "진행 중";
             case UPCOMING -> "시작 예정";
             case ENDED -> "종료";
         };
@@ -118,7 +118,25 @@ public record AdPlacementItem(
     }
 
     public String weightLabel() {
-        return Short.toString(weight);
+        return switch (weight) {
+            case 1 -> "매우 낮음";
+            case 2 -> "낮음";
+            case 3 -> "보통";
+            case 4 -> "높음";
+            case 5 -> "매우 높음";
+            default -> Short.toString(weight);
+        };
+    }
+
+    public String priorityBadgeClass() {
+        return switch (weight) {
+            case 1 -> "ads-priority-badge--very-low";
+            case 2 -> "ads-priority-badge--low";
+            case 3 -> "ads-priority-badge--medium";
+            case 4 -> "ads-priority-badge--high";
+            case 5 -> "ads-priority-badge--very-high";
+            default -> "ads-priority-badge--unknown";
+        };
     }
 
     public boolean hasImage() {

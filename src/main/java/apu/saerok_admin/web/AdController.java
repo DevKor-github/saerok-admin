@@ -347,14 +347,14 @@ public class AdController {
         if (!currentAdminProfile.isAdminEditor()) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 위치를 등록할 권한이 없습니다.");
-            return "redirect:/ads?tab=slots";
+            return "redirect:/ads?tab=schedule";
         }
 
         model.addAttribute("pageTitle", "새 광고 위치 추가");
         model.addAttribute("activeMenu", "ads");
         model.addAttribute("breadcrumbs", List.of(
                 Breadcrumb.of("대시보드", "/"),
-                Breadcrumb.of("광고 관리", "/ads?tab=slots"),
+                Breadcrumb.of("광고 관리", "/ads?tab=schedule"),
                 Breadcrumb.active("새 광고 위치 추가")
         ));
         model.addAttribute("toastMessages", List.of());
@@ -372,7 +372,7 @@ public class AdController {
         if (!currentAdminProfile.isAdminEditor()) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 위치를 등록할 권한이 없습니다.");
-            return "redirect:/ads?tab=slots";
+            return "redirect:/ads?tab=schedule";
         }
 
         if (!StringUtils.hasText(code) || fallbackRatioPercent == null || ttlSeconds == null) {
@@ -388,7 +388,7 @@ public class AdController {
             adminAdClient.createSlot(new AdminCreateSlotRequest(code.trim(), trimToNull(description), fallbackRatio, ttlSeconds));
             redirectAttributes.addFlashAttribute("flashStatus", "success");
             redirectAttributes.addFlashAttribute("flashMessage", "저장되었습니다.");
-            return "redirect:/ads?tab=slots";
+            return "redirect:/ads?tab=schedule";
         } catch (RestClientResponseException exception) {
             log.warn("Failed to create slot. status={}, body={}", exception.getStatusCode(), exception.getResponseBodyAsString(), exception);
         } catch (RestClientException | IllegalStateException exception) {
@@ -408,7 +408,7 @@ public class AdController {
         if (!currentAdminProfile.isAdminEditor()) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 위치를 수정할 권한이 없습니다.");
-            return "redirect:/ads?tab=slots";
+            return "redirect:/ads?tab=schedule";
         }
 
         try {
@@ -422,7 +422,7 @@ public class AdController {
             if (match.isEmpty()) {
                 redirectAttributes.addFlashAttribute("flashStatus", "error");
                 redirectAttributes.addFlashAttribute("flashMessage", "해당 광고 위치를 찾을 수 없습니다.");
-                return "redirect:/ads?tab=slots";
+                return "redirect:/ads?tab=schedule";
             }
 
             AdminSlotListResponse.Item item = match.get();
@@ -433,7 +433,7 @@ public class AdController {
             model.addAttribute("activeMenu", "ads");
             model.addAttribute("breadcrumbs", List.of(
                     Breadcrumb.of("대시보드", "/"),
-                    Breadcrumb.of("광고 관리", "/ads?tab=slots"),
+                    Breadcrumb.of("광고 관리", "/ads?tab=schedule"),
                     Breadcrumb.active("광고 위치 수정")
             ));
             model.addAttribute("toastMessages", List.of());
@@ -447,7 +447,7 @@ public class AdController {
 
         redirectAttributes.addFlashAttribute("flashStatus", "error");
         redirectAttributes.addFlashAttribute("flashMessage", "광고 위치 정보를 불러오지 못했습니다.");
-        return "redirect:/ads?tab=slots";
+        return "redirect:/ads?tab=schedule";
     }
 
     @PostMapping("/slots/edit")
@@ -459,9 +459,18 @@ public class AdController {
                              @RequestParam(name = "redirectTab", defaultValue = "slots") String redirectTab,
                              RedirectAttributes redirectAttributes) {
         String normalizedRedirectTab = normalizeTab(redirectTab);
-        boolean redirectToPlacements = "placements".equals(normalizedRedirectTab);
-        String successRedirect = redirectToPlacements ? "redirect:/ads?tab=placements" : "redirect:/ads?tab=slots";
-        String failureRedirect = redirectToPlacements ? "redirect:/ads?tab=placements" : "redirect:/ads/slots/edit?id=" + slotId;
+        String successRedirect = "redirect:/ads?tab=" + normalizedRedirectTab;
+        boolean redirectFromSchedule = "schedule".equals(normalizedRedirectTab)
+                && StringUtils.hasText(redirectTab)
+                && !"slots".equalsIgnoreCase(redirectTab);
+        String failureRedirect;
+        if ("ads".equals(normalizedRedirectTab)) {
+            failureRedirect = successRedirect;
+        } else if (redirectFromSchedule) {
+            failureRedirect = successRedirect;
+        } else {
+            failureRedirect = "redirect:/ads/slots/edit?id=" + slotId;
+        }
 
         if (!currentAdminProfile.isAdminEditor()) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
@@ -501,7 +510,7 @@ public class AdController {
         if (!currentAdminProfile.isAdminEditor()) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 위치를 삭제할 권한이 없습니다.");
-            return "redirect:/ads?tab=slots";
+            return "redirect:/ads?tab=schedule";
         }
 
         try {
@@ -518,7 +527,7 @@ public class AdController {
             redirectAttributes.addFlashAttribute("flashMessage", "광고 위치 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.");
         }
 
-        return "redirect:/ads?tab=slots";
+        return "redirect:/ads?tab=schedule";
     }
 
     @GetMapping("/placements/new")
@@ -529,7 +538,7 @@ public class AdController {
         if (!currentAdminProfile.isAdminEditor()) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 노출 스케줄을 등록할 권한이 없습니다.");
-            return "redirect:/ads?tab=placements";
+            return "redirect:/ads?tab=schedule";
         }
 
         List<AdListItem> ads = fetchAdOptions();
@@ -539,7 +548,7 @@ public class AdController {
         model.addAttribute("activeMenu", "ads");
         model.addAttribute("breadcrumbs", List.of(
                 Breadcrumb.of("대시보드", "/"),
-                Breadcrumb.of("광고 관리", "/ads?tab=placements"),
+                Breadcrumb.of("광고 관리", "/ads?tab=schedule"),
                 Breadcrumb.active("새 스케줄 등록")
         ));
         model.addAttribute("toastMessages", List.of());
@@ -561,7 +570,7 @@ public class AdController {
         if (!currentAdminProfile.isAdminEditor()) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 노출 스케줄을 등록할 권한이 없습니다.");
-            return "redirect:/ads?tab=placements";
+            return "redirect:/ads?tab=schedule";
         }
 
         try {
@@ -576,7 +585,7 @@ public class AdController {
             adminAdClient.createPlacement(request);
             redirectAttributes.addFlashAttribute("flashStatus", "success");
             redirectAttributes.addFlashAttribute("flashMessage", "저장되었습니다.");
-            return "redirect:/ads?tab=placements";
+            return "redirect:/ads?tab=schedule";
         } catch (Exception exception) {
             log.warn("Failed to create placement.", exception);
         }
@@ -594,7 +603,7 @@ public class AdController {
         if (!currentAdminProfile.isAdminEditor()) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 노출 스케줄을 수정할 권한이 없습니다.");
-            return "redirect:/ads?tab=placements";
+            return "redirect:/ads?tab=schedule";
         }
 
         try {
@@ -608,7 +617,7 @@ public class AdController {
             if (match.isEmpty()) {
                 redirectAttributes.addFlashAttribute("flashStatus", "error");
                 redirectAttributes.addFlashAttribute("flashMessage", "해당 스케줄을 찾을 수 없습니다.");
-                return "redirect:/ads?tab=placements";
+                return "redirect:/ads?tab=schedule";
             }
 
             AdminAdPlacementListResponse.Item item = match.get();
@@ -626,7 +635,7 @@ public class AdController {
             model.addAttribute("activeMenu", "ads");
             model.addAttribute("breadcrumbs", List.of(
                     Breadcrumb.of("대시보드", "/"),
-                    Breadcrumb.of("광고 관리", "/ads?tab=placements"),
+                    Breadcrumb.of("광고 관리", "/ads?tab=schedule"),
                     Breadcrumb.active("스케줄 수정")
             ));
             model.addAttribute("toastMessages", List.of());
@@ -642,7 +651,7 @@ public class AdController {
 
         redirectAttributes.addFlashAttribute("flashStatus", "error");
         redirectAttributes.addFlashAttribute("flashMessage", "광고 노출 스케줄 정보를 불러오지 못했습니다.");
-        return "redirect:/ads?tab=placements";
+        return "redirect:/ads?tab=schedule";
     }
 
     @PostMapping("/placements/edit")
@@ -657,7 +666,7 @@ public class AdController {
         if (!currentAdminProfile.isAdminEditor()) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 노출 스케줄을 수정할 권한이 없습니다.");
-            return "redirect:/ads?tab=placements";
+            return "redirect:/ads?tab=schedule";
         }
 
         try {
@@ -671,7 +680,7 @@ public class AdController {
             adminAdClient.updatePlacement(placementId, request);
             redirectAttributes.addFlashAttribute("flashStatus", "success");
             redirectAttributes.addFlashAttribute("flashMessage", "저장되었습니다.");
-            return "redirect:/ads?tab=placements";
+            return "redirect:/ads?tab=schedule";
         } catch (Exception exception) {
             log.warn("Failed to update placement.", exception);
         }
@@ -688,7 +697,7 @@ public class AdController {
         if (!currentAdminProfile.isAdminEditor()) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 노출 스케줄을 삭제할 권한이 없습니다.");
-            return "redirect:/ads?tab=placements";
+            return "redirect:/ads?tab=schedule";
         }
 
         try {
@@ -705,7 +714,7 @@ public class AdController {
             redirectAttributes.addFlashAttribute("flashMessage", "광고 노출 스케줄 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.");
         }
 
-        return "redirect:/ads?tab=placements";
+        return "redirect:/ads?tab=schedule";
     }
 
     @PostMapping("/placements/toggle")
@@ -716,7 +725,7 @@ public class AdController {
         if (!currentAdminProfile.isAdminEditor()) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 노출 상태를 변경할 권한이 없습니다.");
-            return "redirect:/ads?tab=placements";
+            return "redirect:/ads?tab=schedule";
         }
 
         try {
@@ -730,7 +739,7 @@ public class AdController {
             if (match.isEmpty()) {
                 redirectAttributes.addFlashAttribute("flashStatus", "error");
                 redirectAttributes.addFlashAttribute("flashMessage", "해당 스케줄을 찾을 수 없습니다.");
-                return "redirect:/ads?tab=placements";
+                return "redirect:/ads?tab=schedule";
             }
 
             AdminAdPlacementListResponse.Item item = match.get();
@@ -754,7 +763,7 @@ public class AdController {
             redirectAttributes.addFlashAttribute("flashMessage", "광고 노출 상태 변경에 실패했습니다. 잠시 후 다시 시도해주세요.");
         }
 
-        return "redirect:/ads?tab=placements";
+        return "redirect:/ads?tab=schedule";
     }
 
     @PostMapping("/image/presign")
@@ -791,8 +800,10 @@ public class AdController {
         if (!StringUtils.hasText(tab)) {
             return "ads";
         }
-        return switch (tab.toLowerCase(Locale.ROOT)) {
-            case "ads", "slots", "placements" -> tab.toLowerCase(Locale.ROOT);
+        String tabLower = tab.toLowerCase(Locale.ROOT);
+        return switch (tabLower) {
+            case "ads" -> "ads";
+            case "slots", "placements", "schedule" -> "schedule";
             default -> "ads";
         };
     }
