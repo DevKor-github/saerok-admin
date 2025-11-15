@@ -35,6 +35,21 @@
 .offcanvas.offcanvas-bottom#siDataPicker .offcanvas-body   { padding: 0.5rem 1rem 1rem; overflow: auto; }
 
 /* 툴바 줄바꿈 */
+.si-plots__toolbar { flex-direction: column; align-items: stretch; gap: 1rem; }
+.si-range { width: 100%; gap: .75rem; }
+.si-range__bar { width: 100%; align-items: stretch; gap: .6rem; }
+.si-range__label { font-size: .78rem; letter-spacing: .06em; }
+.si-range__quick { flex: 1 1 auto; width: 100%; overflow-x: auto; padding-bottom: .15rem; gap: .5rem; }
+.si-range__quick::-webkit-scrollbar { height: 6px; }
+.si-range__quick::-webkit-scrollbar-thumb { background: rgba(148,163,184,.55); border-radius: 999px; }
+.si-range__btn,
+.si-range__custom-toggle { flex: 0 0 auto; }
+.si-range__form { width: 100%; flex-direction: column; align-items: stretch; gap: .65rem; }
+.si-range__fields { width: 100%; flex-direction: column; align-items: stretch; gap: .65rem; }
+.si-range__fields .form-control { width: 100%; min-width: 0; }
+.si-range__dash { display: none; }
+.si-range__actions { width: 100%; justify-content: stretch; }
+.si-range__apply { width: 100%; padding-block: .65rem; }
 .si-plots__toolbar .si-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
 
 /* 안전 여백 */

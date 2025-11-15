@@ -22,6 +22,92 @@
 
 /* 플롯 영역 여백 + 포커스 그림자 */
 .service-insight .service-insight__chart { margin-left: 16px; }
+.service-insight .si-plots__toolbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.service-insight .si-range {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    margin-right: auto;
+}
+.service-insight .si-range__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+}
+.service-insight .si-range__label {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #334155;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+}
+.service-insight .si-range__quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+}
+.service-insight .si-range__btn {
+    border-radius: 999px;
+    padding-inline: .85rem;
+    font-weight: 500;
+    transition: color .18s ease, background-color .18s ease, box-shadow .18s ease;
+}
+.service-insight .si-range__custom-toggle {
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    transition: color .18s ease, background-color .18s ease, box-shadow .18s ease;
+}
+.service-insight .si-range__btn:hover,
+.service-insight .si-range__btn:focus-visible,
+.service-insight .si-range__custom-toggle:hover,
+.service-insight .si-range__custom-toggle:focus-visible {
+    box-shadow: 0 4px 12px rgba(59, 130, 246, .18);
+}
+.service-insight .si-range__form {
+    display: none;
+    align-items: center;
+    gap: .75rem;
+    flex-wrap: wrap;
+    padding: .65rem .75rem;
+    border-radius: .75rem;
+    border: 1px solid rgba(148, 163, 184, .45);
+    background: rgba(248, 250, 252, .9);
+}
+.service-insight .si-range__form.is-open {
+    display: flex;
+}
+.service-insight .si-range__fields {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+.service-insight .si-range__fields .form-control {
+    min-width: 9rem;
+}
+.service-insight .si-range__dash {
+    font-weight: 600;
+    color: #64748b;
+}
+.service-insight .si-range__actions {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+.service-insight .si-range__apply {
+    border-radius: 999px;
+    padding-inline: 1.1rem;
+    font-weight: 600;
+}
 .service-insight .si-plot-card { transition: box-shadow .22s ease, border-color .22s ease, transform .12s ease; will-change: box-shadow, transform; }
 .service-insight .si-plot-card.si-plot--active{
     box-shadow:
