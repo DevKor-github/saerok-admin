@@ -42,6 +42,64 @@
             <div class="service-insight__chart">
                 <div class="si-plots" id="si-plots" data-size="roomy">
                     <div class="si-plots__toolbar">
+                        <div class="si-range" role="region" aria-label="데이터 조회 기간">
+                            <div class="si-range__bar">
+                                <span class="si-range__label">기간</span>
+                                <div class="si-range__quick" role="group" aria-label="빠른 조회 기간">
+                                    <a th:each="option : ${rangeQuickOptions}"
+                                       th:href="@{/service-insight(range=${option.paramValue()})}"
+                                       th:text="${option.displayLabel()}"
+                                       th:class="'btn btn-sm si-range__btn ' + (${option.paramValue()} == ${selectedRange} ? 'btn-primary' : 'btn-outline-primary')"
+                                       th:data-range="${option.paramValue()}"
+                                       th:attr="aria-pressed=${option.paramValue()} == ${selectedRange}"
+                                       class="btn btn-sm si-range__btn btn-outline-primary"
+                                       aria-pressed="false">최근 1주</a>
+                                </div>
+                                <button type="button"
+                                        id="si-range-custom-toggle"
+                                        th:class="'btn btn-sm si-range__custom-toggle ' + (${customRangeActive} ? 'btn-primary' : 'btn-outline-secondary')"
+                                        th:attr="aria-expanded=${customRangeActive}"
+                                        class="btn btn-sm btn-outline-secondary si-range__custom-toggle"
+                                        aria-expanded="false"
+                                        aria-controls="si-range-custom">
+                                    <i class="bi bi-calendar-range me-1" aria-hidden="true"></i>직접 설정
+                                </button>
+                            </div>
+                            <form id="si-range-custom"
+                                  class="si-range__form"
+                                  th:class="'si-range__form' + (${customRangeActive} ? ' is-open' : '')"
+                                  method="get"
+                                  role="form"
+                                  aria-label="기간 직접 설정">
+                                <input type="hidden" name="range" value="custom">
+                                <div class="si-range__fields">
+                                    <label for="si-range-start" class="visually-hidden">시작 날짜</label>
+                                    <input id="si-range-start"
+                                           type="date"
+                                           class="form-control form-control-sm"
+                                           name="startDate"
+                                           placeholder="시작일"
+                                           th:value="${selectedStartDate}"
+                                           autocomplete="off">
+                                    <span class="si-range__dash" aria-hidden="true">~</span>
+                                    <label for="si-range-end" class="visually-hidden">종료 날짜</label>
+                                    <input id="si-range-end"
+                                           type="date"
+                                           class="form-control form-control-sm"
+                                           name="endDate"
+                                           placeholder="종료일"
+                                           th:value="${selectedEndDate}"
+                                           autocomplete="off">
+                                </div>
+                                <div class="si-range__actions">
+                                    <button type="submit"
+                                            th:class="'btn btn-sm si-range__apply ' + (${customRangeActive} ? 'btn-primary' : 'btn-outline-secondary')"
+                                            class="btn btn-sm btn-outline-secondary si-range__apply">
+                                        적용
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                         <div class="si-actions">
                             <button type="button" class="btn btn-ghost" id="si-add-plot">
                                 <i class="bi bi-layout-text-window-reverse me-1"></i>플롯 추가
@@ -85,6 +143,7 @@
 
     <!-- 서버에서 내려주는 전체 페이로드 -->
     <script type="application/json" id="serviceInsightData"
+            th:data-endpoint="@{/service-insight}"
             th:utext="${chartDataJson}">{"metricOptions":[],"series":[],"componentLabels":{}}</script>
 
     <!-- Chart.js & Adapter -->

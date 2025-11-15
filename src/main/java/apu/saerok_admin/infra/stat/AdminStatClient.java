@@ -3,6 +3,8 @@ package apu.saerok_admin.infra.stat;
 import apu.saerok_admin.infra.SaerokApiProps;
 import apu.saerok_admin.infra.stat.dto.StatSeriesResponse;
 import java.net.URI;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Objects;
 import org.springframework.stereotype.Component;
@@ -23,13 +25,15 @@ public class AdminStatClient {
         this.missingPrefixSegments = saerokApiProps.missingPrefixSegments().toArray(new String[0]);
     }
 
-    public StatSeriesResponse fetchSeries(Collection<StatMetric> metrics) {
+    private static final DateTimeFormatter ISO_DATE = DateTimeFormatter.ISO_DATE;
+
+    public StatSeriesResponse fetchSeries(Collection<StatMetric> metrics, LocalDate startDate, LocalDate endDate) {
         if (metrics == null || metrics.isEmpty()) {
             throw new IllegalArgumentException("metrics must not be empty");
         }
 
         StatSeriesResponse response = saerokRestClient.get()
-                .uri(uriBuilder -> buildSeriesUri(uriBuilder, metrics))
+                .uri(uriBuilder -> buildSeriesUri(uriBuilder, metrics, startDate, endDate))
                 .retrieve()
                 .body(StatSeriesResponse.class);
 
@@ -40,7 +44,7 @@ public class AdminStatClient {
         return response;
     }
 
-    private URI buildSeriesUri(UriBuilder builder, Collection<StatMetric> metrics) {
+    private URI buildSeriesUri(UriBuilder builder, Collection<StatMetric> metrics, LocalDate startDate, LocalDate endDate) {
         if (missingPrefixSegments.length > 0) {
             builder.pathSegment(missingPrefixSegments);
         }
@@ -52,6 +56,16 @@ public class AdminStatClient {
                 .map(Enum::name)
                 .forEach(metric -> builder.queryParam("metric", metric));
 
+        if (startDate != null || endDate != null) {
+            builder.queryParam("period", buildPeriodQuery(startDate, endDate));
+        }
+
         return builder.build();
+    }
+
+    private String buildPeriodQuery(LocalDate startDate, LocalDate endDate) {
+        String startToken = startDate != null ? ISO_DATE.format(startDate) : "";
+        String endToken = endDate != null ? ISO_DATE.format(endDate) : "";
+        return startToken + "," + endToken;
     }
 }

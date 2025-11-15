@@ -8,6 +8,7 @@ import apu.saerok_admin.web.view.ServiceInsightViewModel.ComponentSeries;
 import apu.saerok_admin.web.view.ServiceInsightViewModel.MetricOption;
 import apu.saerok_admin.web.view.ServiceInsightViewModel.Point;
 import apu.saerok_admin.web.view.ServiceInsightViewModel.Series;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,7 +28,13 @@ public class ServiceInsightService {
     }
 
     public ServiceInsightViewModel loadViewModel() {
-        StatSeriesResponse response = adminStatClient.fetchSeries(List.of(StatMetric.values()));
+        return loadViewModel(ServiceInsightQuery.all());
+    }
+
+    public ServiceInsightViewModel loadViewModel(ServiceInsightQuery query) {
+        LocalDate startDate = query != null ? query.startDate() : null;
+        LocalDate endDate = query != null ? query.endDate() : null;
+        StatSeriesResponse response = adminStatClient.fetchSeries(List.of(StatMetric.values()), startDate, endDate);
         return buildViewModel(response);
     }
 

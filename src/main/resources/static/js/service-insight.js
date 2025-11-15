@@ -4,16 +4,58 @@
     const dataElement = document.getElementById('serviceInsightData');
     if (!dataElement) return;
 
+    const dataEndpoint = dataElement.dataset?.endpoint || window.location.pathname;
+
     let payload = {};
     try { payload = JSON.parse(dataElement.textContent || '{}'); }
     catch (err) { console.warn('Failed to parse service insight payload.', err); }
 
-    const metricOptions   = Array.isArray(payload.metricOptions) ? payload.metricOptions : [];
-    const seriesList      = Array.isArray(payload.series)        ? payload.series        : [];
-    const componentLabels = (payload.componentLabels && typeof payload.componentLabels === 'object') ? payload.componentLabels : {};
+    let metricOptions = [];
+    let seriesList = [];
+    let componentLabels = {};
+    let optionMap = new Map();
+    let seriesMap = new Map();
 
-    const optionMap = new Map(metricOptions.map(o => [o.metric, o]));
-    const seriesMap = new Map(seriesList.map(s => [s.metric, s]));
+    function applyViewModelPayload(source) {
+        payload = (source && typeof source === 'object') ? source : {};
+        metricOptions = Array.isArray(payload.metricOptions) ? payload.metricOptions : [];
+        seriesList = Array.isArray(payload.series) ? payload.series : [];
+        componentLabels = (payload.componentLabels && typeof payload.componentLabels === 'object') ? payload.componentLabels : {};
+        optionMap = new Map(metricOptions.map(o => [o.metric, o]));
+        seriesMap = new Map(seriesList.map(s => [s.metric, s]));
+        try {
+            dataElement.textContent = JSON.stringify(payload);
+        } catch (err) {
+            console.warn('Failed to cache service insight payload JSON.', err);
+        }
+    }
+
+    applyViewModelPayload(payload);
+
+    const rangeQuickContainer = document.querySelector('.si-range__quick');
+    const rangeForm = document.querySelector('.si-range__form');
+    const rangeStartInput = rangeForm?.querySelector('input[name="startDate"]') || null;
+    const rangeEndInput = rangeForm?.querySelector('input[name="endDate"]') || null;
+    const rangeApplyButton = rangeForm?.querySelector('button[type="submit"]') || null;
+    const rangeCustomToggle = document.getElementById('si-range-custom-toggle');
+
+    function setCustomRangeOpen(open) {
+        const next = !!open;
+        if (rangeForm) {
+            rangeForm.classList.toggle('is-open', next);
+        }
+        if (rangeCustomToggle) {
+            rangeCustomToggle.setAttribute('aria-expanded', next ? 'true' : 'false');
+            rangeCustomToggle.classList.toggle('btn-primary', next);
+            rangeCustomToggle.classList.toggle('btn-outline-secondary', !next);
+        }
+        if (rangeApplyButton) {
+            rangeApplyButton.classList.toggle('btn-primary', next);
+            rangeApplyButton.classList.toggle('btn-outline-secondary', !next);
+        }
+    }
+
+    setCustomRangeOpen(rangeForm ? rangeForm.classList.contains('is-open') : false);
 
     // 서버 enum 키
     const METRICS = {
@@ -237,6 +279,26 @@
     let plotSeq = 0;
     // plots: id -> { id, index, el, chart, datasets:Set<string>, groups: Map<metric, Set<datasetId>>, active:boolean }
     const plots = new Map();
+
+    function refreshAllPlots() {
+        for (const [plotId, plot] of plots) {
+            const metrics = [...plot.groups.keys()];
+            plot.chart.data.datasets = [];
+            plot.datasets.clear();
+            plot.groups.clear();
+
+            if (metrics.length === 0) {
+                renderPlotGroupChips(plotId);
+                updateEmptyState(plotId);
+                continue;
+            }
+
+            metrics.forEach(metric => addMetricGroupToPlot(plotId, metric));
+        }
+
+        resizeAllCharts();
+        syncAsideActiveStates();
+    }
 
     function ensureAtLeastOnePlot() { if (plots.size===0) return createPlot(); return [...plots.keys()][0]; }
     function getActivePlotId(){ for (const [id,p] of plots){ if (p.active) return id; } return null; }
@@ -767,6 +829,155 @@
         });
     }
 
+    function updateRangeControlsState(meta) {
+        if (!meta) return;
+
+        const selectedRange = typeof meta.selectedRange === 'string' ? meta.selectedRange : '';
+        const customActive = !!meta.customRangeActive;
+        const startValue = meta.startDate != null ? String(meta.startDate) : '';
+        const endValue = meta.endDate != null ? String(meta.endDate) : '';
+
+        document.querySelectorAll('.si-range__quick .si-range__btn').forEach(btn => {
+            const value = btn.getAttribute('data-range') || '';
+            const isActive = !customActive && selectedRange && value === selectedRange;
+            btn.classList.toggle('btn-primary', isActive);
+            btn.classList.toggle('btn-outline-primary', !isActive);
+            btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+
+        if (rangeStartInput) rangeStartInput.value = startValue;
+        if (rangeEndInput) rangeEndInput.value = endValue;
+
+        setCustomRangeOpen(customActive);
+    }
+
+    function updateBrowserUrl(meta) {
+        if (!window.history || !window.history.replaceState) return;
+        const url = new URL(window.location.href);
+        url.searchParams.delete('range');
+        url.searchParams.delete('startDate');
+        url.searchParams.delete('endDate');
+
+        if (meta && typeof meta.selectedRange === 'string' && meta.selectedRange) {
+            url.searchParams.set('range', meta.selectedRange);
+        }
+
+        if (meta && meta.customRangeActive) {
+            if (meta.startDate) url.searchParams.set('startDate', meta.startDate);
+            if (meta.endDate) url.searchParams.set('endDate', meta.endDate);
+        }
+
+        const query = url.searchParams.toString();
+        const next = url.pathname + (query ? `?${query}` : '');
+        window.history.replaceState(null, document.title, next);
+    }
+
+    async function requestAndApplyRange(target, fallbackHref) {
+        let url;
+        try {
+            url = target instanceof URL ? target : new URL(String(target), window.location.origin || window.location.href);
+        } catch (error) {
+            console.warn('Invalid service insight range URL.', error);
+            if (fallbackHref) window.location.href = fallbackHref;
+            return;
+        }
+
+        try {
+            const response = await fetch(url.toString(), {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (!data || typeof data !== 'object' || !data.viewModel) {
+                throw new Error('Invalid response payload');
+            }
+
+            applyViewModelPayload(data.viewModel);
+            refreshAllPlots();
+            updateRangeControlsState(data);
+            updateBrowserUrl(data);
+
+            if (data.error) {
+                console.warn('Service insight stats responded with a fallback dataset.');
+            }
+        } catch (error) {
+            console.warn('Failed to refresh service insight data without reloading.', error);
+            if (fallbackHref) {
+                window.location.href = fallbackHref;
+            }
+        }
+    }
+
+    function setupRangeControls() {
+        if (rangeQuickContainer) {
+            rangeQuickContainer.querySelectorAll('.si-range__btn').forEach(btn => {
+                btn.addEventListener('click', (event) => {
+                    if (event.defaultPrevented) return;
+                    if (event.button !== 0) return;
+                    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+                    const href = btn.getAttribute('href');
+                    if (!href) return;
+
+                    event.preventDefault();
+                    setCustomRangeOpen(false);
+                    const absoluteHref = btn.href || href;
+                    requestAndApplyRange(absoluteHref, absoluteHref);
+                });
+            });
+        }
+
+        if (rangeCustomToggle && rangeForm) {
+            rangeCustomToggle.addEventListener('click', (event) => {
+                event.preventDefault();
+                const currentlyOpen = rangeForm.classList.contains('is-open');
+                const next = !currentlyOpen;
+                setCustomRangeOpen(next);
+                if (next && rangeStartInput) {
+                    try { rangeStartInput.focus(); } catch (_) {}
+                }
+            });
+        }
+
+        if (rangeForm) {
+            rangeForm.addEventListener('submit', (event) => {
+                if (event.defaultPrevented) return;
+                event.preventDefault();
+
+                const base = rangeForm.getAttribute('action') || dataEndpoint || window.location.pathname;
+                let url;
+                try {
+                    url = new URL(base, window.location.origin || window.location.href);
+                } catch (error) {
+                    console.warn('Invalid service insight form action URL.', error);
+                    if (typeof rangeForm.submit === 'function') {
+                        rangeForm.submit();
+                    }
+                    return;
+                }
+
+                url.searchParams.set('range', 'custom');
+
+                const startValue = rangeStartInput?.value ? rangeStartInput.value.trim() : '';
+                const endValue = rangeEndInput?.value ? rangeEndInput.value.trim() : '';
+
+                if (startValue) url.searchParams.set('startDate', startValue);
+                else url.searchParams.delete('startDate');
+
+                if (endValue) url.searchParams.set('endDate', endValue);
+                else url.searchParams.delete('endDate');
+
+                requestAndApplyRange(url, url.toString());
+            });
+        }
+    }
+
     // 컨트롤
     if (addPlotBtn) addPlotBtn.addEventListener('click', ()=> createPlot());
     if (clearAllBtn) clearAllBtn.addEventListener('click', ()=>{
@@ -785,6 +996,7 @@
     // 초기 렌더
     renderGroups();
     createPlot();
+    setupRangeControls();
 
     // 툴팁 초기화
     window.addEventListener('load', () => initTooltipsIn(document));
