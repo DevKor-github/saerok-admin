@@ -13,6 +13,7 @@ import apu.saerok_admin.infra.role.dto.RoleSummaryResponse;
 import apu.saerok_admin.infra.role.dto.UpdateRolePermissionsRequest;
 import apu.saerok_admin.web.view.Breadcrumb;
 import apu.saerok_admin.web.view.CurrentAdminProfile;
+import apu.saerok_admin.web.view.role.PermissionCatalog;
 import apu.saerok_admin.web.view.role.PermissionOptionView;
 import apu.saerok_admin.web.view.role.PermissionView;
 import apu.saerok_admin.web.view.role.RoleDisplay;
@@ -566,14 +567,14 @@ public class RoleManagementController {
     }
 
     private List<PermissionOptionView> buildPermissionOptions(List<RoleTemplateView> templates) {
-        if (templates.isEmpty()) {
-            return List.of();
-        }
         Map<String, PermissionOptionView> deduplicated = new LinkedHashMap<>();
         for (RoleTemplateView template : templates) {
             for (PermissionView permission : template.permissions()) {
-                deduplicated.putIfAbsent(permission.key(), new PermissionOptionView(permission.key(), permission.description()));
+                deduplicated.put(permission.key(), new PermissionOptionView(permission.key(), permission.description()));
             }
+        }
+        for (PermissionOptionView builtin : PermissionCatalog.builtinPermissions()) {
+            deduplicated.putIfAbsent(builtin.key(), builtin);
         }
         Comparator<PermissionOptionView> comparator = Comparator
                 .comparing(PermissionOptionView::label, String.CASE_INSENSITIVE_ORDER)
