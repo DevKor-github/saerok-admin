@@ -67,14 +67,13 @@ public class RoleManagementController {
     @GetMapping
     public String index(@ModelAttribute("currentAdminProfile") CurrentAdminProfile currentAdminProfile,
                         @RequestParam(name = "tab", required = false) String tab,
-                        @RequestParam(name = "selectedUserId", required = false) Long selectedUserId,
                         @RequestParam(name = "selectedRoleCode", required = false) String selectedRoleCode,
                         Model model) {
-        model.addAttribute("pageTitle", "역할과 권한");
+        model.addAttribute("pageTitle", "운영 권한");
         model.addAttribute("activeMenu", "adminRoles");
         model.addAttribute("breadcrumbs", List.of(
                 Breadcrumb.of("대시보드", "/"),
-                Breadcrumb.active("역할과 권한")
+                Breadcrumb.active("운영 권한")
         ));
         model.addAttribute("toastMessages", List.of());
 
@@ -108,10 +107,10 @@ public class RoleManagementController {
             } catch (RestClientResponseException exception) {
                 log.warn("Failed to load role templates. status={}, body={}",
                         exception.getStatusCode(), exception.getResponseBodyAsString(), exception);
-                roleTemplatesLoadError = "역할 템플릿을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+                roleTemplatesLoadError = "ROLE 템플릿을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
             } catch (RestClientException | IllegalStateException exception) {
                 log.warn("Failed to load role templates.", exception);
-                roleTemplatesLoadError = "역할 템플릿을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+                roleTemplatesLoadError = "ROLE 템플릿을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
             }
         }
 
@@ -142,19 +141,17 @@ public class RoleManagementController {
             } catch (RestClientResponseException exception) {
                 log.warn("Failed to load my roles. status={}, body={}",
                         exception.getStatusCode(), exception.getResponseBodyAsString(), exception);
-                myRolesLoadError = "내 역할 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+                myRolesLoadError = "내 권한 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
             } catch (RestClientException | IllegalStateException exception) {
                 log.warn("Failed to load my roles.", exception);
-                myRolesLoadError = "내 역할 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+                myRolesLoadError = "내 권한 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
             }
         } else {
-            myRolesLoadError = "내 역할을 조회할 권한이 없습니다.";
+            myRolesLoadError = "내 권한을 조회할 권한이 없습니다.";
         }
 
         List<TeamMemberView> teamMembers = List.of();
-        TeamMemberView selectedTeamMember = null;
         String teamMembersLoadError = null;
-        Long resolvedSelectedUserId = selectedUserId;
 
         if (canViewTeamRoles) {
             try {
@@ -169,38 +166,14 @@ public class RoleManagementController {
             } catch (RestClientResponseException exception) {
                 log.warn("Failed to load team members. status={}, body={}",
                         exception.getStatusCode(), exception.getResponseBodyAsString(), exception);
-                teamMembersLoadError = "팀원 역할 정보를 불러오지 못했습니다.";
+                teamMembersLoadError = "팀원 권한 정보를 불러오지 못했습니다.";
             } catch (RestClientException | IllegalStateException exception) {
                 log.warn("Failed to load team members.", exception);
-                teamMembersLoadError = "팀원 역할 정보를 불러오지 못했습니다.";
+                teamMembersLoadError = "팀원 권한 정보를 불러오지 못했습니다.";
             }
         } else {
-            teamMembersLoadError = "팀원 역할을 조회할 권한이 없습니다.";
+            teamMembersLoadError = "팀원 권한을 조회할 권한이 없습니다.";
         }
-
-        if (!teamMembers.isEmpty()) {
-            Long currentSelection = resolvedSelectedUserId;
-            boolean hasSelectedMember = currentSelection != null && teamMembers.stream()
-                    .anyMatch(member -> Objects.equals(member.id(), currentSelection));
-            if (!hasSelectedMember) {
-                resolvedSelectedUserId = teamMembers.get(0).id();
-            }
-            Long candidateId = resolvedSelectedUserId;
-            selectedTeamMember = teamMembers.stream()
-                    .filter(member -> Objects.equals(member.id(), candidateId))
-                    .findFirst()
-                    .orElse(null);
-        } else {
-            resolvedSelectedUserId = null;
-        }
-
-        List<RoleDisplay> assignableRoles = roleTemplates.stream()
-                .map(RoleTemplateView::role)
-                .toList();
-
-        boolean teamRoleEditorAvailable = canManageRoles
-                && selectedTeamMember != null
-                && !assignableRoles.isEmpty();
 
         String normalizedTab = normalizeTab(tab, canViewTeamRoles, canManageRoles);
 
@@ -217,18 +190,7 @@ public class RoleManagementController {
         model.addAttribute("teamMembers", teamMembers);
         model.addAttribute("teamMemberCount", teamMembers.size());
         model.addAttribute("teamMembersLoadError", teamMembersLoadError);
-        model.addAttribute("selectedTeamMemberId", resolvedSelectedUserId);
-        Map<String, RoleTemplateView> mappingForTeam = roleTemplatesByCode;
-        List<RolePermissionGroupView> selectedTeamMemberRoleGroups = selectedTeamMember == null
-                ? List.of()
-                : selectedTeamMember.roles().stream()
-                        .map(role -> new RolePermissionGroupView(role, resolvePermissions(role.code(), mappingForTeam)))
-                        .toList();
-
-        model.addAttribute("selectedTeamMember", selectedTeamMember);
-        model.addAttribute("selectedTeamMemberRoleGroups", selectedTeamMemberRoleGroups);
-        model.addAttribute("assignableRoles", assignableRoles);
-        model.addAttribute("teamRoleEditorAvailable", teamRoleEditorAvailable);
+        model.addAttribute("teamMemberRoleGroupsById", buildTeamMemberRoleGroups(teamMembers, roleTemplatesByCode));
 
         model.addAttribute("roleTemplates", roleTemplates);
         model.addAttribute("roleTemplateCount", roleTemplates.size());
@@ -240,6 +202,108 @@ public class RoleManagementController {
         return "admin-role/index";
     }
 
+    @GetMapping("/team-members/{userId}/edit")
+    public String editTeamMember(@ModelAttribute("currentAdminProfile") CurrentAdminProfile currentAdminProfile,
+                                 @PathVariable Long userId,
+                                 Model model,
+                                 RedirectAttributes redirectAttributes) {
+        boolean canViewTeamRoles = currentAdminProfile.hasPermission(PERMISSION_ADMIN_ROLE_READ);
+        boolean canManageRoles = currentAdminProfile.hasPermission(PERMISSION_ADMIN_ROLE_WRITE);
+
+        if (!canViewTeamRoles) {
+            redirectAttributes.addFlashAttribute("flashStatus", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", "팀원 권한을 조회할 권한이 없습니다.");
+            return redirectToTeamTab();
+        }
+
+        List<RoleTemplateView> roleTemplates = List.of();
+        Map<String, RoleTemplateView> roleTemplatesByCode = Map.of();
+        String roleTemplatesLoadError = null;
+
+        try {
+            AdminRoleListResponse response = adminRoleClient.listRoles();
+            roleTemplates = Optional.ofNullable(response)
+                    .map(AdminRoleListResponse::roles)
+                    .orElseGet(List::of)
+                    .stream()
+                    .map(this::toRoleTemplateView)
+                    .sorted(roleTemplateComparator())
+                    .toList();
+            roleTemplatesByCode = roleTemplates.stream()
+                    .collect(Collectors.toMap(
+                            RoleTemplateView::code,
+                            template -> template,
+                            (left, right) -> left,
+                            LinkedHashMap::new
+                    ));
+        } catch (RestClientResponseException exception) {
+            log.warn("Failed to load role templates for team member edit. status={}, body={}",
+                    exception.getStatusCode(), exception.getResponseBodyAsString(), exception);
+            roleTemplatesLoadError = "권한 템플릿을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+        } catch (RestClientException | IllegalStateException exception) {
+            log.warn("Failed to load role templates for team member edit.", exception);
+            roleTemplatesLoadError = "권한 템플릿을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+        }
+
+        TeamMemberView targetMember = null;
+        String teamMemberLoadError = null;
+
+        try {
+            AdminRoleUserListResponse response = adminRoleClient.listAdminUsers();
+            targetMember = Optional.ofNullable(response)
+                    .map(AdminRoleUserListResponse::users)
+                    .orElseGet(List::of)
+                    .stream()
+                    .map(this::toTeamMemberView)
+                    .filter(member -> Objects.equals(member.id(), userId))
+                    .findFirst()
+                    .orElse(null);
+            if (targetMember == null) {
+                teamMemberLoadError = "선택한 팀원을 찾을 수 없습니다.";
+            }
+        } catch (RestClientResponseException exception) {
+            log.warn("Failed to load team member. status={}, body={}",
+                    exception.getStatusCode(), exception.getResponseBodyAsString(), exception);
+            teamMemberLoadError = "팀원 정보를 불러오지 못했습니다.";
+        } catch (RestClientException | IllegalStateException exception) {
+            log.warn("Failed to load team member.", exception);
+            teamMemberLoadError = "팀원 정보를 불러오지 못했습니다.";
+        }
+
+        if (targetMember == null) {
+            redirectAttributes.addFlashAttribute("flashStatus", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", teamMemberLoadError != null
+                    ? teamMemberLoadError
+                    : "선택한 팀원을 찾을 수 없습니다.");
+            return redirectToTeamTab();
+        }
+
+        List<RoleDisplay> assignableRoles = roleTemplates.stream()
+                .map(RoleTemplateView::role)
+                .toList();
+        boolean teamRoleEditorAvailable = canManageRoles && !assignableRoles.isEmpty();
+
+        List<RolePermissionGroupView> memberRoleGroups = buildRolePermissionGroups(targetMember, roleTemplatesByCode);
+
+        model.addAttribute("pageTitle", targetMember.nickname() + " 권한 수정");
+        model.addAttribute("activeMenu", "adminRoles");
+        model.addAttribute("breadcrumbs", List.of(
+                Breadcrumb.of("대시보드", "/"),
+                Breadcrumb.of("운영 권한", "/admin/roles?tab=" + TAB_TEAM),
+                Breadcrumb.active(targetMember.nickname() + " 권한 수정")
+        ));
+        model.addAttribute("toastMessages", List.of());
+
+        model.addAttribute("teamMember", targetMember);
+        model.addAttribute("teamMemberRoleGroups", memberRoleGroups);
+        model.addAttribute("assignableRoles", assignableRoles);
+        model.addAttribute("teamRoleEditorAvailable", teamRoleEditorAvailable);
+        model.addAttribute("roleTemplatesLoadError", roleTemplatesLoadError);
+        model.addAttribute("canManageRoles", canManageRoles);
+
+        return "admin-role/team-member-edit";
+    }
+
     @PostMapping("/team-members/{userId}/roles")
     public String updateTeamMemberRoles(@ModelAttribute("currentAdminProfile") CurrentAdminProfile currentAdminProfile,
                                         @PathVariable Long userId,
@@ -247,8 +311,8 @@ public class RoleManagementController {
                                         RedirectAttributes redirectAttributes) {
         if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_ROLE_WRITE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "역할을 편집할 권한이 없습니다.");
-            return redirectToTeam(userId);
+            redirectAttributes.addFlashAttribute("flashMessage", "권한을 편집할 권한이 없습니다.");
+            return redirectToTeamMemberEditor(userId);
         }
 
         Set<String> desiredRoles = new LinkedHashSet<>(normalizeRoleCodes(roleCodes));
@@ -264,7 +328,7 @@ public class RoleManagementController {
             if (targetUser.isEmpty()) {
                 redirectAttributes.addFlashAttribute("flashStatus", "error");
                 redirectAttributes.addFlashAttribute("flashMessage", "선택한 팀원을 찾을 수 없습니다.");
-                return redirectToTeam(userId);
+                return redirectToTeamMemberEditor(userId);
             }
 
             Set<String> currentRoles = Optional.of(targetUser.get())
@@ -290,21 +354,21 @@ public class RoleManagementController {
 
             String message = toGrant.isEmpty() && toRevoke.isEmpty()
                     ? "변경 사항이 없어 기존 구성을 유지했습니다."
-                    : "팀원 역할 구성을 업데이트했습니다.";
+                    : "팀원 권한 구성을 업데이트했습니다.";
             redirectAttributes.addFlashAttribute("flashStatus", "success");
             redirectAttributes.addFlashAttribute("flashMessage", message);
         } catch (RestClientResponseException exception) {
             log.warn("Failed to update team member roles. status={}, body={}",
                     exception.getStatusCode(), exception.getResponseBodyAsString(), exception);
             redirectAttributes.addFlashAttribute("flashStatus", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "팀원 역할을 수정하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+            redirectAttributes.addFlashAttribute("flashMessage", "팀원 권한을 수정하지 못했습니다. 잠시 후 다시 시도해 주세요.");
         } catch (RestClientException | IllegalStateException exception) {
             log.warn("Failed to update team member roles.", exception);
             redirectAttributes.addFlashAttribute("flashStatus", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "팀원 역할을 수정하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+            redirectAttributes.addFlashAttribute("flashMessage", "팀원 권한을 수정하지 못했습니다. 잠시 후 다시 시도해 주세요.");
         }
 
-        return redirectToTeam(userId);
+        return redirectToTeamMemberEditor(userId);
     }
 
     @PostMapping("/new")
@@ -316,7 +380,7 @@ public class RoleManagementController {
                              RedirectAttributes redirectAttributes) {
         if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_ROLE_WRITE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "역할을 생성할 권한이 없습니다.");
+            redirectAttributes.addFlashAttribute("flashMessage", "권한을 생성할 권한이 없습니다.");
             return redirectToManage(null);
         }
 
@@ -327,7 +391,7 @@ public class RoleManagementController {
         if (!StringUtils.hasText(normalizedCode) || !StringUtils.hasText(normalizedDisplayName)
                 || !StringUtils.hasText(normalizedDescription)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "역할 코드, 이름, 설명을 모두 입력해 주세요.");
+            redirectAttributes.addFlashAttribute("flashMessage", "권한 코드, 이름, 설명을 모두 입력해 주세요.");
             return redirectToManage(normalizedCode);
         }
 
@@ -338,16 +402,16 @@ public class RoleManagementController {
                 adminRoleClient.updateRolePermissions(normalizedCode, new UpdateRolePermissionsRequest(permissionKeys));
             }
             redirectAttributes.addFlashAttribute("flashStatus", "success");
-            redirectAttributes.addFlashAttribute("flashMessage", "새 역할을 생성했습니다.");
+            redirectAttributes.addFlashAttribute("flashMessage", "새 권한을 생성했습니다.");
         } catch (RestClientResponseException exception) {
             log.warn("Failed to create role. status={}, body={}",
                     exception.getStatusCode(), exception.getResponseBodyAsString(), exception);
             redirectAttributes.addFlashAttribute("flashStatus", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "새 역할을 생성하지 못했습니다. 입력값을 확인해 주세요.");
+            redirectAttributes.addFlashAttribute("flashMessage", "새 권한을 생성하지 못했습니다. 입력값을 확인해 주세요.");
         } catch (RestClientException | IllegalStateException exception) {
             log.warn("Failed to create role.", exception);
             redirectAttributes.addFlashAttribute("flashStatus", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "새 역할을 생성하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+            redirectAttributes.addFlashAttribute("flashMessage", "새 권한을 생성하지 못했습니다. 잠시 후 다시 시도해 주세요.");
         }
 
         return redirectToManage(normalizedCode);
@@ -360,7 +424,7 @@ public class RoleManagementController {
                                         RedirectAttributes redirectAttributes) {
         if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_ROLE_WRITE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "역할을 편집할 권한이 없습니다.");
+            redirectAttributes.addFlashAttribute("flashMessage", "권한을 편집할 권한이 없습니다.");
             return redirectToManage(roleCode);
         }
 
@@ -375,11 +439,11 @@ public class RoleManagementController {
             log.warn("Failed to update role permissions. status={}, body={}",
                     exception.getStatusCode(), exception.getResponseBodyAsString(), exception);
             redirectAttributes.addFlashAttribute("flashStatus", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "역할 권한을 업데이트하지 못했습니다.");
+            redirectAttributes.addFlashAttribute("flashMessage", "권한 세부 사항을 업데이트하지 못했습니다.");
         } catch (RestClientException | IllegalStateException exception) {
             log.warn("Failed to update role permissions.", exception);
             redirectAttributes.addFlashAttribute("flashStatus", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "역할 권한을 업데이트하지 못했습니다.");
+            redirectAttributes.addFlashAttribute("flashMessage", "권한 세부 사항을 업데이트하지 못했습니다.");
         }
 
         return redirectToManage(normalizedCode);
@@ -391,30 +455,30 @@ public class RoleManagementController {
                              RedirectAttributes redirectAttributes) {
         if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_ROLE_WRITE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "역할을 삭제할 권한이 없습니다.");
+            redirectAttributes.addFlashAttribute("flashMessage", "권한을 삭제할 권한이 없습니다.");
             return redirectToManage(roleCode);
         }
 
         String normalizedCode = normalizeRoleCode(roleCode);
         if (!StringUtils.hasText(normalizedCode)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "삭제할 역할 코드를 확인해 주세요.");
+            redirectAttributes.addFlashAttribute("flashMessage", "삭제할 권한 코드를 확인해 주세요.");
             return redirectToManage(null);
         }
 
         try {
             adminRoleClient.deleteRole(normalizedCode);
             redirectAttributes.addFlashAttribute("flashStatus", "success");
-            redirectAttributes.addFlashAttribute("flashMessage", "역할을 삭제했습니다.");
+            redirectAttributes.addFlashAttribute("flashMessage", "권한을 삭제했습니다.");
         } catch (RestClientResponseException exception) {
             log.warn("Failed to delete role. status={}, body={}",
                     exception.getStatusCode(), exception.getResponseBodyAsString(), exception);
             redirectAttributes.addFlashAttribute("flashStatus", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "역할을 삭제하지 못했습니다.");
+            redirectAttributes.addFlashAttribute("flashMessage", "권한을 삭제하지 못했습니다.");
         } catch (RestClientException | IllegalStateException exception) {
             log.warn("Failed to delete role.", exception);
             redirectAttributes.addFlashAttribute("flashStatus", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "역할을 삭제하지 못했습니다.");
+            redirectAttributes.addFlashAttribute("flashMessage", "권한을 삭제하지 못했습니다.");
         }
 
         return redirectToManage(null);
@@ -574,13 +638,42 @@ public class RoleManagementController {
         return List.copyOf(normalized);
     }
 
-    private String redirectToTeam(Long selectedUserId) {
+    private String redirectToTeamMemberEditor(Long userId) {
+        if (userId == null) {
+            return redirectToTeamTab();
+        }
+        return "redirect:/admin/roles/team-members/" + userId + "/edit";
+    }
+
+    private String redirectToTeamTab() {
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/admin/roles")
                 .queryParam("tab", TAB_TEAM);
-        if (selectedUserId != null) {
-            builder.queryParam("selectedUserId", selectedUserId);
-        }
         return "redirect:" + builder.toUriString();
+    }
+
+    private Map<Long, List<RolePermissionGroupView>> buildTeamMemberRoleGroups(List<TeamMemberView> members,
+                                                                               Map<String, RoleTemplateView> mapping) {
+        if (members.isEmpty()) {
+            return Map.of();
+        }
+        return members.stream()
+                .filter(member -> member.id() != null)
+                .collect(Collectors.toMap(
+                        TeamMemberView::id,
+                        member -> buildRolePermissionGroups(member, mapping),
+                        (left, right) -> left,
+                        LinkedHashMap::new
+                ));
+    }
+
+    private List<RolePermissionGroupView> buildRolePermissionGroups(TeamMemberView member,
+                                                                    Map<String, RoleTemplateView> mapping) {
+        if (member == null) {
+            return List.of();
+        }
+        return member.roles().stream()
+                .map(role -> new RolePermissionGroupView(role, resolvePermissions(role.code(), mapping)))
+                .toList();
     }
 
     private String redirectToManage(String selectedRoleCode) {
