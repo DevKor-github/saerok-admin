@@ -46,6 +46,11 @@
                 <i class="bi bi-clipboard-check"></i>
                 <span>관리자 활동 로그</span>
             </a>
+            <a th:href="@{/admin/roles}" class="app-sidebar__link"
+               th:classappend="${activeMenu}=='adminRoles' ? ' is-active'">
+                <i class="bi bi-shield-lock"></i>
+                <span>운영 권한</span>
+            </a>
         </nav>
         <div class="app-sidebar__footer">
             <div>버전 0.1.0</div>
@@ -98,6 +103,11 @@
                    th:classappend="${activeMenu}=='adminAuditLogs' ? ' is-active fw-semibold'">
                     <i class="bi bi-clipboard-check"></i>
                     <span>관리자 활동 로그</span>
+                </a>
+                <a th:href="@{/admin/roles}" class="app-sidebar__link"
+                   th:classappend="${activeMenu}=='adminRoles' ? ' is-active fw-semibold'">
+                    <i class="bi bi-shield-lock"></i>
+                    <span>운영 권한</span>
                 </a>
             </nav>
         </div>

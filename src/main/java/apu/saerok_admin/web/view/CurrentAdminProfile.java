@@ -10,8 +10,9 @@ public record CurrentAdminProfile(
         String nickname,
         String email,
         String profileImageUrl,
-        List<String> roleDescriptions,
-        List<String> roleCodes
+        List<String> roleDisplayNames,
+        List<String> roleCodes,
+        List<String> permissionKeys
 ) {
 
     private static final String DEFAULT_PROFILE_IMAGE_URL =
@@ -23,12 +24,13 @@ public record CurrentAdminProfile(
         nickname = StringUtils.hasText(nickname) ? nickname : DEFAULT_NICKNAME;
         email = StringUtils.hasText(email) ? email : DEFAULT_EMAIL;
         profileImageUrl = StringUtils.hasText(profileImageUrl) ? profileImageUrl : DEFAULT_PROFILE_IMAGE_URL;
-        roleDescriptions = roleDescriptions != null ? List.copyOf(roleDescriptions) : List.of();
+        roleDisplayNames = normalizeRoleDisplayNames(roleDisplayNames);
         roleCodes = normalizeRoleCodes(roleCodes);
+        permissionKeys = normalizePermissionKeys(permissionKeys);
     }
 
-    public boolean hasRoleDescriptions() {
-        return !roleDescriptions.isEmpty();
+    public boolean hasRoleDisplayNames() {
+        return !roleDisplayNames.isEmpty();
     }
 
     public boolean hasRole(String roleCode) {
@@ -48,7 +50,15 @@ public record CurrentAdminProfile(
     }
 
     public static CurrentAdminProfile placeholder() {
-        return new CurrentAdminProfile(null, null, null, List.of(), List.of());
+        return new CurrentAdminProfile(null, null, null, List.of(), List.of(), List.of());
+    }
+
+    public boolean hasPermission(String permissionKey) {
+        if (!StringUtils.hasText(permissionKey)) {
+            return false;
+        }
+        String normalized = permissionKey.toUpperCase(Locale.ROOT);
+        return permissionKeys.contains(normalized);
     }
 
     private static List<String> normalizeRoleCodes(List<String> rawRoles) {
@@ -61,6 +71,40 @@ public record CurrentAdminProfile(
                 continue;
             }
             normalized.add(role.toUpperCase(Locale.ROOT));
+        }
+        if (normalized.isEmpty()) {
+            return List.of();
+        }
+        return List.copyOf(normalized);
+    }
+
+    private static List<String> normalizePermissionKeys(List<String> rawKeys) {
+        if (rawKeys == null || rawKeys.isEmpty()) {
+            return List.of();
+        }
+        Set<String> normalized = new LinkedHashSet<>();
+        for (String key : rawKeys) {
+            if (!StringUtils.hasText(key)) {
+                continue;
+            }
+            normalized.add(key.toUpperCase(Locale.ROOT));
+        }
+        if (normalized.isEmpty()) {
+            return List.of();
+        }
+        return List.copyOf(normalized);
+    }
+
+    private static List<String> normalizeRoleDisplayNames(List<String> names) {
+        if (names == null || names.isEmpty()) {
+            return List.of();
+        }
+        Set<String> normalized = new LinkedHashSet<>();
+        for (String name : names) {
+            if (!StringUtils.hasText(name)) {
+                continue;
+            }
+            normalized.add(name.trim());
         }
         if (normalized.isEmpty()) {
             return List.of();

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="role-permission-modal">
+    <div class="modal fade" id="rolePermissionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog role-permission-modal__dialog modal-dialog-centered">
+            <div class="modal-content role-permission-modal">
+                <div class="modal-header">
+                    <div>
+                        <div class="role-permission-modal__eyebrow">권한</div>
+                        <h5 class="modal-title" data-role-modal-title>권한 이름</h5>
+                        <p class="role-permission-modal__description mb-0 text-muted" data-role-modal-description>권한 설명</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" data-role-modal-dismiss aria-label="닫기"></button>
+                </div>
+                <div class="modal-body">
+                    <div data-role-modal-permissions>
+                        <div class="permission-modal-empty">권한 정보를 불러오는 중입니다.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const modalElement = document.getElementById('rolePermissionModal');
+            if (!modalElement) {
+                return;
+            }
+
+            const titleElement = modalElement.querySelector('[data-role-modal-title]');
+            const descriptionElement = modalElement.querySelector('[data-role-modal-description]');
+            const permissionsContainer = modalElement.querySelector('[data-role-modal-permissions]');
+            const bodyElement = document.body;
+            let storedOverflow = '';
+
+            function renderPermissionContent(entries) {
+                permissionsContainer.innerHTML = '';
+
+                if (!entries.length) {
+                    const fallback = document.createElement('div');
+                    fallback.className = 'permission-modal-empty';
+                    fallback.textContent = '이 권한의 세부 사항을 불러오지 못했습니다.';
+                    permissionsContainer.appendChild(fallback);
+                    return;
+                }
+
+                let index = 0;
+                const carousel = document.createElement('div');
+                carousel.className = 'permission-carousel';
+
+                const viewport = document.createElement('div');
+                viewport.className = 'permission-carousel__viewport';
+
+                const slide = document.createElement('div');
+                slide.className = 'permission-carousel__slide';
+
+                const labelEl = document.createElement('div');
+                labelEl.className = 'permission-carousel__label';
+
+                const keyEl = document.createElement('div');
+                keyEl.className = 'permission-carousel__key';
+
+                slide.appendChild(labelEl);
+                slide.appendChild(keyEl);
+                viewport.appendChild(slide);
+
+                const controls = document.createElement('div');
+                controls.className = 'permission-carousel__controls';
+
+                const prevButton = document.createElement('button');
+                prevButton.type = 'button';
+                prevButton.className = 'permission-carousel__nav';
+                prevButton.setAttribute('aria-label', '이전 권한');
+                prevButton.innerHTML = '<i class="bi bi-chevron-left"></i>';
+
+                const counter = document.createElement('div');
+                counter.className = 'permission-carousel__counter';
+
+                const nextButton = document.createElement('button');
+                nextButton.type = 'button';
+                nextButton.className = 'permission-carousel__nav';
+                nextButton.setAttribute('aria-label', '다음 권한');
+                nextButton.innerHTML = '<i class="bi bi-chevron-right"></i>';
+
+                controls.appendChild(prevButton);
+                controls.appendChild(counter);
+                controls.appendChild(nextButton);
+
+                carousel.appendChild(viewport);
+                carousel.appendChild(controls);
+                permissionsContainer.appendChild(carousel);
+
+                function updateSlide() {
+                    const current = entries[index] || { label: '', key: '' };
+                    labelEl.textContent = current.label || '권한 정보';
+                    keyEl.textContent = current.key || '-';
+                    counter.textContent = (index + 1) + ' / ' + entries.length;
+                    prevButton.disabled = index === 0;
+                    nextButton.disabled = index === entries.length - 1;
+                }
+
+                prevButton.addEventListener('click', function () {
+                    if (index === 0) {
+                        return;
+                    }
+                    index -= 1;
+                    updateSlide();
+                });
+
+                nextButton.addEventListener('click', function () {
+                    if (index >= entries.length - 1) {
+                        return;
+                    }
+                    index += 1;
+                    updateSlide();
+                });
+
+                function attachSwipeHandlers(target) {
+                    let touchStartX = 0;
+                    let swiping = false;
+                    const swipeThreshold = 40;
+
+                    target.addEventListener('touchstart', function (event) {
+                        if (!event.touches || !event.touches.length) {
+                            return;
+                        }
+                        touchStartX = event.touches[0].clientX;
+                        swiping = true;
+                    }, { passive: true });
+
+                    target.addEventListener('touchmove', function (event) {
+                        if (!swiping || !event.touches || !event.touches.length) {
+                            return;
+                        }
+
+                        const deltaX = event.touches[0].clientX - touchStartX;
+                        if (Math.abs(deltaX) < swipeThreshold) {
+                            return;
+                        }
+
+                        swiping = false;
+                        if (deltaX < 0) {
+                            nextButton.click();
+                        } else {
+                            prevButton.click();
+                        }
+                    }, { passive: true });
+
+                    target.addEventListener('touchend', function () {
+                        swiping = false;
+                    });
+
+                    target.addEventListener('touchcancel', function () {
+                        swiping = false;
+                    });
+                }
+
+                attachSwipeHandlers(viewport);
+
+                updateSlide();
+            }
+
+            function openModal() {
+                if (window.bootstrap && window.bootstrap.Modal) {
+                    window.bootstrap.Modal.getOrCreateInstance(modalElement).show();
+                    return;
+                }
+
+                storedOverflow = bodyElement.style.overflow;
+                modalElement.classList.add('show');
+                modalElement.style.display = 'block';
+                modalElement.removeAttribute('aria-hidden');
+                modalElement.setAttribute('aria-modal', 'true');
+                bodyElement.classList.add('modal-open');
+                bodyElement.style.overflow = 'hidden';
+            }
+
+            function closeModal() {
+                if (window.bootstrap && window.bootstrap.Modal) {
+                    const instance = window.bootstrap.Modal.getInstance(modalElement);
+                    if (instance) {
+                        instance.hide();
+                    }
+                    return;
+                }
+
+                modalElement.classList.remove('show');
+                modalElement.style.display = 'none';
+                modalElement.setAttribute('aria-hidden', 'true');
+                modalElement.removeAttribute('aria-modal');
+                bodyElement.classList.remove('modal-open');
+                bodyElement.style.overflow = storedOverflow || '';
+            }
+
+            modalElement.addEventListener('click', function (event) {
+                if (event.target.closest('[data-role-modal-dismiss]')) {
+                    event.preventDefault();
+                    closeModal();
+                    return;
+                }
+
+                if (!window.bootstrap && event.target === modalElement) {
+                    closeModal();
+                }
+            });
+
+            document.addEventListener('click', function (event) {
+                const trigger = event.target.closest('[data-role-modal-trigger]');
+                if (!trigger) {
+                    return;
+                }
+                event.preventDefault();
+
+                const templateId = trigger.getAttribute('data-role-permission-template');
+                const template = templateId ? document.getElementById(templateId) : null;
+                const entries = [];
+
+                if (template && template.content) {
+                    template.content.querySelectorAll('[data-permission-entry]').forEach(function (node) {
+                        entries.push({
+                            label: node.getAttribute('data-permission-label') || '',
+                            key: node.getAttribute('data-permission-key') || ''
+                        });
+                    });
+                }
+
+                renderPermissionContent(entries);
+
+                const roleLabel = trigger.getAttribute('data-role-label') || '권한 세부 사항';
+                const roleDescription = trigger.getAttribute('data-role-description') || '';
+                const roleCode = trigger.getAttribute('data-role-code') || '';
+
+                titleElement.textContent = roleLabel;
+                const subtitle = roleDescription.trim() || roleCode;
+                descriptionElement.textContent = subtitle || '';
+                descriptionElement.hidden = !subtitle;
+
+                openModal();
+            });
+        })();
+    </script>
+</th:block>
+</html>

@@ -6,7 +6,6 @@ import java.net.URI;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -22,12 +21,6 @@ import org.springframework.web.util.UriBuilder;
 public class CurrentAdminClient {
 
     private static final Logger log = LoggerFactory.getLogger(CurrentAdminClient.class);
-    private static final Map<String, String> ROLE_DESCRIPTION_MAP = Map.of(
-            "ADMIN_VIEWER", "열람자",
-            "ADMIN_EDITOR", "운영자"
-    );
-    private static final String UNKNOWN_ROLE_DESCRIPTION = "알 수 없는 관리자 권한";
-
     private final RestClient saerokRestClient;
     private final List<String> missingPrefixSegments;
     private final LoginSessionManager loginSessionManager;
@@ -57,14 +50,19 @@ public class CurrentAdminClient {
                 return Optional.empty();
             }
 
-            List<String> roles = response.roles() != null ? List.copyOf(response.roles()) : List.of();
+            List<String> backendRoles = response.roles() != null ? List.copyOf(response.roles()) : List.of();
+            AdminRoleInfo roleInfo = fetchAdminRoleInfo();
+            List<String> roleCodes = !roleInfo.roleCodes().isEmpty()
+                    ? roleInfo.roleCodes()
+                    : normalizeRoleCodes(backendRoles);
 
             return Optional.of(new CurrentAdminProfile(
                     response.nickname(),
                     response.email(),
                     response.profileImageUrl(),
-                    toRoleDescriptions(roles),
-                    normalizeRoleCodes(roles)
+                    roleInfo.roleDisplayNames(),
+                    roleCodes,
+                    roleInfo.permissionKeys()
             ));
         } catch (RestClientResponseException exception) {
             log.warn(
@@ -96,30 +94,79 @@ public class CurrentAdminClient {
     ) {
     }
 
-    private List<String> toRoleDescriptions(List<String> roles) {
-        if (roles == null || roles.isEmpty()) {
-            return List.of();
+    private AdminRoleInfo fetchAdminRoleInfo() {
+        try {
+            AdminMyRoleResponse response = saerokRestClient.get()
+                    .uri(uriBuilder -> buildUri(uriBuilder, "admin", "role", "me"))
+                    .retrieve()
+                    .body(AdminMyRoleResponse.class);
+
+            if (response == null) {
+                return AdminRoleInfo.empty();
+            }
+
+            List<String> roleDisplayNames = response.roles() == null
+                    ? List.of()
+                    : response.roles().stream()
+                            .map(RoleSummaryResponse::displayName)
+                            .filter(StringUtils::hasText)
+                            .map(String::trim)
+                            .toList();
+            List<String> roleCodes = response.roles() == null
+                    ? List.of()
+                    : response.roles().stream()
+                            .map(RoleSummaryResponse::code)
+                            .filter(StringUtils::hasText)
+                            .toList();
+            List<String> permissionKeys = response.permissions() == null
+                    ? List.of()
+                    : response.permissions().stream()
+                            .map(PermissionSummaryResponse::key)
+                            .filter(StringUtils::hasText)
+                            .toList();
+            return new AdminRoleInfo(roleDisplayNames, roleCodes, permissionKeys);
+        } catch (RestClientResponseException exception) {
+            log.warn(
+                    "Failed to fetch current admin roles. status={}, body={}",
+                    exception.getStatusCode(),
+                    exception.getResponseBodyAsString(),
+                    exception
+            );
+        } catch (RestClientException exception) {
+            log.warn("Failed to fetch current admin roles.", exception);
         }
+        return AdminRoleInfo.empty();
+    }
 
-        Set<String> descriptions = new LinkedHashSet<>();
-        for (String role : roles) {
-            if (!StringUtils.hasText(role)) {
-                continue;
-            }
+    private record AdminMyRoleResponse(
+            List<RoleSummaryResponse> roles,
+            List<PermissionSummaryResponse> permissions
+    ) {
+    }
 
-            String normalized = role.toUpperCase(Locale.ROOT);
-            String description = ROLE_DESCRIPTION_MAP.get(normalized);
-            if (description != null) {
-                descriptions.add(description);
-                continue;
-            }
+    private record RoleSummaryResponse(
+            Long id,
+            String code,
+            String displayName,
+            String description,
+            Boolean builtin
+    ) {
+    }
 
-            if (normalized.startsWith("ADMIN_")) {
-                descriptions.add(UNKNOWN_ROLE_DESCRIPTION);
-            }
+    private record PermissionSummaryResponse(
+            String key,
+            String description
+    ) {
+    }
+
+    private record AdminRoleInfo(
+            List<String> roleDisplayNames,
+            List<String> roleCodes,
+            List<String> permissionKeys
+    ) {
+        private static AdminRoleInfo empty() {
+            return new AdminRoleInfo(List.of(), List.of(), List.of());
         }
-
-        return descriptions.isEmpty() ? List.of() : List.copyOf(descriptions);
     }
 
     private List<String> normalizeRoleCodes(List<String> roles) {

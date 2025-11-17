@@ -42,7 +42,7 @@ class BackendAuthClientTest {
 
     @Test
     void kakaoLoginSendsRequestIncludingApiPrefix() {
-        wireMockServer.stubFor(post(urlEqualTo("/api/v1/auth/kakao/login"))
+        wireMockServer.stubFor(post(urlEqualTo("/api/v1/admin/auth/kakao/login"))
                 .withRequestBody(equalToJson("{" +
                         "\"authorizationCode\":\"auth-code\"," +
                         "\"channel\":\"admin\"" +
@@ -60,7 +60,7 @@ class BackendAuthClientTest {
         assertThat(loginSuccess.accessToken()).isEqualTo("backend-token");
         assertThat(loginSuccess.refreshCookies()).contains("refreshToken=abc; Path=/; HttpOnly");
 
-        wireMockServer.verify(postRequestedFor(urlEqualTo("/api/v1/auth/kakao/login")));
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/api/v1/admin/auth/kakao/login")));
     }
 
     @Test
@@ -73,7 +73,7 @@ class BackendAuthClientTest {
                 "http://localhost:" + wireMockServer.port(),
                 "/api/v1"
         ));
-        wireMockServer.stubFor(post(urlEqualTo("/api/v1/auth/kakao/login"))
+        wireMockServer.stubFor(post(urlEqualTo("/api/v1/admin/auth/kakao/login"))
                 .withRequestBody(equalToJson("{" +
                         "\"authorizationCode\":\"auth-code\"," +
                         "\"channel\":\"admin\"" +
@@ -88,6 +88,6 @@ class BackendAuthClientTest {
         BackendAuthClient.LoginSuccess loginSuccess = client.kakaoLogin("auth-code");
 
         assertThat(loginSuccess.accessToken()).isEqualTo("backend-token");
-        wireMockServer.verify(postRequestedFor(urlEqualTo("/api/v1/auth/kakao/login")));
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/api/v1/admin/auth/kakao/login")));
     }
 }

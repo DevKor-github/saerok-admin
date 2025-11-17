@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+    <div class="alert d-flex align-items-center mb-4"
+         th:if="${flashMessage != null}"
+         th:classappend="${flashStatus} == 'success' ? ' alert-success' : ' alert-danger'">
+        <i class="bi"
+           th:classappend="${flashStatus} == 'success' ? ' bi-check-circle-fill me-2' : ' bi-exclamation-triangle-fill me-2'"></i>
+        <span th:text="${flashMessage}">알림</span>
+    </div>
+
+    <div class="mb-4">
+        <ul class="nav nav-tabs nav-tabs-line role-tabs">
+            <li class="nav-item">
+                <a class="nav-link"
+                   th:classappend="${tab} == 'my' ? ' active' : ''"
+                   th:href="@{/admin/roles(tab='my')}">내 권한</a>
+            </li>
+            <li class="nav-item" th:if="${canViewTeamTab}">
+                <a class="nav-link"
+                   th:classappend="${tab} == 'team' ? ' active' : ''"
+                   th:href="@{/admin/roles(tab='team')}">팀원들의 권한</a>
+            </li>
+            <li class="nav-item" th:unless="${canViewTeamTab}">
+                <span class="nav-link disabled" title="ADMIN_ROLE_READ 권한이 필요합니다.">팀원들의 권한</span>
+            </li>
+            <li class="nav-item" th:if="${canManageRoles}">
+                <a class="nav-link"
+                   th:classappend="${tab} == 'manage' ? ' active' : ''"
+                   th:href="${#strings.isEmpty(selectedRoleCode)} ? @{/admin/roles(tab='manage')} : @{/admin/roles(tab='manage', selectedRoleCode=${selectedRoleCode})}">권한 관리</a>
+            </li>
+        </ul>
+    </div>
+
+
+    <div th:if="${tab} == 'my'">
+        <div class="card card-elevated mb-4">
+            <div class="card-body card-body-comfy">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+                    <div>
+                        <h2 class="h5 mb-1">내 권한</h2>
+                        <div class="text-muted small">부여된 권한을 눌러 세부 정보를 확인하세요.</div>
+                    </div>
+                    <span class="badge bg-light text-dark" th:text="${#lists.size(myRoles)} + '개 권한'"></span>
+                </div>
+                <div class="alert alert-warning" th:if="${myRolesLoadError != null}" th:text="${myRolesLoadError}">로드 오류</div>
+                <div th:if="${myRolesLoadError == null}">
+                    <div class="text-muted" th:if="${#lists.isEmpty(myRoles)}">
+                        아직 부여된 권한이 없습니다.
+                    </div>
+                    <div th:if="${!#lists.isEmpty(myRoles)}">
+                        <div class="role-token-grid" th:if="${!#lists.isEmpty(myRolePermissionGroups)}">
+                            <th:block th:each="group, iterStat : ${myRolePermissionGroups}">
+                                <th:block th:with="templateId=${'permission-template-my-' + group.role().code() + '-' + iterStat.index}">
+                                    <button type="button"
+                                            class="role-token-button"
+                                            data-role-modal-trigger="true"
+                                            th:data-role-code="${group.role().code()}"
+                                            th:data-role-label="${group.role().label()}"
+                                            th:data-role-description="${group.role().description()}"
+                                            th:data-role-permission-template="${templateId}"
+                                            th:attr="aria-label=|${group.role().label()} 권한 보기|">
+                                        <span class="fw-semibold" th:text="${group.role().label()}">권한 이름</span>
+                                    </button>
+                                    <template th:id="${templateId}">
+                                        <div data-permission-entry
+                                             th:each="permission : ${group.permissions()}"
+                                             th:data-permission-label="${permission.label()}"
+                                             th:data-permission-key="${permission.key()}">
+                                        </div>
+                                    </template>
+                                </th:block>
+                            </th:block>
+                        </div>
+                        <div class="role-token-grid" th:if="${#lists.isEmpty(myRolePermissionGroups)}">
+                            <span class="role-token" th:each="role : ${myRoles}" th:text="${role.label()}">팀 멤버</span>
+                        </div>
+                        <div class="alert alert-info mt-3"
+                             th:if="${#lists.isEmpty(myRolePermissionGroups)}">
+                            권한 템플릿을 불러오지 못해 권한 목록을 표시할 수 없습니다.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${tab} == 'team'">
+        <div class="alert alert-warning" th:if="${!canViewTeamTab}">
+            팀원 권한을 확인하려면 ADMIN_ROLE_READ 권한이 필요합니다.
+        </div>
+        <div th:if="${canViewTeamTab}">
+            <div class="card card-elevated mb-4">
+                <div class="card-body card-body-comfy">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+                        <div>
+                            <h2 class="h5 mb-1">팀원들의 권한</h2>
+                            <div class="text-muted small" th:text="|${teamMemberCount}명|">0명</div>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning" th:if="${teamMembersLoadError != null}" th:text="${teamMembersLoadError}">로드 오류</div>
+                    <div th:if="${teamMembersLoadError == null}">
+                        <div class="text-muted text-center py-5" th:if="${#lists.isEmpty(teamMembers)}">
+                            관리 대상 팀원이 없습니다.
+                        </div>
+                        <div th:if="${!#lists.isEmpty(teamMembers)}">
+                            <div class="team-role-card-grid">
+                                <article class="team-role-card" th:each="member : ${teamMembers}">
+                                    <div class="d-flex justify-content-between align-items-start gap-3">
+                                        <div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="fw-semibold" th:text="${member.nickname()}">운영자</div>
+                                                <span class="badge bg-warning-subtle text-dark" th:if="${member.superAdmin()}">SUPER</span>
+                                            </div>
+                                            <div class="text-muted small" th:text="${#lists.size(member.roles())} + '개 권한'">0개 권한</div>
+                                        </div>
+                                        <div>
+                                            <a class="btn btn-outline-primary btn-sm"
+                                               th:if="${canManageRoles}"
+                                               th:href="@{|/admin/roles/team-members/${member.id()}/edit|}">권한 편집</a>
+                                        </div>
+                                    </div>
+                                    <div class="team-role-card__roles mt-3">
+                                        <th:block th:with="groups=${teamMemberRoleGroupsById[member.id()]}">
+                                            <div class="role-token-grid" th:if="${groups != null && !#lists.isEmpty(groups)}">
+                                                <th:block th:each="group, iterStat : ${groups}">
+                                                    <th:block th:with="templateId=${'permission-template-team-' + member.id() + '-' + group.role().code() + '-' + iterStat.index}">
+                                                        <button type="button"
+                                                                class="role-token-button"
+                                                                data-role-modal-trigger="true"
+                                                                th:data-role-code="${group.role().code()}"
+                                                                th:data-role-label="${group.role().label()}"
+                                                                th:data-role-description="${group.role().description()}"
+                                                                th:data-role-permission-template="${templateId}"
+                                                                th:attr="aria-label=|${group.role().label()} 권한 보기|">
+                                                            <span class="fw-semibold" th:text="${group.role().label()}">권한 이름</span>
+                                                        </button>
+                                                        <template th:id="${templateId}">
+                                                            <div data-permission-entry
+                                                                 th:each="permission : ${group.permissions()}"
+                                                                 th:data-permission-label="${permission.label()}"
+                                                                 th:data-permission-key="${permission.key()}">
+                                                            </div>
+                                                        </template>
+                                                    </th:block>
+                                                </th:block>
+                                            </div>
+                                            <div class="role-token-grid"
+                                                 th:if="${(groups == null || #lists.isEmpty(groups)) && !#lists.isEmpty(member.roles())}">
+                                                <span class="role-token" th:each="role : ${member.roles()}" th:text="${role.label()}">팀 멤버</span>
+                                            </div>
+                                            <div class="text-muted small" th:if="${#lists.isEmpty(member.roles())}">
+                                                부여된 권한이 없습니다.
+                                            </div>
+                                        </th:block>
+                                    </div>
+                                    <div class="text-muted small" th:if="${#lists.isEmpty(member.roles())}">
+                                        권한이 없는 팀원입니다.
+                                    </div>
+                                </article>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div th:if="${tab} == 'manage'">
+        <div class="alert alert-warning" th:if="${!canManageRoles}">
+            권한 관리 기능은 ADMIN_ROLE_WRITE 권한을 가진 사용자만 사용할 수 있습니다.
+        </div>
+        <div th:if="${canManageRoles}">
+            <div class="role-manage-region">
+                <div class="role-manage-toolbar">
+                    <div>
+                        <div class="role-manage-eyebrow">Role Templates</div>
+                        <h2 class="h4 mb-1">권한 관리</h2>
+                        <p class="text-muted mb-0 small">권한 구조를 빠르게 파악하고 필요한 권한만 정돈된 화면에서 조정하세요.</p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-light text-dark" th:text="|총 ${roleTemplateCount}개|">총 0개</span>
+                        <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#newRoleForm">
+                            새 권한 추가
+                        </button>
+                    </div>
+                </div>
+                <div id="newRoleForm" class="role-manage-form collapse" th:classappend="${roleTemplateCount == 0} ? ' show' : ''">
+                    <form action="/admin/roles/new" method="post" class="role-editor-form">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-4">
+                                <label class="form-label" for="roleCodeInput">권한 코드</label>
+                                <input type="text" class="form-control" id="roleCodeInput" name="code" placeholder="예: CONTENT_REVIEWER" required>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label" for="roleNameInput">표시 이름</label>
+                                <input type="text" class="form-control" id="roleNameInput" name="displayName" placeholder="예: 콘텐츠 검토자" required>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label" for="roleDescriptionInput">설명</label>
+                                <input type="text" class="form-control" id="roleDescriptionInput" name="description" placeholder="권한 목적을 입력하세요" required>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="text-muted small mb-2">포함할 권한</div>
+                            <div class="alert alert-light border" th:if="${#lists.isEmpty(permissionOptions)}">
+                                선택할 수 있는 권한 목록을 불러오지 못했습니다.
+                            </div>
+                            <div class="permission-grid" th:if="${!#lists.isEmpty(permissionOptions)}">
+                                <label class="form-check permission-option" th:each="option : ${permissionOptions}">
+                                    <input class="form-check-input" type="checkbox" name="permissions" th:value="${option.key()}">
+                                    <div>
+                                        <div class="fw-semibold" th:text="${option.label()}">권한 이름</div>
+                                        <small class="text-muted" th:text="${option.key()}">KEY</small>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end mt-3">
+                            <button type="submit" class="btn btn-primary btn-sm">저장</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="role-manage-columns">
+                    <section class="role-manage-column role-manage-column--list">
+                        <div class="role-manage-column__header">
+                            <div>
+                                <div class="role-manage-eyebrow">등록된 권한</div>
+                                <p class="text-muted small mb-0">선택하여 상세 권한을 살펴보세요.</p>
+                            </div>
+                        </div>
+                        <div class="alert alert-warning" th:if="${roleTemplatesLoadError != null}" th:text="${roleTemplatesLoadError}">로드 오류</div>
+                        <div class="role-manage-list" th:if="${roleTemplatesLoadError == null}">
+                            <div class="text-muted small" th:if="${#lists.isEmpty(roleTemplates)}">등록된 권한이 없습니다.</div>
+                            <a class="role-manage-list-item"
+                               th:each="role : ${roleTemplates}"
+                               th:href="@{/admin/roles(tab='manage', selectedRoleCode=${role.code()})}"
+                               th:classappend="${selectedRoleCode == role.code()} ? ' is-active' : ''">
+                                <div>
+                                    <div class="fw-semibold" th:text="${role.displayName()}">권한 이름</div>
+                                    <div class="text-muted small" th:text="${role.code()}">ROLE_CODE</div>
+                                </div>
+                                <i class="bi bi-arrow-right-short"></i>
+                            </a>
+                        </div>
+                    </section>
+                    <section class="role-manage-column role-manage-column--detail">
+                        <div th:if="${selectedRoleTemplate == null}" class="role-manage-empty">
+                            왼쪽 목록에서 편집할 권한을 선택하세요.
+                        </div>
+                        <div th:if="${selectedRoleTemplate != null}" class="role-manage-detail">
+                            <header class="role-manage-detail__header">
+                                <div>
+                                    <div class="role-manage-eyebrow">선택한 권한</div>
+                                    <h3 class="h4 mb-1" th:text="${selectedRoleTemplate.displayName()}">권한 이름</h3>
+                                    <p class="text-muted mb-2" th:text="${selectedRoleTemplate.description()}">권한 설명</p>
+                                    <span class="role-manage-code" th:text="${selectedRoleTemplate.code()}">ROLE_CODE</span>
+                                </div>
+                                <span class="badge bg-secondary-subtle text-dark align-self-start" th:if="${selectedRoleTemplate.builtin()}">시스템 내장</span>
+                            </header>
+                            <section>
+                                <div class="role-manage-eyebrow mb-2">권한</div>
+                                <div class="role-permission-chips" th:if="${selectedRoleTemplate.hasPermissions()}">
+                                    <span class="role-permission-chip" th:each="permission : ${selectedRoleTemplate.permissions()}">
+                                        <span class="role-permission-chip__label" th:text="${permission.label()}">권한</span>
+                                        <span class="role-permission-chip__key" th:text="${permission.key()}">KEY</span>
+                                    </span>
+                                </div>
+                                <div class="text-muted small" th:unless="${selectedRoleTemplate.hasPermissions()}">아직 연결된 권한이 없습니다.</div>
+                            </section>
+                            <section>
+                                <div class="role-manage-eyebrow mb-2">권한 편집</div>
+                                <div class="alert alert-light border" th:if="${#lists.isEmpty(permissionOptions)}">
+                                    선택 가능한 권한 목록이 없어 편집할 수 없습니다.
+                                </div>
+                                <form th:if="${!#lists.isEmpty(permissionOptions)}"
+                                      th:action="@{|/admin/roles/${selectedRoleTemplate.code()}/permissions|}"
+                                      method="post" class="role-editor-form">
+                                    <div class="permission-grid">
+                                        <label class="form-check permission-option" th:each="option : ${permissionOptions}">
+                                            <input class="form-check-input" type="checkbox" name="permissions"
+                                                   th:value="${option.key()}"
+                                                   th:checked="${selectedRoleTemplate.hasPermission(option.key())}">
+                                            <div>
+                                                <div class="fw-semibold" th:text="${option.label()}">권한 이름</div>
+                                                <small class="text-muted" th:text="${option.key()}">KEY</small>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="d-flex justify-content-end mt-3">
+                                        <button type="submit" class="btn btn-primary btn-sm">권한 저장</button>
+                                    </div>
+                                </form>
+                            </section>
+                            <section>
+                                <form th:if="${!selectedRoleTemplate.builtin()}"
+                                      th:action="@{|/admin/roles/${selectedRoleTemplate.code()}/delete|}"
+                                      method="post"
+                                      onsubmit="return confirm('정말 이 권한을 삭제하시겠습니까? 되돌릴 수 없습니다.');">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">권한 삭제</button>
+                                </form>
+                                <div class="alert alert-light border" th:if="${selectedRoleTemplate.builtin()}">
+                                    시스템 내장 권한은 삭제할 수 없습니다.
+                                </div>
+                            </section>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+    <th:block th:replace="~{fragments/role-permission-modal :: role-permission-modal}"></th:block>
+</th:block>
+</html>

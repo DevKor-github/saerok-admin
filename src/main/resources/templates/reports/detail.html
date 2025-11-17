@@ -139,24 +139,24 @@
                     <div class="card-body card-body-comfy">
                         <h3 class="h6 fw-semibold mb-3">처리 옵션</h3>
                         <div class="d-flex flex-wrap flex-gap-sm">
-                            <div class="d-flex flex-wrap flex-gap-sm">
-                                <a class="btn btn-outline-secondary d-inline-flex align-items-center gap-1"
-                                   th:href="@{/reports}" data-bs-toggle="tooltip" data-bs-placement="top" title="목록 보기">
-                                    <i class="bi bi-list"></i>
-                                    <span>목록 보기</span>
-                                </a>
-                                <form th:action="@{${detail.ignoreAction()}}" method="post" class="m-0">
-                                    <input type="hidden" name="redirect" value="detail">
-                                    <button type="submit"
-                                            class="btn btn-outline-primary d-inline-flex align-items-center gap-1"
-                                            th:onclick="|return confirm('해당 신고를 무시 처리할까요?');|"
-                                            data-bs-toggle="tooltip" data-bs-placement="top" title="신고 무시">
-                                        <i class="bi bi-slash-circle"></i>
-                                        <span>신고 무시</span>
-                                    </button>
-                                </form>
-                            </div>
-                            <form th:action="@{${detail.deleteAction()}}" method="post" class="m-0">
+                            <a class="btn btn-outline-secondary d-inline-flex align-items-center gap-1"
+                               th:href="@{/reports}" data-bs-toggle="tooltip" data-bs-placement="top" title="목록 보기">
+                                <i class="bi bi-list"></i>
+                                <span>목록 보기</span>
+                            </a>
+                            <form th:if="${currentAdminProfile.hasPermission('ADMIN_REPORT_WRITE')}"
+                                  th:action="@{${detail.ignoreAction()}}" method="post" class="m-0">
+                                <input type="hidden" name="redirect" value="detail">
+                                <button type="submit"
+                                        class="btn btn-outline-primary d-inline-flex align-items-center gap-1"
+                                        th:onclick="|return confirm('해당 신고를 무시 처리할까요?');|"
+                                        data-bs-toggle="tooltip" data-bs-placement="top" title="신고 무시">
+                                    <i class="bi bi-slash-circle"></i>
+                                    <span>신고 무시</span>
+                                </button>
+                            </form>
+                            <form th:if="${currentAdminProfile.hasPermission('ADMIN_REPORT_WRITE')}"
+                                  th:action="@{${detail.deleteAction()}}" method="post" class="m-0">
                                 <input type="hidden" name="redirect" value="detail">
                                 <input type="hidden" name="reason" value="">
                                 <button type="button"
