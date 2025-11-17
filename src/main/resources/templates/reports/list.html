@@ -112,7 +112,8 @@
                                 </div>
                             </div>
                     </a>
-                    <footer class="report-card__footer border-top d-flex flex-wrap gap-2 justify-content-end align-items-center">
+                    <footer class="report-card__footer border-top d-flex flex-wrap gap-2 justify-content-end align-items-center"
+                            th:if="${currentAdminProfile.hasPermission('ADMIN_REPORT_WRITE')}">
                         <form th:action="@{${report.ignoreAction()}}" method="post" class="m-0">
                             <input type="hidden" name="redirect" value="list">
                             <th:block th:each="typeParam : ${selectedTypeParams}">

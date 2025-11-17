@@ -111,7 +111,11 @@ public class BackendAuthClient {
         return builder.build();
     }
 
-    private record KakaoLoginPayload(String authorizationCode) {
+    private record KakaoLoginPayload(String authorizationCode, String channel) {
+
+        private KakaoLoginPayload(String authorizationCode) {
+            this(authorizationCode, "admin");
+        }
     }
 
     private record AppleLoginPayload(String authorizationCode) {

@@ -58,6 +58,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AdController {
 
     private static final Logger log = LoggerFactory.getLogger(AdController.class);
+    private static final String PERMISSION_ADMIN_AD_WRITE = "ADMIN_AD_WRITE";
+    private static final String PERMISSION_ADMIN_SLOT_DELETE = "ADMIN_SLOT_DELETE";
 
     private final AdminAdClient adminAdClient;
     private final Clock clock;
@@ -168,7 +170,7 @@ public class AdController {
     public String newAdForm(@ModelAttribute("currentAdminProfile") CurrentAdminProfile currentAdminProfile,
                             Model model,
                             RedirectAttributes redirectAttributes) {
-        if (!currentAdminProfile.isAdminEditor()) {
+        if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_AD_WRITE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고를 등록할 권한이 없습니다.");
             return "redirect:/ads";
@@ -194,7 +196,7 @@ public class AdController {
                            @RequestParam(name = "objectKey") String objectKey,
                            @RequestParam(name = "contentType") String contentType,
                            RedirectAttributes redirectAttributes) {
-        if (!currentAdminProfile.isAdminEditor()) {
+        if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_AD_WRITE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고를 등록할 권한이 없습니다.");
             return "redirect:/ads?tab=ads";
@@ -229,7 +231,7 @@ public class AdController {
                              @RequestParam("id") Long adId,
                              Model model,
                              RedirectAttributes redirectAttributes) {
-        if (!currentAdminProfile.isAdminEditor()) {
+        if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_AD_WRITE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고를 수정할 권한이 없습니다.");
             return "redirect:/ads";
@@ -282,7 +284,7 @@ public class AdController {
                            @RequestParam(name = "objectKey", required = false) String objectKey,
                            @RequestParam(name = "contentType", required = false) String contentType,
                            RedirectAttributes redirectAttributes) {
-        if (!currentAdminProfile.isAdminEditor()) {
+        if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_AD_WRITE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고를 수정할 권한이 없습니다.");
             return "redirect:/ads?tab=ads";
@@ -317,7 +319,7 @@ public class AdController {
     public String deleteAd(@ModelAttribute("currentAdminProfile") CurrentAdminProfile currentAdminProfile,
                            @RequestParam("id") Long adId,
                            RedirectAttributes redirectAttributes) {
-        if (!currentAdminProfile.isAdminEditor()) {
+        if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_AD_WRITE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고를 삭제할 권한이 없습니다.");
             return "redirect:/ads?tab=ads";
@@ -344,7 +346,7 @@ public class AdController {
     public String newSlotForm(@ModelAttribute("currentAdminProfile") CurrentAdminProfile currentAdminProfile,
                               Model model,
                               RedirectAttributes redirectAttributes) {
-        if (!currentAdminProfile.isAdminEditor()) {
+        if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_AD_WRITE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 위치를 등록할 권한이 없습니다.");
             return "redirect:/ads?tab=schedule";
@@ -369,7 +371,7 @@ public class AdController {
                              @RequestParam("fallbackRatio") Double fallbackRatioPercent,
                              @RequestParam("ttlSeconds") Integer ttlSeconds,
                              RedirectAttributes redirectAttributes) {
-        if (!currentAdminProfile.isAdminEditor()) {
+        if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_AD_WRITE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 위치를 등록할 권한이 없습니다.");
             return "redirect:/ads?tab=schedule";
@@ -405,7 +407,7 @@ public class AdController {
                                @RequestParam("id") Long slotId,
                                Model model,
                                RedirectAttributes redirectAttributes) {
-        if (!currentAdminProfile.isAdminEditor()) {
+        if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_AD_WRITE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 위치를 수정할 권한이 없습니다.");
             return "redirect:/ads?tab=schedule";
@@ -472,7 +474,7 @@ public class AdController {
             failureRedirect = "redirect:/ads/slots/edit?id=" + slotId;
         }
 
-        if (!currentAdminProfile.isAdminEditor()) {
+        if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_AD_WRITE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 위치를 수정할 권한이 없습니다.");
             return successRedirect;
@@ -507,7 +509,7 @@ public class AdController {
     public String deleteSlot(@ModelAttribute("currentAdminProfile") CurrentAdminProfile currentAdminProfile,
                              @RequestParam("id") Long slotId,
                              RedirectAttributes redirectAttributes) {
-        if (!currentAdminProfile.isAdminEditor()) {
+        if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_SLOT_DELETE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 위치를 삭제할 권한이 없습니다.");
             return "redirect:/ads?tab=schedule";
@@ -535,7 +537,7 @@ public class AdController {
                                    @RequestParam(name = "slotId", required = false) Long preselectedSlotId,
                                    Model model,
                                    RedirectAttributes redirectAttributes) {
-        if (!currentAdminProfile.isAdminEditor()) {
+        if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_AD_WRITE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 노출 스케줄을 등록할 권한이 없습니다.");
             return "redirect:/ads?tab=schedule";
@@ -567,7 +569,7 @@ public class AdController {
                                   @RequestParam("weight") Short weight,
                                   @RequestParam(name = "enabled", defaultValue = "false") boolean enabled,
                                   RedirectAttributes redirectAttributes) {
-        if (!currentAdminProfile.isAdminEditor()) {
+        if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_AD_WRITE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 노출 스케줄을 등록할 권한이 없습니다.");
             return "redirect:/ads?tab=schedule";
@@ -600,7 +602,7 @@ public class AdController {
                                     @RequestParam("id") Long placementId,
                                     Model model,
                                     RedirectAttributes redirectAttributes) {
-        if (!currentAdminProfile.isAdminEditor()) {
+        if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_AD_WRITE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 노출 스케줄을 수정할 권한이 없습니다.");
             return "redirect:/ads?tab=schedule";
@@ -663,7 +665,7 @@ public class AdController {
                                   @RequestParam("weight") Short weight,
                                   @RequestParam(name = "enabled", defaultValue = "false") boolean enabled,
                                   RedirectAttributes redirectAttributes) {
-        if (!currentAdminProfile.isAdminEditor()) {
+        if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_AD_WRITE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 노출 스케줄을 수정할 권한이 없습니다.");
             return "redirect:/ads?tab=schedule";
@@ -694,7 +696,7 @@ public class AdController {
     public String deletePlacement(@ModelAttribute("currentAdminProfile") CurrentAdminProfile currentAdminProfile,
                                   @RequestParam("id") Long placementId,
                                   RedirectAttributes redirectAttributes) {
-        if (!currentAdminProfile.isAdminEditor()) {
+        if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_AD_WRITE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 노출 스케줄을 삭제할 권한이 없습니다.");
             return "redirect:/ads?tab=schedule";
@@ -722,7 +724,7 @@ public class AdController {
                                   @RequestParam("id") Long placementId,
                                   @RequestParam("enabled") boolean enabled,
                                   RedirectAttributes redirectAttributes) {
-        if (!currentAdminProfile.isAdminEditor()) {
+        if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_AD_WRITE)) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "광고 노출 상태를 변경할 권한이 없습니다.");
             return "redirect:/ads?tab=schedule";
@@ -770,7 +772,7 @@ public class AdController {
     @ResponseBody
     public ResponseEntity<?> presignImage(@ModelAttribute("currentAdminProfile") CurrentAdminProfile currentAdminProfile,
                                           @RequestBody Map<String, String> payload) {
-        if (!currentAdminProfile.isAdminEditor()) {
+        if (!currentAdminProfile.hasPermission(PERMISSION_ADMIN_AD_WRITE)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "이미지 업로드 권한이 없습니다."));
         }
