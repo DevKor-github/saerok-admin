@@ -36,11 +36,11 @@
                 <i class="bi bi-badge-ad"></i>
                 <span>광고 관리</span>
             </a>
-            <span class="app-sidebar__link is-disabled upcoming-feature" role="button" tabindex="-1" aria-disabled="true"
-                  data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="추후 제공 예정인 기능">
+            <a th:href="@{/notices}" class="app-sidebar__link"
+               th:classappend="${activeMenu}=='notices' ? ' is-active fw-semibold'">
                 <i class="bi bi-megaphone"></i>
-                <span>시스템 알림 발송</span>
-            </span>
+                <span>공지사항 관리</span>
+            </a>
             <a th:href="@{/admin/audit-logs}" class="app-sidebar__link"
                th:classappend="${activeMenu}=='adminAuditLogs' ? ' is-active'">
                 <i class="bi bi-clipboard-check"></i>
@@ -94,11 +94,11 @@
                     <i class="bi bi-badge-ad"></i>
                     <span>광고 관리</span>
                 </a>
-                <span class="app-sidebar__link is-disabled upcoming-feature" role="button" tabindex="-1" aria-disabled="true"
-                      data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="추후 제공 예정인 기능">
+                <a th:href="@{/notices}" class="app-sidebar__link"
+                   th:classappend="${activeMenu}=='notices' ? ' is-active fw-semibold'">
                     <i class="bi bi-megaphone"></i>
-                    <span>시스템 알림 발송</span>
-                </span>
+                    <span>공지사항 관리</span>
+                </a>
                 <a th:href="@{/admin/audit-logs}" class="app-sidebar__link"
                    th:classappend="${activeMenu}=='adminAuditLogs' ? ' is-active fw-semibold'">
                     <i class="bi bi-clipboard-check"></i>

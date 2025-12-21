@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+    <!-- Quill (Snow theme) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css">
+
+    <style>
+        .notice-editor .ql-toolbar {
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            border-color: var(--border-subtle);
+            background: var(--surface-primary);
+        }
+        .notice-editor .ql-container {
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+            border-color: var(--border-subtle);
+            min-height: 380px;
+            font-size: 1rem;
+        }
+        .notice-editor .ql-editor {
+            padding: 1rem;
+        }
+        .notice-editor .ql-editor img {
+            max-width: 100%;
+            border-radius: var(--radius-md);
+        }
+        .notice-editor .ql-editor p,
+        .notice-editor .ql-editor li {
+            line-height: 1.55;
+        }
+        .notice-section-title {
+            letter-spacing: -0.01em;
+        }
+    </style>
+
+    <div class="row g-4">
+        <div class="col-12 col-xl-8">
+            <div class="card card-elevated">
+                <div class="card-body">
+                    <form id="noticeForm" class="row g-4" autocomplete="off">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold notice-section-title">공지 제목</label>
+                            <input id="noticeTitle" type="text" class="form-control form-control-lg" placeholder="예) 서비스 점검 안내">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold notice-section-title">공지 본문</label>
+                            <div class="notice-editor">
+                                <div id="noticeEditor"></div>
+                            </div>
+                            <div class="form-text">
+                                굵게/기울임/밑줄/헤딩/리스트/링크/이미지만 지원합니다. (이미지 업로드는 현재 Mock)
+                            </div>
+                            <input type="hidden" id="noticeContentHtml" name="contentHtml">
+                        </div>
+
+                        <div class="col-12">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="sendNotificationToggle">
+                                        <label class="form-check-label fw-semibold" for="sendNotificationToggle">
+                                            공지사항이 게시될 때 알림 보내기
+                                        </label>
+                                    </div>
+                                    <div class="mt-2 small text-muted">
+                                        옵션을 켜면 공지 게시 시 <strong>푸시 알림</strong> 및 <strong>인앱 알림</strong> 내용도 함께 작성합니다.
+                                    </div>
+
+                                    <div id="notificationFields" class="mt-4" hidden>
+                                        <div class="row g-3">
+                                            <div class="col-12">
+                                                <label class="form-label fw-semibold">푸시 알림 제목</label>
+                                                <input id="pushTitle" type="text" class="form-control" placeholder="예) 새로운 공지사항이 등록되었어요">
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label fw-semibold">푸시 알림 본문</label>
+                                                <textarea id="pushBody" class="form-control" rows="3" placeholder="예) 점검 일정과 변경 사항을 확인해 주세요."></textarea>
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label fw-semibold">인앱 알림 본문</label>
+                                                <textarea id="inAppBody" class="form-control" rows="3" placeholder="예) 공지사항이 게시되었습니다. 자세한 내용을 확인해 주세요."></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                                        <div>
+                                            <div class="fw-semibold notice-section-title">게시 방식</div>
+                                            <div class="small text-muted mt-1">
+                                                지금 게시하거나, 특정 날짜/시각에 예약 게시할 수 있습니다. (현재는 버튼 동작만 Mock)
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-3 mt-2">
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label fw-semibold">예약 게시 시각</label>
+                                            <input id="scheduledAt" type="datetime-local" class="form-control">
+                                            <div class="form-text">예약 게시 버튼을 누르면 위 시각으로 예약됩니다.</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex flex-wrap gap-2 mt-4">
+                                        <button id="publishNowBtn" type="button" class="btn btn-primary"
+                                                data-toast-target="toastNoticePublishPending">
+                                            <i class="bi bi-lightning-charge me-1"></i>
+                                            지금 바로 게시하기
+                                        </button>
+                                        <button id="schedulePublishBtn" type="button" class="btn btn-outline-primary"
+                                                data-toast-target="toastNoticePublishPending">
+                                            <i class="bi bi-calendar2-check me-1"></i>
+                                            예약해서 게시하기
+                                        </button>
+                                        <button id="saveDraftBtn" type="button" class="btn btn-outline-secondary ms-auto"
+                                                data-toast-target="toastNoticeSavedPending">
+                                            <i class="bi bi-save2 me-1"></i>
+                                            임시 저장 (Mock)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="alert alert-warning border-0 rounded-4 mt-4 mb-0">
+                        <div class="fw-semibold mb-1">현재 상태</div>
+                        <div class="small">
+                            이 화면은 <strong>UI + Quill 에디터</strong>까지만 구성되어 있고,
+                            게시/예약/저장 API는 아직 연동되지 않았습니다.
+                            이미지 업로드는 <strong>어드민 서버의 Mock 엔드포인트</strong>로 임시 저장됩니다.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-4">
+            <div class="card card-elevated h-100">
+                <div class="card-body">
+                    <h2 class="h6 fw-semibold mb-3">작성 가이드</h2>
+                    <ul class="text-muted mb-0 small">
+                        <li class="mb-2">제목은 한 줄로 간결하게 작성하세요.</li>
+                        <li class="mb-2">이미지는 중요한 지점에만 넣고, 여러 장을 넣을 때는 간격을 두세요.</li>
+                        <li class="mb-2">알림 옵션을 켠 경우, 푸시/인앱 문구는 공지 본문보다 더 짧게 작성하세요.</li>
+                        <li>예약 게시 시각은 서버 시간 기준으로 처리되도록(추후) 맞춰주세요.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+    <script>
+        (function () {
+            function $(id) { return document.getElementById(id); }
+
+            var sendToggle = $('sendNotificationToggle');
+            var notificationFields = $('notificationFields');
+
+            if (sendToggle && notificationFields) {
+                var syncNotificationVisibility = function () {
+                    notificationFields.hidden = !sendToggle.checked;
+                };
+                sendToggle.addEventListener('change', syncNotificationVisibility);
+                syncNotificationVisibility();
+            }
+
+            // ---- Quill init
+            var editorEl = $('noticeEditor');
+            if (!editorEl || !window.Quill) {
+                return;
+            }
+
+            var quill = new window.Quill('#noticeEditor', {
+                theme: 'snow',
+                placeholder: '공지사항 본문을 작성하세요. 텍스트 중간에 이미지를 넣을 수 있습니다.',
+                modules: {
+                    toolbar: [
+                        [{ header: [1, 2, false] }],
+                        ['bold', 'italic', 'underline'],
+                        [{ list: 'ordered' }, { list: 'bullet' }],
+                        ['link', 'image'],
+                        ['clean']
+                    ]
+                }
+            });
+
+            var presignEndpoint = '/public/mock/notices/images/presign';
+
+            function selectLocalImage() {
+                var input = document.createElement('input');
+                input.setAttribute('type', 'file');
+                input.setAttribute('accept', 'image/*');
+                input.click();
+
+                input.onchange = function () {
+                    var file = input.files && input.files[0];
+                    if (!file) {
+                        return;
+                    }
+                    uploadImage(file);
+                };
+            }
+
+            async function uploadImage(file) {
+                try {
+                    var presignRes = await fetch(presignEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filename: file.name, contentType: file.type })
+                    });
+
+                    if (!presignRes.ok) {
+                        throw new Error('presign_failed');
+                    }
+
+                    var presign = await presignRes.json();
+                    if (!presign || !presign.uploadUrl || !presign.imageUrl) {
+                        throw new Error('presign_invalid');
+                    }
+
+                    var uploadRes = await fetch(presign.uploadUrl, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': file.type || 'application/octet-stream' },
+                        body: file
+                    });
+
+                    if (!uploadRes.ok) {
+                        throw new Error('upload_failed');
+                    }
+
+                    var range = quill.getSelection(true);
+                    var insertIndex = range ? range.index : quill.getLength();
+                    quill.insertEmbed(insertIndex, 'image', presign.imageUrl, 'user');
+                    quill.setSelection(insertIndex + 1);
+
+                } catch (e) {
+                    console.warn('Image upload failed (mock).', e);
+                    alert('이미지 업로드에 실패했습니다. (Mock)\n- Presigned URL/업로드 API 연동 전 단계입니다.');
+                }
+            }
+
+            var toolbar = quill.getModule('toolbar');
+            if (toolbar) {
+                toolbar.addHandler('image', selectLocalImage);
+            }
+
+            function collectPayload() {
+                var html = quill.root ? quill.root.innerHTML : '';
+                $('noticeContentHtml').value = html;
+
+                return {
+                    title: $('noticeTitle').value || '',
+                    contentHtml: html || '',
+                    sendNotification: !!($('sendNotificationToggle') && $('sendNotificationToggle').checked),
+                    push: {
+                        title: $('pushTitle') ? $('pushTitle').value : '',
+                        body: $('pushBody') ? $('pushBody').value : ''
+                    },
+                    inApp: {
+                        body: $('inAppBody') ? $('inAppBody').value : ''
+                    },
+                    scheduledAt: $('scheduledAt') ? $('scheduledAt').value : ''
+                };
+            }
+
+            function validatePayload(payload) {
+                if (!payload.title.trim()) {
+                    alert('공지 제목을 입력해 주세요.');
+                    return false;
+                }
+
+                if (!payload.contentHtml || payload.contentHtml.replace(/<[^>]*>/g, '').trim().length === 0) {
+                    var hasImg = /<img\s+[^>]*src=/.test(payload.contentHtml || '');
+                    if (!hasImg) {
+                        alert('공지 본문을 입력해 주세요.');
+                        return false;
+                    }
+                }
+
+                if (payload.sendNotification) {
+                    if (!payload.push.title.trim()) {
+                        alert('푸시 알림 제목을 입력해 주세요.');
+                        return false;
+                    }
+                    if (!payload.push.body.trim()) {
+                        alert('푸시 알림 본문을 입력해 주세요.');
+                        return false;
+                    }
+                    if (!payload.inApp.body.trim()) {
+                        alert('인앱 알림 본문을 입력해 주세요.');
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            function attachMockAction(buttonId, type) {
+                var btn = $(buttonId);
+                if (!btn) return;
+
+                btn.addEventListener('click', function (event) {
+                    var payload = collectPayload();
+                    payload.action = type;
+
+                    if (type === 'SCHEDULE_PUBLISH' && !payload.scheduledAt) {
+                        alert('예약 게시 시각을 선택해 주세요.');
+                        event.preventDefault();
+                        event.stopPropagation();
+                        return;
+                    }
+
+                    if (type !== 'SAVE_DRAFT' && !validatePayload(payload)) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        return;
+                    }
+
+                    console.log('[NOTICE MOCK SUBMIT]', payload);
+                });
+            }
+
+            attachMockAction('publishNowBtn', 'PUBLISH_NOW');
+            attachMockAction('schedulePublishBtn', 'SCHEDULE_PUBLISH');
+            attachMockAction('saveDraftBtn', 'SAVE_DRAFT');
+        })();
+    </script>
+</th:block>
+</html>
