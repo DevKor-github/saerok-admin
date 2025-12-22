@@ -37,10 +37,20 @@
         <div class="col-12 col-xl-8">
             <div class="card card-elevated">
                 <div class="card-body">
-                    <form id="noticeForm" class="row g-4" autocomplete="off">
+                    <div th:if="${flashMessage}" class="alert alert-elevated d-flex align-items-center mb-4"
+                         th:classappend="${flashStatus} == 'success' ? ' alert-success' : ' alert-danger'">
+                        <i class="bi"
+                           th:classappend="${flashStatus} == 'success' ? ' bi-check-circle-fill' : ' bi-exclamation-triangle-fill'"></i>
+                        <div class="ms-2" th:text="${flashMessage}">작업이 완료되었습니다.</div>
+                    </div>
+
+                    <form id="noticeForm" class="row g-4" autocomplete="off" method="post"
+                          th:action="${isEdit} ? @{/notices/edit} : @{/notices/create}"
+                          th:attr="data-mode=${isEdit} ? 'edit' : 'create'">
                         <div class="col-12">
                             <label class="form-label fw-semibold notice-section-title">공지 제목</label>
-                            <input id="noticeTitle" type="text" class="form-control form-control-lg" placeholder="예) 서비스 점검 안내">
+                            <input id="noticeTitle" name="title" th:value="${form.title}" type="text"
+                                   class="form-control form-control-lg" placeholder="예) 서비스 점검 안내">
                         </div>
 
                         <div class="col-12">
@@ -49,16 +59,23 @@
                                 <div id="noticeEditor"></div>
                             </div>
                             <div class="form-text">
-                                굵게/기울임/밑줄/헤딩/리스트/링크/이미지만 지원합니다. (이미지 업로드는 현재 Mock)
+                                굵게/기울임/밑줄/헤딩/리스트/링크/이미지만 지원합니다. (이미지 업로드 연동 완료)
                             </div>
                             <input type="hidden" id="noticeContentHtml" name="contentHtml">
+                            <input type="hidden" id="publishNow" name="publishNow" value="false">
+                            <input type="hidden" id="noticeImagesJson" name="imagesJson" value="[]">
+                            <input type="hidden" id="initialImagesJson" th:value="${initialImagesJson}">
+                            <textarea id="initialContentHtml" class="d-none" th:text="${form.contentHtml}"></textarea>
+                            <input type="hidden" name="id" th:if="${isEdit}" th:value="${form.id}">
                         </div>
 
                         <div class="col-12">
                             <div class="card border-0 bg-light">
                                 <div class="card-body">
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="sendNotificationToggle">
+                                        <input class="form-check-input" type="checkbox" id="sendNotificationToggle"
+                                               name="sendNotification" value="true"
+                                               th:checked="${form.sendNotification}">
                                         <label class="form-check-label fw-semibold" for="sendNotificationToggle">
                                             공지사항이 게시될 때 알림 보내기
                                         </label>
@@ -71,15 +88,21 @@
                                         <div class="row g-3">
                                             <div class="col-12">
                                                 <label class="form-label fw-semibold">푸시 알림 제목</label>
-                                                <input id="pushTitle" type="text" class="form-control" placeholder="예) 새로운 공지사항이 등록되었어요">
+                                                <input id="pushTitle" name="pushTitle" th:value="${form.pushTitle}"
+                                                       type="text" class="form-control"
+                                                       placeholder="예) 새로운 공지사항이 등록되었어요">
                                             </div>
                                             <div class="col-12">
                                                 <label class="form-label fw-semibold">푸시 알림 본문</label>
-                                                <textarea id="pushBody" class="form-control" rows="3" placeholder="예) 점검 일정과 변경 사항을 확인해 주세요."></textarea>
+                                                <textarea id="pushBody" name="pushBody" class="form-control" rows="3"
+                                                          placeholder="예) 점검 일정과 변경 사항을 확인해 주세요."
+                                                          th:text="${form.pushBody}"></textarea>
                                             </div>
                                             <div class="col-12">
                                                 <label class="form-label fw-semibold">인앱 알림 본문</label>
-                                                <textarea id="inAppBody" class="form-control" rows="3" placeholder="예) 공지사항이 게시되었습니다. 자세한 내용을 확인해 주세요."></textarea>
+                                                <textarea id="inAppBody" name="inAppBody" class="form-control" rows="3"
+                                                          placeholder="예) 공지사항이 게시되었습니다. 자세한 내용을 확인해 주세요."
+                                                          th:text="${form.inAppBody}"></textarea>
                                             </div>
                                         </div>
                                     </div>
@@ -92,36 +115,28 @@
                                 <div class="card-body">
                                     <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
                                         <div>
-                                            <div class="fw-semibold notice-section-title">게시 방식</div>
-                                            <div class="small text-muted mt-1">
-                                                지금 게시하거나, 특정 날짜/시각에 예약 게시할 수 있습니다. (현재는 버튼 동작만 Mock)
-                                            </div>
+                                            <div class="fw-semibold">예약 게시</div>
+                                            <div class="small text-muted">예약 게시 버튼을 누르면 아래 시각으로 예약됩니다.</div>
                                         </div>
-                                    </div>
-
-                                    <div class="row g-3 mt-2">
-                                        <div class="col-12 col-md-6">
-                                            <label class="form-label fw-semibold">예약 게시 시각</label>
-                                            <input id="scheduledAt" type="datetime-local" class="form-control">
-                                            <div class="form-text">예약 게시 버튼을 누르면 위 시각으로 예약됩니다.</div>
+                                        <div style="min-width: 240px;">
+                                            <input id="scheduledAt" name="scheduledAt" type="datetime-local"
+                                                   class="form-control" th:value="${form.scheduledAt}">
                                         </div>
                                     </div>
 
                                     <div class="d-flex flex-wrap gap-2 mt-4">
-                                        <button id="publishNowBtn" type="button" class="btn btn-primary"
-                                                data-toast-target="toastNoticePublishPending">
+                                        <button id="publishNowBtn" type="button" class="btn btn-primary">
                                             <i class="bi bi-lightning-charge me-1"></i>
                                             지금 바로 게시하기
                                         </button>
-                                        <button id="schedulePublishBtn" type="button" class="btn btn-outline-primary"
-                                                data-toast-target="toastNoticePublishPending">
+                                        <button id="schedulePublishBtn" type="button" class="btn btn-outline-primary">
                                             <i class="bi bi-calendar2-check me-1"></i>
                                             예약해서 게시하기
                                         </button>
                                         <button id="saveDraftBtn" type="button" class="btn btn-outline-secondary ms-auto"
-                                                data-toast-target="toastNoticeSavedPending">
+                                                th:if="${isEdit}">
                                             <i class="bi bi-save2 me-1"></i>
-                                            임시 저장 (Mock)
+                                            변경 사항 저장
                                         </button>
                                     </div>
                                 </div>
@@ -129,12 +144,11 @@
                         </div>
                     </form>
 
-                    <div class="alert alert-warning border-0 rounded-4 mt-4 mb-0">
-                        <div class="fw-semibold mb-1">현재 상태</div>
+                    <div class="alert alert-info border-0 rounded-4 mt-4 mb-0">
+                        <div class="fw-semibold mb-1">안내</div>
                         <div class="small">
-                            이 화면은 <strong>UI + Quill 에디터</strong>까지만 구성되어 있고,
-                            게시/예약/저장 API는 아직 연동되지 않았습니다.
-                            이미지 업로드는 <strong>어드민 서버의 Mock 엔드포인트</strong>로 임시 저장됩니다.
+                            <strong>즉시 게시</strong>, <strong>예약 게시</strong>, <strong>수정</strong>, <strong>삭제</strong>가 가능합니다.
+                            에디터에서 이미지를 삽입하면 자동으로 업로드된 뒤 본문에 포함됩니다.
                         </div>
                     </div>
                 </div>
@@ -149,7 +163,7 @@
                         <li class="mb-2">제목은 한 줄로 간결하게 작성하세요.</li>
                         <li class="mb-2">이미지는 중요한 지점에만 넣고, 여러 장을 넣을 때는 간격을 두세요.</li>
                         <li class="mb-2">알림 옵션을 켠 경우, 푸시/인앱 문구는 공지 본문보다 더 짧게 작성하세요.</li>
-                        <li>예약 게시 시각은 서버 시간 기준으로 처리되도록(추후) 맞춰주세요.</li>
+                        <li>예약 게시 시각은 KST 기준입니다.</li>
                     </ul>
                 </div>
             </div>
@@ -160,6 +174,13 @@
     <script>
         (function () {
             function $(id) { return document.getElementById(id); }
+
+            var form = $('noticeForm');
+            var titleEl = $('noticeTitle');
+            var scheduledAtEl = $('scheduledAt');
+            var contentInput = $('noticeContentHtml');
+            var publishNowInput = $('publishNow');
+            var imagesJsonInput = $('noticeImagesJson');
 
             var sendToggle = $('sendNotificationToggle');
             var notificationFields = $('notificationFields');
@@ -178,21 +199,52 @@
                 return;
             }
 
+            var toolbarOptions = [
+                [{ header: [1, 2, false] }],
+                ['bold', 'italic', 'underline'],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                ['link', 'image'],
+                ['clean']
+            ];
+
             var quill = new window.Quill('#noticeEditor', {
                 theme: 'snow',
                 placeholder: '공지사항 본문을 작성하세요. 텍스트 중간에 이미지를 넣을 수 있습니다.',
                 modules: {
-                    toolbar: [
-                        [{ header: [1, 2, false] }],
-                        ['bold', 'italic', 'underline'],
-                        [{ list: 'ordered' }, { list: 'bullet' }],
-                        ['link', 'image'],
-                        ['clean']
-                    ]
+                    toolbar: toolbarOptions
                 }
             });
 
-            var presignEndpoint = '/public/mock/notices/images/presign';
+            // 초기 본문
+            var initialContent = $('initialContentHtml');
+            if (initialContent && initialContent.value) {
+                quill.root.innerHTML = initialContent.value;
+            }
+
+            // 업로드된 이미지 메타(에디터 내 이미지 src 기준)
+            var imagesByUrl = {};
+
+            var initialImages = $('initialImagesJson');
+            if (initialImages && initialImages.value) {
+                try {
+                    var parsed = JSON.parse(initialImages.value || '[]');
+                    if (Array.isArray(parsed)) {
+                        parsed.forEach(function (img) {
+                            if (img && img.imageUrl && img.objectKey && img.contentType) {
+                                imagesByUrl[img.imageUrl] = {
+                                    objectKey: img.objectKey,
+                                    contentType: img.contentType,
+                                    imageUrl: img.imageUrl
+                                };
+                            }
+                        });
+                    }
+                } catch (e) {
+                    // ignore
+                }
+            }
+
+            var presignEndpoint = '/notices/image/presign';
 
             function selectLocalImage() {
                 var input = document.createElement('input');
@@ -205,16 +257,16 @@
                     if (!file) {
                         return;
                     }
-                    uploadImage(file);
+                    uploadAndInsertImage(file);
                 };
             }
 
-            async function uploadImage(file) {
+            async function uploadAndInsertImage(file) {
                 try {
                     var presignRes = await fetch(presignEndpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ filename: file.name, contentType: file.type })
+                        body: JSON.stringify({ contentType: file.type })
                     });
 
                     if (!presignRes.ok) {
@@ -222,28 +274,33 @@
                     }
 
                     var presign = await presignRes.json();
-                    if (!presign || !presign.uploadUrl || !presign.imageUrl) {
-                        throw new Error('presign_invalid');
+                    if (!presign || !presign.presignedUrl || !presign.imageUrl || !presign.objectKey) {
+                        throw new Error('invalid_presign_response');
                     }
 
-                    var uploadRes = await fetch(presign.uploadUrl, {
+                    var putRes = await fetch(presign.presignedUrl, {
                         method: 'PUT',
-                        headers: { 'Content-Type': file.type || 'application/octet-stream' },
+                        headers: { 'Content-Type': file.type },
                         body: file
                     });
 
-                    if (!uploadRes.ok) {
+                    if (!putRes.ok) {
                         throw new Error('upload_failed');
                     }
 
                     var range = quill.getSelection(true);
-                    var insertIndex = range ? range.index : quill.getLength();
-                    quill.insertEmbed(insertIndex, 'image', presign.imageUrl, 'user');
-                    quill.setSelection(insertIndex + 1);
+                    var index = range ? range.index : quill.getLength();
+                    quill.insertEmbed(index, 'image', presign.imageUrl, 'user');
+                    quill.setSelection(index + 1, 0);
 
+                    imagesByUrl[presign.imageUrl] = {
+                        objectKey: presign.objectKey,
+                        contentType: file.type,
+                        imageUrl: presign.imageUrl
+                    };
                 } catch (e) {
-                    console.warn('Image upload failed (mock).', e);
-                    alert('이미지 업로드에 실패했습니다. (Mock)\n- Presigned URL/업로드 API 연동 전 단계입니다.');
+                    console.warn('[NOTICE IMAGE UPLOAD ERROR]', e);
+                    alert('이미지 업로드에 실패했습니다. 잠시 후 다시 시도해주세요.');
                 }
             }
 
@@ -252,85 +309,124 @@
                 toolbar.addHandler('image', selectLocalImage);
             }
 
-            function collectPayload() {
-                var html = quill.root ? quill.root.innerHTML : '';
-                $('noticeContentHtml').value = html;
-
-                return {
-                    title: $('noticeTitle').value || '',
-                    contentHtml: html || '',
-                    sendNotification: !!($('sendNotificationToggle') && $('sendNotificationToggle').checked),
-                    push: {
-                        title: $('pushTitle') ? $('pushTitle').value : '',
-                        body: $('pushBody') ? $('pushBody').value : ''
-                    },
-                    inApp: {
-                        body: $('inAppBody') ? $('inAppBody').value : ''
-                    },
-                    scheduledAt: $('scheduledAt') ? $('scheduledAt').value : ''
-                };
+            function stripHtml(html) {
+                return (html || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
             }
 
-            function validatePayload(payload) {
-                if (!payload.title.trim()) {
+            function collectImagesFromHtml(html) {
+                var doc = new DOMParser().parseFromString(html || '', 'text/html');
+                var imgs = Array.prototype.slice.call(doc.querySelectorAll('img'));
+                var seen = {};
+                var out = [];
+                imgs.forEach(function (img) {
+                    var src = img.getAttribute('src');
+                    if (!src) {
+                        return;
+                    }
+                    var meta = imagesByUrl[src];
+                    if (!meta || !meta.objectKey || seen[meta.objectKey]) {
+                        return;
+                    }
+                    seen[meta.objectKey] = true;
+                    out.push({ objectKey: meta.objectKey, contentType: meta.contentType });
+                });
+                return out;
+            }
+
+            function validateForSubmit(publishNow, requireSchedule) {
+                if (!titleEl || !titleEl.value || !titleEl.value.trim()) {
                     alert('공지 제목을 입력해 주세요.');
                     return false;
                 }
 
-                if (!payload.contentHtml || payload.contentHtml.replace(/<[^>]*>/g, '').trim().length === 0) {
-                    var hasImg = /<img\s+[^>]*src=/.test(payload.contentHtml || '');
-                    if (!hasImg) {
-                        alert('공지 본문을 입력해 주세요.');
+                var html = quill.root ? quill.root.innerHTML : '';
+                var text = stripHtml(html);
+                var hasImg = /<img\s+[^>]*src=/.test(html || '');
+                if (!text && !hasImg) {
+                    alert('공지 본문을 입력해 주세요.');
+                    return false;
+                }
+
+                if (!publishNow && requireSchedule) {
+                    if (!scheduledAtEl || !scheduledAtEl.value) {
+                        alert('예약 게시 시각을 입력해 주세요.');
                         return false;
                     }
                 }
 
-                if (payload.sendNotification) {
-                    if (!payload.push.title.trim()) {
-                        alert('푸시 알림 제목을 입력해 주세요.');
-                        return false;
-                    }
-                    if (!payload.push.body.trim()) {
-                        alert('푸시 알림 본문을 입력해 주세요.');
-                        return false;
-                    }
-                    if (!payload.inApp.body.trim()) {
-                        alert('인앱 알림 본문을 입력해 주세요.');
+                if (sendToggle && sendToggle.checked) {
+                    var pushTitleEl = $('pushTitle');
+                    var pushBodyEl = $('pushBody');
+                    var inAppBodyEl = $('inAppBody');
+
+                    if (!pushTitleEl || !pushTitleEl.value.trim() ||
+                        !pushBodyEl || !pushBodyEl.value.trim() ||
+                        !inAppBodyEl || !inAppBodyEl.value.trim()) {
+                        alert('알림을 보낼 경우 푸시 제목/본문과 인앱 알림 본문을 모두 입력해 주세요.');
                         return false;
                     }
                 }
 
+                if (contentInput) {
+                    contentInput.value = html;
+                }
+                if (imagesJsonInput) {
+                    imagesJsonInput.value = JSON.stringify(collectImagesFromHtml(html));
+                }
                 return true;
             }
 
-            function attachMockAction(buttonId, type) {
-                var btn = $(buttonId);
-                if (!btn) return;
+            function submitWithMode(mode) {
+                if (!form) {
+                    return;
+                }
 
-                btn.addEventListener('click', function (event) {
-                    var payload = collectPayload();
-                    payload.action = type;
+                var isEdit = form.getAttribute('data-mode') === 'edit';
 
-                    if (type === 'SCHEDULE_PUBLISH' && !payload.scheduledAt) {
-                        alert('예약 게시 시각을 선택해 주세요.');
-                        event.preventDefault();
-                        event.stopPropagation();
-                        return;
+                if (mode === 'PUBLISH_NOW') {
+                    if (publishNowInput) publishNowInput.value = 'true';
+                    if (scheduledAtEl) scheduledAtEl.value = '';
+                    if (!validateForSubmit(true, false)) return;
+                } else if (mode === 'SCHEDULE') {
+                    if (publishNowInput) publishNowInput.value = 'false';
+                    if (!validateForSubmit(false, true)) return;
+                } else if (mode === 'SAVE') {
+                    if (publishNowInput) publishNowInput.value = 'false';
+                    if (isEdit && scheduledAtEl) {
+                        // 저장 버튼은 "현재 예약 시각 유지" (수정 본문만 저장)
+                        scheduledAtEl.value = '';
                     }
+                    if (!validateForSubmit(false, !isEdit)) return;
+                } else {
+                    return;
+                }
 
-                    if (type !== 'SAVE_DRAFT' && !validatePayload(payload)) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        return;
-                    }
+                form.submit();
+            }
 
-                    console.log('[NOTICE MOCK SUBMIT]', payload);
+            var publishNowBtn = $('publishNowBtn');
+            if (publishNowBtn) {
+                publishNowBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    submitWithMode('PUBLISH_NOW');
                 });
             }
 
-            attachMockAction('publishNowBtn', 'PUBLISH_NOW');
-            attachMockAction('schedulePublishBtn', 'SCHEDULE_PUBLISH');
-            attachMockAction('saveDraftBtn', 'SAVE_DRAFT');
+            var schedulePublishBtn = $('schedulePublishBtn');
+            if (schedulePublishBtn) {
+                schedulePublishBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    submitWithMode('SCHEDULE');
+                });
+            }
+
+            var saveDraftBtn = $('saveDraftBtn');
+            if (saveDraftBtn) {
+                saveDraftBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    submitWithMode('SAVE');
+                });
+            }
         })();
     </script>
 </th:block>
