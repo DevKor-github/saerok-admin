@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,6 +28,7 @@ import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -46,6 +48,7 @@ public class NoticeController {
     private static final String PERMISSION_ADMIN_ANNOUNCEMENT_WRITE = "ADMIN_ANNOUNCEMENT_WRITE";
 
     private static final DateTimeFormatter DATETIME_LOCAL_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+    private static final ZoneId KST_ZONE = ZoneId.of("Asia/Seoul");
 
     private final AdminAnnouncementClient adminAnnouncementClient;
     private final ObjectMapper objectMapper;
@@ -89,6 +92,51 @@ public class NoticeController {
         }
 
         return "notices/index";
+    }
+
+    @GetMapping("/{id:\\d+}")
+    public String detail(@ModelAttribute("currentAdminProfile") CurrentAdminProfile currentAdminProfile,
+                         @PathVariable Long id,
+                         Model model,
+                         RedirectAttributes redirectAttributes) {
+        boolean canRead = currentAdminProfile != null && currentAdminProfile.hasPermission(PERMISSION_ADMIN_ANNOUNCEMENT_READ);
+        boolean canWrite = currentAdminProfile != null && currentAdminProfile.hasPermission(PERMISSION_ADMIN_ANNOUNCEMENT_WRITE);
+
+        if (!canRead) {
+            redirectAttributes.addFlashAttribute("flashStatus", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", "공지사항을 조회할 권한이 없습니다.");
+            return "redirect:/notices";
+        }
+
+        try {
+            AdminAnnouncementDetailResponse response = adminAnnouncementClient.getAnnouncement(id);
+            if (response == null) {
+                throw new IllegalStateException("Empty announcement detail response");
+            }
+
+            model.addAttribute("pageTitle", "공지사항 상세");
+            model.addAttribute("activeMenu", "notices");
+            model.addAttribute("breadcrumbs", List.of(
+                    Breadcrumb.of("대시보드", "/"),
+                    Breadcrumb.of("공지사항 관리", "/notices"),
+                    Breadcrumb.active("상세")
+            ));
+            model.addAttribute("toastMessages", List.of());
+            model.addAttribute("detail", response);
+            model.addAttribute("canWrite", canWrite);
+            model.addAttribute("canEdit", canWrite && !"PUBLISHED".equalsIgnoreCase(response.status()));
+            return "notices/detail";
+        } catch (RestClientResponseException exception) {
+            log.warn("Failed to load announcement detail. status={}, body={}", exception.getStatusCode(), exception.getResponseBodyAsString(), exception);
+            redirectAttributes.addFlashAttribute("flashStatus", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", "공지사항을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.");
+            return "redirect:/notices";
+        } catch (RestClientException | IllegalStateException exception) {
+            log.warn("Failed to load announcement detail.", exception);
+            redirectAttributes.addFlashAttribute("flashStatus", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", "공지사항을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.");
+            return "redirect:/notices";
+        }
     }
 
     @GetMapping("/new")
@@ -268,6 +316,11 @@ public class NoticeController {
         }
 
         LocalDateTime scheduledAt = parseDatetimeLocal(scheduledAtRaw);
+        if (!publishNow && scheduledAt == null) {
+            redirectAttributes.addFlashAttribute("flashStatus", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", "예약 게시 시각을 입력해 주세요.");
+            return "redirect:/notices/edit?id=" + id;
+        }
 
         if (sendNotification && (!StringUtils.hasText(pushTitle) || !StringUtils.hasText(pushBody) || !StringUtils.hasText(inAppBody))) {
             redirectAttributes.addFlashAttribute("flashStatus", "error");
@@ -409,7 +462,7 @@ public class NoticeController {
             return "";
         }
         try {
-            return offsetDateTime.toLocalDateTime().format(DATETIME_LOCAL_FORMAT);
+            return offsetDateTime.atZoneSameInstant(KST_ZONE).toLocalDateTime().format(DATETIME_LOCAL_FORMAT);
         } catch (Exception exception) {
             return "";
         }

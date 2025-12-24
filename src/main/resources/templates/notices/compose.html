@@ -127,16 +127,11 @@
                                     <div class="d-flex flex-wrap gap-2 mt-4">
                                         <button id="publishNowBtn" type="button" class="btn btn-primary">
                                             <i class="bi bi-lightning-charge me-1"></i>
-                                            지금 바로 게시하기
+                                            <span th:text="${isEdit} ? '예약 취소 및 즉시 게시하기' : '지금 바로 게시하기'">지금 바로 게시하기</span>
                                         </button>
                                         <button id="schedulePublishBtn" type="button" class="btn btn-outline-primary">
                                             <i class="bi bi-calendar2-check me-1"></i>
-                                            예약해서 게시하기
-                                        </button>
-                                        <button id="saveDraftBtn" type="button" class="btn btn-outline-secondary ms-auto"
-                                                th:if="${isEdit}">
-                                            <i class="bi bi-save2 me-1"></i>
-                                            변경 사항 저장
+                                            <span th:text="${isEdit} ? '변경된 내용으로 예약 게시하기' : '예약해서 게시하기'">예약해서 게시하기</span>
                                         </button>
                                     </div>
                                 </div>
@@ -381,8 +376,6 @@
                     return;
                 }
 
-                var isEdit = form.getAttribute('data-mode') === 'edit';
-
                 if (mode === 'PUBLISH_NOW') {
                     if (publishNowInput) publishNowInput.value = 'true';
                     if (scheduledAtEl) scheduledAtEl.value = '';
@@ -390,13 +383,6 @@
                 } else if (mode === 'SCHEDULE') {
                     if (publishNowInput) publishNowInput.value = 'false';
                     if (!validateForSubmit(false, true)) return;
-                } else if (mode === 'SAVE') {
-                    if (publishNowInput) publishNowInput.value = 'false';
-                    if (isEdit && scheduledAtEl) {
-                        // 저장 버튼은 "현재 예약 시각 유지" (수정 본문만 저장)
-                        scheduledAtEl.value = '';
-                    }
-                    if (!validateForSubmit(false, !isEdit)) return;
                 } else {
                     return;
                 }
@@ -417,14 +403,6 @@
                 schedulePublishBtn.addEventListener('click', function (e) {
                     e.preventDefault();
                     submitWithMode('SCHEDULE');
-                });
-            }
-
-            var saveDraftBtn = $('saveDraftBtn');
-            if (saveDraftBtn) {
-                saveDraftBtn.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    submitWithMode('SAVE');
                 });
             }
         })();
