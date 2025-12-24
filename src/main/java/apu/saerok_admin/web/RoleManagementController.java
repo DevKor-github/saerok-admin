@@ -2,6 +2,7 @@ package apu.saerok_admin.web;
 
 import apu.saerok_admin.infra.role.AdminRoleClient;
 import apu.saerok_admin.infra.role.dto.AdminMyRoleResponse;
+import apu.saerok_admin.infra.role.dto.AdminPermissionListResponse;
 import apu.saerok_admin.infra.role.dto.AdminRoleListResponse;
 import apu.saerok_admin.infra.role.dto.AdminRoleUserListResponse;
 import apu.saerok_admin.infra.role.dto.AdminUserRoleResponse;
@@ -13,7 +14,6 @@ import apu.saerok_admin.infra.role.dto.RoleSummaryResponse;
 import apu.saerok_admin.infra.role.dto.UpdateRolePermissionsRequest;
 import apu.saerok_admin.web.view.Breadcrumb;
 import apu.saerok_admin.web.view.CurrentAdminProfile;
-import apu.saerok_admin.web.view.role.PermissionCatalog;
 import apu.saerok_admin.web.view.role.PermissionOptionView;
 import apu.saerok_admin.web.view.role.PermissionView;
 import apu.saerok_admin.web.view.role.RoleDisplay;
@@ -104,7 +104,6 @@ public class RoleManagementController {
                                 (left, right) -> left,
                                 LinkedHashMap::new
                         ));
-                permissionOptions = buildPermissionOptions(roleTemplates);
             } catch (RestClientResponseException exception) {
                 log.warn("Failed to load role templates. status={}, body={}",
                         exception.getStatusCode(), exception.getResponseBodyAsString(), exception);
@@ -112,6 +111,32 @@ public class RoleManagementController {
             } catch (RestClientException | IllegalStateException exception) {
                 log.warn("Failed to load role templates.", exception);
                 roleTemplatesLoadError = "ROLE 템플릿을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+            }
+        }
+
+        if (canManageRoles) {
+            try {
+                AdminPermissionListResponse response = adminRoleClient.listPermissions();
+                permissionOptions = Optional.ofNullable(response)
+                        .map(AdminPermissionListResponse::permissions)
+                        .orElseGet(List::of)
+                        .stream()
+                        .map(permission -> new PermissionOptionView(permission.key(), permission.description()))
+                        .collect(Collectors.toMap(
+                                PermissionOptionView::key,
+                                option -> option,
+                                (left, right) -> left,
+                                LinkedHashMap::new
+                        ))
+                        .values()
+                        .stream()
+                        .sorted(permissionOptionComparator())
+                        .toList();
+            } catch (RestClientResponseException exception) {
+                log.warn("Failed to load permissions. status={}, body={}",
+                        exception.getStatusCode(), exception.getResponseBodyAsString(), exception);
+            } catch (RestClientException | IllegalStateException exception) {
+                log.warn("Failed to load permissions.", exception);
             }
         }
 
@@ -566,20 +591,10 @@ public class RoleManagementController {
         );
     }
 
-    private List<PermissionOptionView> buildPermissionOptions(List<RoleTemplateView> templates) {
-        Map<String, PermissionOptionView> deduplicated = new LinkedHashMap<>();
-        for (RoleTemplateView template : templates) {
-            for (PermissionView permission : template.permissions()) {
-                deduplicated.put(permission.key(), new PermissionOptionView(permission.key(), permission.description()));
-            }
-        }
-        for (PermissionOptionView builtin : PermissionCatalog.builtinPermissions()) {
-            deduplicated.putIfAbsent(builtin.key(), builtin);
-        }
-        Comparator<PermissionOptionView> comparator = Comparator
+    private Comparator<PermissionOptionView> permissionOptionComparator() {
+        return Comparator
                 .comparing(PermissionOptionView::label, String.CASE_INSENSITIVE_ORDER)
                 .thenComparing(PermissionOptionView::key, String.CASE_INSENSITIVE_ORDER);
-        return deduplicated.values().stream().sorted(comparator).toList();
     }
 
     private String normalizeTab(String requestedTab, boolean canViewTeamRoles, boolean canManageRoles) {
