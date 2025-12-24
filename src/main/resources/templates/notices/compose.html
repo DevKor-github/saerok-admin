@@ -58,9 +58,6 @@
                             <div class="notice-editor">
                                 <div id="noticeEditor"></div>
                             </div>
-                            <div class="form-text">
-                                굵게/기울임/밑줄/헤딩/리스트/링크/이미지만 지원합니다. (이미지 업로드 연동 완료)
-                            </div>
                             <input type="hidden" id="noticeContentHtml" name="contentHtml">
                             <input type="hidden" id="publishNow" name="publishNow" value="false">
                             <input type="hidden" id="noticeImagesJson" name="imagesJson" value="[]">
@@ -145,9 +142,6 @@
                                                 <label class="form-label fw-semibold mb-2" for="scheduledAt">예약 게시 시각</label>
                                                 <input id="scheduledAt" name="scheduledAt" type="datetime-local"
                                                        class="form-control" th:value="${form.scheduledAt}">
-                                                <div class="form-text">
-                                                    PC에서는 오른쪽 입력창에서, 모바일에서는 아래 입력창에서 시각을 선택하세요.
-                                                </div>
                                             </div>
                                             <div class="mt-auto">
                                                 <button id="schedulePublishBtn" type="button"
