@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1 fw-semibold">공지사항 관리</h1>
+            <p class="text-muted-soft mb-0">앱 공지사항을 작성하고 게시/예약 게시를 관리합니다.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a th:if="${canWrite}" th:href="@{/notices/new}" class="btn btn-primary">
+                <i class="bi bi-pencil-square me-1"></i>
+                공지사항 작성
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${flashMessage}" class="alert alert-elevated d-flex align-items-center"
+         th:classappend="${flashStatus} == 'success' ? ' alert-success' : ' alert-danger'">
+        <i class="bi"
+           th:classappend="${flashStatus} == 'success' ? ' bi-check-circle-fill' : ' bi-exclamation-triangle-fill'"></i>
+        <div class="ms-2" th:text="${flashMessage}">작업이 완료되었습니다.</div>
+    </div>
+
+    <div th:if="${loadError}" class="alert alert-warning border-0 rounded-4">
+        <div class="fw-semibold mb-1">공지사항을 불러올 수 없습니다.</div>
+        <div class="small" th:text="${loadError}">잠시 후 다시 시도해주세요.</div>
+    </div>
+
+    <div class="card card-elevated">
+        <div class="card-header card-header-tight d-flex flex-wrap justify-content-between align-items-center flex-gap-sm">
+            <div>
+                <h2 class="h6 mb-1 fw-semibold">공지사항 목록</h2>
+                <p class="text-muted-soft small mb-0"
+                   th:text="${'총 ' + (announcements == null ? 0 : announcements.size()) + '건'}">
+                    총 0건
+                </p>
+            </div>
+        </div>
+
+        <div class="list-group list-group-flush">
+            <div th:if="${#lists.isEmpty(announcements)}" class="list-group-item py-5 text-center text-muted">
+                등록된 공지사항이 없습니다.
+            </div>
+
+            <article class="list-group-item p-0 report-card"
+                     th:each="item : ${announcements}"
+                     th:with="statusLabel=${item.status() == 'SCHEDULED' ? '게시 예약됨' : (item.status() == 'PUBLISHED' ? '게시됨' : item.status())},
+                              publishedText=${item.publishedAt() != null ? (#temporals.format(item.publishedAt().atZoneSameInstant(T(java.time.ZoneId).of('Asia/Seoul')), 'yyyy-MM-dd HH:mm') + '에 게시되었습니다') : null},
+                              scheduledText=${item.scheduledAt() != null ? (#temporals.format(item.scheduledAt().atZoneSameInstant(T(java.time.ZoneId).of('Asia/Seoul')), 'yyyy-MM-dd HH:mm') + '에 게시될 예정입니다') : null},
+                              timeText=${publishedText != null ? publishedText : (scheduledText != null ? scheduledText : '-')}"
+            >
+                <a class="report-card__link d-flex flex-column gap-3 text-decoration-none text-reset"
+                   th:href="@{/notices/{id}(id=${item.id()})}"
+                   th:attr="aria-label=|공지사항 ${item.title()} 상세로 이동|">
+                    <header class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+                        <div class="d-flex flex-column gap-2">
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <span class="badge rounded-pill"
+                                      th:text="${statusLabel}"
+                                      th:classappend="${item.status()} == 'PUBLISHED' ? ' text-bg-success' : ' text-bg-primary'">
+                                    게시 예약됨
+                                </span>
+                                <span class="text-muted small"
+                                      th:text="${item.id() != null ? '#' + item.id() : '-'}">#0</span>
+                            </div>
+
+                            <div class="fw-semibold" th:text="${item.title()}">공지사항 제목</div>
+
+                            <div class="text-muted small" th:text="${timeText}">
+                                -
+                            </div>
+                        </div>
+
+                        <div class="text-md-end">
+                            <div class="text-muted small">작성자</div>
+                            <div class="fw-semibold"
+                                 th:text="${item.adminName() != null ? item.adminName() : '-'}">운영자</div>
+                        </div>
+                    </header>
+                </a>
+
+                <footer class="report-card__footer border-top d-flex flex-wrap gap-2 justify-content-end align-items-center"
+                        th:if="${canWrite}">
+                    <a th:if="${canWrite and item.status() == 'SCHEDULED'}"
+                       th:href="@{/notices/edit(id=${item.id()})}"
+                       class="btn btn-sm btn-outline-primary">
+                        수정
+                    </a>
+
+                    <form th:if="${canWrite}" th:action="@{/notices/delete}" method="post" class="m-0"
+                          onsubmit="return confirm('공지사항을 삭제하시겠습니까?');">
+                        <input type="hidden" name="id" th:value="${item.id()}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            삭제
+                        </button>
+                    </form>
+                </footer>
+            </article>
+        </div>
+
+        <div class="card-body pt-0" th:if="${!canWrite}">
+            <div class="small text-muted mt-3">
+                ※ 공지사항 작성/수정/삭제 권한이 없습니다.
+            </div>
+        </div>
+    </div>
+</th:block>
+</html>

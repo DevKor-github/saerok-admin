@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+    <!-- Quill (Snow theme) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css">
+
+    <style>
+        .notice-editor .ql-toolbar {
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            border-color: var(--border-subtle);
+            background: var(--surface-primary);
+        }
+        .notice-editor .ql-container {
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+            border-color: var(--border-subtle);
+            min-height: 380px;
+            font-size: 1rem;
+        }
+        .notice-editor .ql-editor {
+            padding: 1rem;
+        }
+        .notice-editor .ql-editor img {
+            max-width: 100%;
+            border-radius: var(--radius-md);
+        }
+        .notice-editor .ql-editor p,
+        .notice-editor .ql-editor li {
+            line-height: 1.55;
+        }
+        .notice-section-title {
+            letter-spacing: -0.01em;
+        }
+    </style>
+
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card card-elevated">
+                <div class="card-body">
+                    <div th:if="${flashMessage}" class="alert alert-elevated d-flex align-items-center mb-4"
+                         th:classappend="${flashStatus} == 'success' ? ' alert-success' : ' alert-danger'">
+                        <i class="bi"
+                           th:classappend="${flashStatus} == 'success' ? ' bi-check-circle-fill' : ' bi-exclamation-triangle-fill'"></i>
+                        <div class="ms-2" th:text="${flashMessage}">작업이 완료되었습니다.</div>
+                    </div>
+
+                    <form id="noticeForm" class="row g-4" autocomplete="off" method="post"
+                          th:action="${isEdit} ? @{/notices/edit} : @{/notices/create}"
+                          th:attr="data-mode=${isEdit} ? 'edit' : 'create'">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold notice-section-title">공지 제목</label>
+                            <input id="noticeTitle" name="title" th:value="${form.title}" type="text"
+                                   class="form-control form-control-lg" placeholder="예) 서비스 점검 안내">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold notice-section-title">공지 본문</label>
+                            <div class="notice-editor">
+                                <div id="noticeEditor"></div>
+                            </div>
+                            <input type="hidden" id="noticeContentHtml" name="contentHtml">
+                            <input type="hidden" id="publishNow" name="publishNow" value="false">
+                            <input type="hidden" id="noticeImagesJson" name="imagesJson" value="[]">
+                            <input type="hidden" id="initialImagesJson" th:value="${initialImagesJson}">
+                            <textarea id="initialContentHtml" class="d-none" th:text="${form.contentHtml}"></textarea>
+                            <input type="hidden" name="id" th:if="${isEdit}" th:value="${form.id}">
+                        </div>
+
+                        <div class="col-12">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="sendNotificationToggle"
+                                               name="sendNotification" value="true"
+                                               th:checked="${form.sendNotification}">
+                                        <label class="form-check-label fw-semibold" for="sendNotificationToggle">
+                                            공지사항이 게시될 때 알림 보내기
+                                        </label>
+                                    </div>
+                                    <div class="mt-2 small text-muted">
+                                        옵션을 켜면 공지 게시 시 <strong>푸시 알림</strong> 및 <strong>인앱 알림</strong> 내용도 함께 작성합니다.
+                                    </div>
+
+                                    <div id="notificationFields" class="mt-4" hidden>
+                                        <div class="row g-3">
+                                            <div class="col-12">
+                                                <label class="form-label fw-semibold">푸시 알림 제목</label>
+                                                <input id="pushTitle" name="pushTitle" th:value="${form.pushTitle}"
+                                                       type="text" class="form-control"
+                                                       placeholder="예) 새로운 공지사항이 등록되었어요">
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label fw-semibold">푸시 알림 본문</label>
+                                                <textarea id="pushBody" name="pushBody" class="form-control" rows="3"
+                                                          placeholder="예) 점검 일정과 변경 사항을 확인해 주세요."
+                                                          th:text="${form.pushBody}"></textarea>
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label fw-semibold">인앱 알림 본문</label>
+                                                <textarea id="inAppBody" name="inAppBody" class="form-control" rows="3"
+                                                          placeholder="예) 공지사항이 게시되었습니다. 자세한 내용을 확인해 주세요."
+                                                          th:text="${form.inAppBody}"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="row g-3">
+                                <div class="col-12 col-lg-6">
+                                    <div class="card border-0 bg-light h-100">
+                                        <div class="card-body d-flex flex-column gap-3">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <i class="bi bi-lightning-charge text-primary"></i>
+                                                <div class="fw-semibold">지금 바로 게시</div>
+                                            </div>
+                                            <div class="text-muted small">
+                                                즉시 게시로 설정하면 저장과 동시에 공지사항이 바로 노출됩니다.
+                                            </div>
+                                            <div class="mt-auto">
+                                                <button id="publishNowBtn" type="button" class="btn btn-primary w-100">
+                                                    <i class="bi bi-lightning-charge me-1"></i>
+                                                    <span th:text="${isEdit} ? '예약 취소 및 즉시 게시하기' : '지금 바로 게시하기'">지금 바로 게시하기</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-lg-6">
+                                    <div class="card border-0 bg-light h-100">
+                                        <div class="card-body d-flex flex-column gap-3">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <i class="bi bi-calendar-event text-primary"></i>
+                                                <div class="fw-semibold">예약해서 게시</div>
+                                            </div>
+                                            <div class="text-muted small">
+                                                게시 시각을 선택한 뒤 예약해서 게시하기를 누르면 해당 시각에 자동으로 게시됩니다.
+                                            </div>
+                                            <div>
+                                                <label class="form-label fw-semibold mb-2" for="scheduledAt">예약 게시 시각</label>
+                                                <input id="scheduledAt" name="scheduledAt" type="datetime-local"
+                                                       class="form-control" th:value="${form.scheduledAt}">
+                                            </div>
+                                            <div class="mt-auto">
+                                                <button id="schedulePublishBtn" type="button"
+                                                        class="btn btn-outline-primary w-100">
+                                                    <i class="bi bi-calendar2-check me-1"></i>
+                                                    <span th:text="${isEdit} ? '변경된 내용으로 예약 게시하기' : '예약해서 게시하기'">예약해서 게시하기</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+    <script>
+        (function () {
+            function $(id) { return document.getElementById(id); }
+
+            var form = $('noticeForm');
+            var titleEl = $('noticeTitle');
+            var scheduledAtEl = $('scheduledAt');
+            var contentInput = $('noticeContentHtml');
+            var publishNowInput = $('publishNow');
+            var imagesJsonInput = $('noticeImagesJson');
+
+            var sendToggle = $('sendNotificationToggle');
+            var notificationFields = $('notificationFields');
+
+            if (sendToggle && notificationFields) {
+                var syncNotificationVisibility = function () {
+                    notificationFields.hidden = !sendToggle.checked;
+                };
+                sendToggle.addEventListener('change', syncNotificationVisibility);
+                syncNotificationVisibility();
+            }
+
+            // ---- Quill init
+            var editorEl = $('noticeEditor');
+            if (!editorEl || !window.Quill) {
+                return;
+            }
+
+            var toolbarOptions = [
+                [{ header: [1, 2, false] }],
+                ['bold', 'italic', 'underline'],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                ['link', 'image'],
+                ['clean']
+            ];
+
+            var quill = new window.Quill('#noticeEditor', {
+                theme: 'snow',
+                placeholder: '공지사항 본문을 작성하세요. 텍스트 중간에 이미지를 넣을 수 있습니다.',
+                modules: {
+                    toolbar: toolbarOptions
+                }
+            });
+
+            // 초기 본문
+            var initialContent = $('initialContentHtml');
+            if (initialContent && initialContent.value) {
+                quill.root.innerHTML = initialContent.value;
+            }
+
+            // 업로드된 이미지 메타(에디터 내 이미지 src 기준)
+            var imagesByUrl = {};
+
+            var initialImages = $('initialImagesJson');
+            if (initialImages && initialImages.value) {
+                try {
+                    var parsed = JSON.parse(initialImages.value || '[]');
+                    if (Array.isArray(parsed)) {
+                        parsed.forEach(function (img) {
+                            if (img && img.imageUrl && img.objectKey && img.contentType) {
+                                imagesByUrl[img.imageUrl] = {
+                                    objectKey: img.objectKey,
+                                    contentType: img.contentType,
+                                    imageUrl: img.imageUrl
+                                };
+                            }
+                        });
+                    }
+                } catch (e) {
+                    // ignore
+                }
+            }
+
+            var presignEndpoint = '/notices/image/presign';
+
+            function selectLocalImage() {
+                var input = document.createElement('input');
+                input.setAttribute('type', 'file');
+                input.setAttribute('accept', 'image/*');
+                input.click();
+
+                input.onchange = function () {
+                    var file = input.files && input.files[0];
+                    if (!file) {
+                        return;
+                    }
+                    uploadAndInsertImage(file);
+                };
+            }
+
+            async function uploadAndInsertImage(file) {
+                try {
+                    var presignRes = await fetch(presignEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contentType: file.type })
+                    });
+
+                    if (!presignRes.ok) {
+                        throw new Error('presign_failed');
+                    }
+
+                    var presign = await presignRes.json();
+                    if (!presign || !presign.presignedUrl || !presign.imageUrl || !presign.objectKey) {
+                        throw new Error('invalid_presign_response');
+                    }
+
+                    var putRes = await fetch(presign.presignedUrl, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': file.type },
+                        body: file
+                    });
+
+                    if (!putRes.ok) {
+                        throw new Error('upload_failed');
+                    }
+
+                    var range = quill.getSelection(true);
+                    var index = range ? range.index : quill.getLength();
+                    quill.insertEmbed(index, 'image', presign.imageUrl, 'user');
+                    quill.setSelection(index + 1, 0);
+
+                    imagesByUrl[presign.imageUrl] = {
+                        objectKey: presign.objectKey,
+                        contentType: file.type,
+                        imageUrl: presign.imageUrl
+                    };
+                } catch (e) {
+                    console.warn('[NOTICE IMAGE UPLOAD ERROR]', e);
+                    alert('이미지 업로드에 실패했습니다. 잠시 후 다시 시도해주세요.');
+                }
+            }
+
+            var toolbar = quill.getModule('toolbar');
+            if (toolbar) {
+                toolbar.addHandler('image', selectLocalImage);
+            }
+
+            function stripHtml(html) {
+                return (html || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+            }
+
+            function collectImagesFromHtml(html) {
+                var doc = new DOMParser().parseFromString(html || '', 'text/html');
+                var imgs = Array.prototype.slice.call(doc.querySelectorAll('img'));
+                var seen = {};
+                var out = [];
+                imgs.forEach(function (img) {
+                    var src = img.getAttribute('src');
+                    if (!src) {
+                        return;
+                    }
+                    var meta = imagesByUrl[src];
+                    if (!meta || !meta.objectKey || seen[meta.objectKey]) {
+                        return;
+                    }
+                    seen[meta.objectKey] = true;
+                    out.push({ objectKey: meta.objectKey, contentType: meta.contentType });
+                });
+                return out;
+            }
+
+            function validateForSubmit(publishNow, requireSchedule) {
+                if (!titleEl || !titleEl.value || !titleEl.value.trim()) {
+                    alert('공지 제목을 입력해 주세요.');
+                    return false;
+                }
+
+                var html = quill.root ? quill.root.innerHTML : '';
+                var text = stripHtml(html);
+                var hasImg = /<img\s+[^>]*src=/.test(html || '');
+                if (!text && !hasImg) {
+                    alert('공지 본문을 입력해 주세요.');
+                    return false;
+                }
+
+                if (!publishNow && requireSchedule) {
+                    if (!scheduledAtEl || !scheduledAtEl.value) {
+                        alert('예약 게시 시각을 입력해 주세요.');
+                        return false;
+                    }
+                }
+
+                if (sendToggle && sendToggle.checked) {
+                    var pushTitleEl = $('pushTitle');
+                    var pushBodyEl = $('pushBody');
+                    var inAppBodyEl = $('inAppBody');
+
+                    if (!pushTitleEl || !pushTitleEl.value.trim() ||
+                        !pushBodyEl || !pushBodyEl.value.trim() ||
+                        !inAppBodyEl || !inAppBodyEl.value.trim()) {
+                        alert('알림을 보낼 경우 푸시 제목/본문과 인앱 알림 본문을 모두 입력해 주세요.');
+                        return false;
+                    }
+                }
+
+                if (contentInput) {
+                    contentInput.value = html;
+                }
+                if (imagesJsonInput) {
+                    imagesJsonInput.value = JSON.stringify(collectImagesFromHtml(html));
+                }
+                return true;
+            }
+
+            function submitWithMode(mode) {
+                if (!form) {
+                    return;
+                }
+
+                if (mode === 'PUBLISH_NOW') {
+                    if (publishNowInput) publishNowInput.value = 'true';
+                    if (scheduledAtEl) scheduledAtEl.value = '';
+                    if (!validateForSubmit(true, false)) return;
+                } else if (mode === 'SCHEDULE') {
+                    if (publishNowInput) publishNowInput.value = 'false';
+                    if (!validateForSubmit(false, true)) return;
+                } else {
+                    return;
+                }
+
+                form.submit();
+            }
+
+            var publishNowBtn = $('publishNowBtn');
+            if (publishNowBtn) {
+                publishNowBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    submitWithMode('PUBLISH_NOW');
+                });
+            }
+
+            var schedulePublishBtn = $('schedulePublishBtn');
+            if (schedulePublishBtn) {
+                schedulePublishBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    submitWithMode('SCHEDULE');
+                });
+            }
+        })();
+    </script>
+</th:block>
+</html>

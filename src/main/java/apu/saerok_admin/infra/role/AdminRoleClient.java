@@ -1,6 +1,7 @@
 package apu.saerok_admin.infra.role;
 
 import apu.saerok_admin.infra.SaerokApiProps;
+import apu.saerok_admin.infra.role.dto.AdminPermissionListResponse;
 import apu.saerok_admin.infra.role.dto.AdminMyRoleResponse;
 import apu.saerok_admin.infra.role.dto.AdminRoleListResponse;
 import apu.saerok_admin.infra.role.dto.AdminRoleUserListResponse;
@@ -40,6 +41,10 @@ public class AdminRoleClient {
 
     public AdminRoleListResponse listRoles() {
         return get(AdminRoleListResponse.class);
+    }
+
+    public AdminPermissionListResponse listPermissions() {
+        return get(AdminPermissionListResponse.class, "permissions");
     }
 
     public RoleDetailResponse createRole(CreateRoleRequest request) {

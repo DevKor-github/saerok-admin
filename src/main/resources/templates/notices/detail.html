@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+    <div th:if="${flashMessage}" class="alert alert-elevated d-flex align-items-center"
+         th:classappend="${flashStatus} == 'success' ? ' alert-success' : ' alert-danger'">
+        <i class="bi"
+           th:classappend="${flashStatus} == 'success' ? ' bi-check-circle-fill' : ' bi-exclamation-triangle-fill'"></i>
+        <div class="ms-2" th:text="${flashMessage}">작업이 완료되었습니다.</div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-8">
+            <div class="card card-elevated mb-4">
+                <div class="card-body card-body-comfy">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3"
+                         th:with="statusLabel=${detail.status() == 'SCHEDULED' ? '게시 예약됨' : (detail.status() == 'PUBLISHED' ? '게시됨' : detail.status())},
+                                  publishedText=${detail.publishedAt() != null ? (#temporals.format(detail.publishedAt().atZoneSameInstant(T(java.time.ZoneId).of('Asia/Seoul')), 'yyyy-MM-dd HH:mm') + '에 게시되었습니다') : null},
+                                  scheduledText=${detail.scheduledAt() != null ? (#temporals.format(detail.scheduledAt().atZoneSameInstant(T(java.time.ZoneId).of('Asia/Seoul')), 'yyyy-MM-dd HH:mm') + '에 게시될 예정입니다') : null},
+                                  timeText=${publishedText != null ? publishedText : (scheduledText != null ? scheduledText : '-')}"
+                    >
+                        <div>
+                            <span class="badge rounded-pill"
+                                  th:text="${statusLabel}"
+                                  th:classappend="${detail.status()} == 'PUBLISHED' ? ' text-bg-success' : ' text-bg-primary'">
+                                게시 예약됨
+                            </span>
+
+                            <h2 class="h4 fw-semibold mt-3" th:text="${detail.title()}">공지사항 제목</h2>
+
+                            <div class="text-muted small mt-2" th:text="${timeText}">
+                                -
+                            </div>
+                        </div>
+
+                        <div class="text-end small text-muted">
+                            <div>작성자 <strong th:text="${detail.adminName() != null ? detail.adminName() : '-'}">운영자</strong></div>
+                            <div>ID <strong th:text="${detail.id() != null ? '#' + detail.id() : '-'}">#0</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-elevated mb-4">
+                <div class="card-header card-header-tight">
+                    <h3 class="h6 mb-0 fw-semibold">공지 본문</h3>
+                </div>
+                <div class="card-body card-body-comfy">
+                    <div th:if="${#strings.isEmpty(detail.content())}" class="text-muted">본문이 없습니다.</div>
+                    <div th:unless="${#strings.isEmpty(detail.content())}" th:utext="${detail.content()}"></div>
+                </div>
+            </div>
+
+            <div class="card card-elevated" th:if="${detail.sendNotification()}">
+                <div class="card-header card-header-tight">
+                    <h3 class="h6 mb-0 fw-semibold">알림 내용</h3>
+                </div>
+                <div class="card-body card-body-comfy">
+                    <div class="mb-3">
+                        <div class="text-muted small">푸시 알림 제목</div>
+                        <div class="fw-semibold" th:text="${detail.pushTitle() != null ? detail.pushTitle() : '-'}">-</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-muted small">푸시 알림 본문</div>
+                        <div th:text="${detail.pushBody() != null ? detail.pushBody() : '-'}">-</div>
+                    </div>
+                    <div>
+                        <div class="text-muted small">인앱 알림 본문</div>
+                        <div th:text="${detail.inAppBody() != null ? detail.inAppBody() : '-'}">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="card card-elevated">
+                <div class="card-body card-body-comfy">
+                    <h3 class="h6 fw-semibold mb-3">작업</h3>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary d-inline-flex align-items-center gap-1"
+                           th:href="@{/notices}">
+                            <i class="bi bi-list"></i>
+                            <span>목록 보기</span>
+                        </a>
+                        <a class="btn btn-outline-primary d-inline-flex align-items-center gap-1"
+                           th:if="${canEdit}"
+                           th:href="@{/notices/edit(id=${detail.id()})}">
+                            <i class="bi bi-pencil-square"></i>
+                            <span>수정</span>
+                        </a>
+                        <form th:if="${canWrite}" th:action="@{/notices/delete}" method="post" class="m-0"
+                              th:onsubmit="|return confirm('공지사항을 삭제하시겠습니까?');|">
+                            <input type="hidden" name="id" th:value="${detail.id()}">
+                            <button type="submit" class="btn btn-outline-danger d-inline-flex align-items-center gap-1">
+                                <i class="bi bi-trash"></i>
+                                <span>삭제</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+</html>
