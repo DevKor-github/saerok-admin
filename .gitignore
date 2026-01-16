@@ -36,5 +36,32 @@ out/
 ### VS Code ###
 .vscode/
 
+.codex/
+
 .env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.*.local
+!.env.example
 context/
+
+### OS ###
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+### Logs ###
+logs/
+*.log
+*.log.*
+
+### JVM ###
+hs_err_pid*
+replay_pid*
+
+### Spring Boot ###
+/.spring-boot-devtools.properties
