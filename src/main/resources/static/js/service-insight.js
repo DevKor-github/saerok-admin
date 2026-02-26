@@ -73,6 +73,8 @@
         USER_DAU:             'USER_DAU',
         USER_WAU:             'USER_WAU',
         USER_MAU:             'USER_MAU',
+        USER_SIGNUP_SOURCE_TOTAL:   'USER_SIGNUP_SOURCE_TOTAL',
+        USER_DEVICE_PLATFORM_TOTAL: 'USER_DEVICE_PLATFORM_TOTAL',
     };
 
     // (아래부터는 기존 로직 그대로입니다. 색상/그룹/플롯/툴팁/박스플롯 렌더링 등 전체 원본 유지)
@@ -167,7 +169,8 @@
         { key:'collection', name:'새록', metrics:[METRICS.TOTAL_COUNT, METRICS.PRIVATE_RATIO] },
         { key:'user',       name:'유저', metrics:[
                 METRICS.USER_COMPLETED_TOTAL, METRICS.USER_SIGNUP_DAILY, METRICS.USER_WITHDRAWAL_DAILY,
-                METRICS.USER_DAU, METRICS.USER_WAU, METRICS.USER_MAU
+                METRICS.USER_DAU, METRICS.USER_WAU, METRICS.USER_MAU,
+                METRICS.USER_SIGNUP_SOURCE_TOTAL, METRICS.USER_DEVICE_PLATFORM_TOTAL
             ] },
         { key:'id',         name:'동정 요청', metrics:[METRICS.PENDING_COUNT, METRICS.RESOLVED_COUNT, METRICS.RESOLUTION_STATS] },
     ];
@@ -683,6 +686,50 @@
                 groupSet.add(id);
                 changed = true;
             }
+        } else if (opt.multiSeries) {
+            // 일반 다중 시리즈: 컴포넌트별 라인 렌더링
+            const series = seriesMap.get(metric);
+            const comps = Array.isArray(series?.components) ? series.components : [];
+            const labelsMap = (componentLabels[metric] && typeof componentLabels[metric] === 'object') ? componentLabels[metric] : {};
+            const unit = String(opt.unit || '').toUpperCase();
+            const yAxis = axisByUnit(unit);
+
+            comps.forEach(comp => {
+                if (!comp || !comp.key) return;
+                const compKey = comp.key;
+                const id = datasetIdFor(metric, compKey);
+                if (p.datasets.has(id)) return;
+
+                const compColor = colorForMetric(id);
+                const compLabel = labelsMap[compKey] || compKey;
+                const points = (Array.isArray(comp.points) ? comp.points : [])
+                    .map(pt => {
+                        const x = toDateKST(pt.date);
+                        const y = normalizeValue(pt.value, unit);
+                        return (x && y != null) ? { x, y } : null;
+                    })
+                    .filter(Boolean);
+
+                const ds = {
+                    _id: id,
+                    label: `${opt.label || metric} (${compLabel})`,
+                    data: points,
+                    parsing: { xAxisKey: 'x', yAxisKey: 'y' },
+                    borderColor: compColor,
+                    backgroundColor: compColor,
+                    tension: 0.25,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    fill: false,
+                    spanGaps: true,
+                    yAxisID: yAxis,
+                    _saUnit: unit
+                };
+                p.chart.data.datasets.push(ds);
+                p.datasets.add(id);
+                groupSet.add(id);
+                changed = true;
+            });
         } else {
             const unit = String(optionMap.get(metric)?.unit || '').toUpperCase();
             const s = seriesMap.get(metric);
