@@ -96,6 +96,22 @@ public enum StatMetric {
             false,
             Map.of(),
             false
+    ),
+    USER_SIGNUP_SOURCE_TOTAL(
+            "가입 경로별 누적 사용자",
+            "가입 경로(소셜 로그인 종류)별 누적 가입자 수",
+            MetricUnit.COUNT,
+            true,
+            Map.of(),
+            false
+    ),
+    USER_DEVICE_PLATFORM_TOTAL(
+            "기기 플랫폼별 누적 사용자",
+            "기기 플랫폼(iOS/Android/Web 등)별 누적 사용자 수",
+            MetricUnit.COUNT,
+            true,
+            Map.of(),
+            false
     );
 
     private final String label;
