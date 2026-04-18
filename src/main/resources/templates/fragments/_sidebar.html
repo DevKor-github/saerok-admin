@@ -41,6 +41,11 @@
                 <i class="bi bi-megaphone"></i>
                 <span>공지사항 관리</span>
             </a>
+            <a th:href="@{/notifications/compose}" class="app-sidebar__link"
+               th:classappend="${activeMenu}=='notifications' ? ' is-active fw-semibold'">
+                <i class="bi bi-send"></i>
+                <span>대상 공지 발송</span>
+            </a>
             <a th:href="@{/admin/audit-logs}" class="app-sidebar__link"
                th:classappend="${activeMenu}=='adminAuditLogs' ? ' is-active'">
                 <i class="bi bi-clipboard-check"></i>
@@ -99,6 +104,11 @@
                     <i class="bi bi-megaphone"></i>
                     <span>공지사항 관리</span>
                 </a>
+                <a th:href="@{/notifications/compose}" class="app-sidebar__link"
+                   th:classappend="${activeMenu}=='notifications' ? ' is-active fw-semibold'">
+                    <i class="bi bi-send"></i>
+                    <span>대상 공지 발송</span>
+                </a>
                 <a th:href="@{/admin/audit-logs}" class="app-sidebar__link"
                    th:classappend="${activeMenu}=='adminAuditLogs' ? ' is-active fw-semibold'">
                     <i class="bi bi-clipboard-check"></i>
@@ -115,5 +125,4 @@
 </div>
 </body>
 </html>
-
 
