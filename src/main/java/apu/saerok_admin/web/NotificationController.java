@@ -2,13 +2,18 @@ package apu.saerok_admin.web;
 
 import apu.saerok_admin.infra.notification.AdminNotificationClient;
 import apu.saerok_admin.infra.notification.dto.AdminSendMessageRequest;
+import apu.saerok_admin.infra.user.AdminUserClient;
+import apu.saerok_admin.infra.user.dto.AdminUserListResponse;
 import apu.saerok_admin.web.view.Breadcrumb;
 import apu.saerok_admin.web.view.CurrentAdminProfile;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -17,6 +22,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -32,6 +38,7 @@ public class NotificationController {
     private static final int MAX_BODY_LENGTH = 500;
 
     private final AdminNotificationClient adminNotificationClient;
+    private final AdminUserClient adminUserClient;
 
     @GetMapping("/compose")
     public String compose(@ModelAttribute("currentAdminProfile") CurrentAdminProfile currentAdminProfile,
@@ -41,6 +48,30 @@ public class NotificationController {
             model.addAttribute("form", NotificationMessageForm.empty());
         }
         return "notifications/compose";
+    }
+
+    @GetMapping("/users/search")
+    @ResponseBody
+    public ResponseEntity<?> searchUsers(@ModelAttribute("currentAdminProfile") CurrentAdminProfile currentAdminProfile,
+                                         @RequestParam(name = "q", required = false) String query) {
+        if (currentAdminProfile == null || !currentAdminProfile.hasPermission(PERMISSION_ADMIN_ANNOUNCEMENT_WRITE)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "사용자 목록을 조회할 권한이 없습니다."));
+        }
+
+        try {
+            AdminUserListResponse response = adminUserClient.listUsers(query, 1, 10);
+            return ResponseEntity.ok(response);
+        } catch (RestClientResponseException exception) {
+            log.warn("Failed to search admin users. status={}, body={}",
+                    exception.getStatusCode(), exception.getResponseBodyAsString(), exception);
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                    .body(Map.of("message", "사용자 목록을 불러오지 못했습니다."));
+        } catch (RestClientException | IllegalStateException exception) {
+            log.warn("Failed to search admin users.", exception);
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                    .body(Map.of("message", "사용자 목록을 불러오지 못했습니다."));
+        }
     }
 
     @PostMapping("/send")

@@ -5,7 +5,7 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
             <h1 class="h3 mb-1 fw-semibold">대상 공지 발송</h1>
-            <p class="text-muted-soft mb-0">사용자 ID를 지정해 관리자 메시지를 푸시 및 인앱 알림으로 발송합니다.</p>
+            <p class="text-muted-soft mb-0">닉네임으로 사용자를 선택해 관리자 메시지를 푸시 및 인앱 알림으로 발송합니다.</p>
         </div>
         <a th:href="@{/notices}" class="btn btn-outline-secondary d-inline-flex align-items-center gap-1">
             <i class="bi bi-megaphone"></i>
@@ -32,13 +32,20 @@
                     <form id="notificationSendForm" class="row g-4" method="post" th:action="@{/notifications/send}"
                           autocomplete="off" onsubmit="return confirm('입력한 대상에게 공지를 발송할까요?');">
                         <div class="col-12">
-                            <label class="form-label fw-semibold" for="notificationUserIds">수신자 사용자 ID</label>
-                            <textarea id="notificationUserIds" name="userIds" class="form-control" rows="5"
-                                      placeholder="예) 501, 502, 503"
-                                      th:disabled="${!canSend}"
-                                      th:text="${form.userIdsRaw}"></textarea>
+                            <label class="form-label fw-semibold" for="recipientSearch">수신자 닉네임</label>
+                            <input id="notificationUserIds" name="userIds" type="hidden" th:value="${form.userIdsRaw}">
+                            <div class="position-relative">
+                                <input id="recipientSearch" type="search" class="form-control form-control-lg"
+                                       placeholder="닉네임을 입력해 검색하세요"
+                                       autocomplete="off"
+                                       th:disabled="${!canSend}">
+                                <div id="recipientSuggestions"
+                                     class="list-group position-absolute start-0 end-0 shadow-sm d-none"
+                                     style="z-index: 1050;"></div>
+                            </div>
+                            <div id="selectedRecipients" class="d-flex flex-wrap gap-2 mt-3"></div>
                             <div class="form-text">
-                                쉼표, 공백, 줄바꿈으로 구분할 수 있습니다. 중복 ID는 한 번만 발송됩니다.
+                                닉네임 검색 결과에서 사용자를 선택하세요. 중복 선택은 자동으로 제외됩니다.
                             </div>
                         </div>
 
@@ -110,6 +117,9 @@
             }
 
             var userIdsEl = $('notificationUserIds');
+            var searchEl = $('recipientSearch');
+            var suggestionsEl = $('recipientSuggestions');
+            var selectedRecipientsEl = $('selectedRecipients');
             var titleEl = $('notificationTitle');
             var bodyEl = $('notificationBody');
             var recipientCountEl = $('recipientCount');
@@ -118,6 +128,9 @@
             var previewBodyEl = $('messagePreviewBody');
             var titleCountEl = $('notificationTitleCount');
             var bodyCountEl = $('notificationBodyCount');
+            var selectedUsers = parseInitialUsers(userIdsEl ? userIdsEl.value : '');
+            var searchTimer = null;
+            var latestSearchSeq = 0;
 
             function uniqueIds(raw) {
                 if (!raw || !raw.trim()) {
@@ -133,16 +146,174 @@
                 });
             }
 
+            function parseInitialUsers(raw) {
+                return uniqueIds(raw).map(function (id) {
+                    return {
+                        id: id,
+                        nickname: '#' + id
+                    };
+                });
+            }
+
+            function labelFor(user) {
+                if (!user) {
+                    return '';
+                }
+                if (user.nickname && user.nickname.charAt(0) === '#') {
+                    return user.nickname;
+                }
+                return user.nickname + ' (#' + user.id + ')';
+            }
+
+            function syncSelectedRecipients() {
+                if (userIdsEl) {
+                    userIdsEl.value = selectedUsers.map(function (user) {
+                        return user.id;
+                    }).join(',');
+                }
+                if (!selectedRecipientsEl) {
+                    return;
+                }
+                selectedRecipientsEl.innerHTML = '';
+                if (selectedUsers.length === 0) {
+                    var empty = document.createElement('span');
+                    empty.className = 'text-muted small';
+                    empty.textContent = '선택된 수신자가 없습니다.';
+                    selectedRecipientsEl.appendChild(empty);
+                    return;
+                }
+                selectedUsers.forEach(function (user) {
+                    var chip = document.createElement('span');
+                    chip.className = 'badge rounded-pill text-bg-primary d-inline-flex align-items-center gap-1 px-3 py-2';
+                    chip.textContent = labelFor(user);
+
+                    var removeButton = document.createElement('button');
+                    removeButton.type = 'button';
+                    removeButton.className = 'btn-close btn-close-white ms-1';
+                    removeButton.setAttribute('aria-label', labelFor(user) + ' 제거');
+                    removeButton.addEventListener('click', function () {
+                        selectedUsers = selectedUsers.filter(function (selected) {
+                            return selected.id !== user.id;
+                        });
+                        syncSelectedRecipients();
+                        syncPreview();
+                    });
+                    chip.appendChild(removeButton);
+                    selectedRecipientsEl.appendChild(chip);
+                });
+            }
+
+            function hideSuggestions() {
+                if (!suggestionsEl) {
+                    return;
+                }
+                suggestionsEl.classList.add('d-none');
+                suggestionsEl.innerHTML = '';
+            }
+
+            function showSuggestionMessage(message) {
+                if (!suggestionsEl) {
+                    return;
+                }
+                suggestionsEl.innerHTML = '';
+                var item = document.createElement('div');
+                item.className = 'list-group-item text-muted small';
+                item.textContent = message;
+                suggestionsEl.appendChild(item);
+                suggestionsEl.classList.remove('d-none');
+            }
+
+            function addRecipient(user) {
+                var id = String(user.id);
+                var exists = selectedUsers.some(function (selected) {
+                    return selected.id === id;
+                });
+                if (!exists) {
+                    selectedUsers.push({
+                        id: id,
+                        nickname: user.nickname
+                    });
+                }
+                if (searchEl) {
+                    searchEl.value = '';
+                    searchEl.focus();
+                }
+                hideSuggestions();
+                syncSelectedRecipients();
+                syncPreview();
+            }
+
+            function renderSuggestions(users) {
+                if (!suggestionsEl) {
+                    return;
+                }
+                suggestionsEl.innerHTML = '';
+                var candidates = users.filter(function (user) {
+                    return !selectedUsers.some(function (selected) {
+                        return selected.id === String(user.id);
+                    });
+                });
+                if (candidates.length === 0) {
+                    showSuggestionMessage('검색 결과가 없습니다.');
+                    return;
+                }
+                candidates.forEach(function (user) {
+                    var button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                    button.innerHTML = '<span></span><span class="text-muted small"></span>';
+                    button.querySelector('span:first-child').textContent = user.nickname;
+                    button.querySelector('span:last-child').textContent = '#' + user.id;
+                    button.addEventListener('click', function () {
+                        addRecipient(user);
+                    });
+                    suggestionsEl.appendChild(button);
+                });
+                suggestionsEl.classList.remove('d-none');
+            }
+
+            function searchRecipients(query) {
+                var trimmed = query ? query.trim() : '';
+                if (!trimmed) {
+                    hideSuggestions();
+                    return;
+                }
+                var searchSeq = ++latestSearchSeq;
+                fetch('/notifications/users/search?q=' + encodeURIComponent(trimmed), {
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                })
+                        .then(function (response) {
+                            if (!response.ok) {
+                                throw new Error('Search failed');
+                            }
+                            return response.json();
+                        })
+                        .then(function (data) {
+                            if (searchSeq !== latestSearchSeq) {
+                                return;
+                            }
+                            renderSuggestions(data && data.users ? data.users : []);
+                        })
+                        .catch(function () {
+                            if (searchSeq === latestSearchSeq) {
+                                showSuggestionMessage('사용자 검색에 실패했습니다.');
+                            }
+                        });
+            }
+
             function syncPreview() {
-                var ids = uniqueIds(userIdsEl ? userIdsEl.value : '');
+                var recipients = selectedUsers.map(labelFor);
                 var title = titleEl && titleEl.value.trim() ? titleEl.value.trim() : '알림 제목';
                 var body = bodyEl && bodyEl.value.trim() ? bodyEl.value.trim() : '알림 본문';
 
                 if (recipientCountEl) {
-                    recipientCountEl.textContent = ids.length;
+                    recipientCountEl.textContent = selectedUsers.length;
                 }
                 if (recipientPreviewEl) {
-                    recipientPreviewEl.textContent = ids.length > 0 ? ids.join(', ') : '-';
+                    recipientPreviewEl.textContent = recipients.length > 0 ? recipients.join(', ') : '-';
                 }
                 if (previewTitleEl) {
                     previewTitleEl.textContent = title;
@@ -164,6 +335,31 @@
                 }
             });
 
+            if (searchEl) {
+                searchEl.addEventListener('input', function () {
+                    window.clearTimeout(searchTimer);
+                    searchTimer = window.setTimeout(function () {
+                        searchRecipients(searchEl.value);
+                    }, 250);
+                });
+                searchEl.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape') {
+                        hideSuggestions();
+                    }
+                });
+            }
+
+            document.addEventListener('click', function (event) {
+                if (!suggestionsEl || !searchEl) {
+                    return;
+                }
+                if (event.target === searchEl || suggestionsEl.contains(event.target)) {
+                    return;
+                }
+                hideSuggestions();
+            });
+
+            syncSelectedRecipients();
             syncPreview();
         })();
     </script>
