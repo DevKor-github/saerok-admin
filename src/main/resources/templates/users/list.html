@@ -5,7 +5,7 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
             <h1 class="h3 mb-1 fw-semibold">사용자 목록</h1>
-            <p class="text-muted-soft mb-0">대상 공지 발송에 사용할 사용자 ID와 닉네임을 조회합니다.</p>
+            <p class="text-muted-soft mb-0">ID 또는 닉네임으로 사용자를 조회합니다.</p>
         </div>
     </div>
 
@@ -18,9 +18,9 @@
         <div class="card-body card-body-comfy">
             <form class="row g-3 align-items-end" method="get">
                 <div class="col-md-5">
-                    <label class="form-label small text-uppercase text-muted" for="userQuery">닉네임 검색</label>
+                    <label class="form-label small text-uppercase text-muted" for="userQuery">ID/닉네임 검색</label>
                     <input type="search" class="form-control" id="userQuery" name="q"
-                           placeholder="닉네임 일부를 입력하세요" th:value="${query}"
+                           placeholder="ID 또는 닉네임 일부를 입력하세요" th:value="${query}"
                            th:disabled="${!canViewUsers}">
                 </div>
                 <div class="col-md-2">
@@ -53,7 +53,12 @@
                 </tr>
                 <tr th:each="user : ${users}">
                     <td class="fw-semibold" th:text="${'#' + user.id()}">#501</td>
-                    <td th:text="${user.nickname()}">솔바람</td>
+                    <td>
+                        <span th:if="${user.nickname() != null and !#strings.isEmpty(user.nickname())}"
+                              th:text="${user.nickname()}">솔바람</span>
+                        <span th:unless="${user.nickname() != null and !#strings.isEmpty(user.nickname())}"
+                              class="text-muted small">(닉네임 없음)</span>
+                    </td>
                 </tr>
                 </tbody>
             </table>
