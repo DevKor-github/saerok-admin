@@ -23,6 +23,10 @@
                 <i class="bi bi-graph-up-arrow"></i>
                 <span>서비스 인사이트</span>
             </a>
+            <a th:href="@{/users}" class="app-sidebar__link" th:classappend="${activeMenu}=='users' ? ' is-active'">
+                <i class="bi bi-people"></i>
+                <span>사용자 목록</span>
+            </a>
             <span class="app-sidebar__link is-disabled upcoming-feature" role="button" tabindex="-1" aria-disabled="true"
                   data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="추후 제공 예정인 기능">
                 <i class="bi bi-journal-richtext"></i>
@@ -40,6 +44,11 @@
                th:classappend="${activeMenu}=='notices' ? ' is-active fw-semibold'">
                 <i class="bi bi-megaphone"></i>
                 <span>공지사항 관리</span>
+            </a>
+            <a th:href="@{/notifications/compose}" class="app-sidebar__link"
+               th:classappend="${activeMenu}=='notifications' ? ' is-active fw-semibold'">
+                <i class="bi bi-send"></i>
+                <span>대상 공지 발송</span>
             </a>
             <a th:href="@{/admin/audit-logs}" class="app-sidebar__link"
                th:classappend="${activeMenu}=='adminAuditLogs' ? ' is-active'">
@@ -81,6 +90,11 @@
                     <i class="bi bi-graph-up-arrow"></i>
                     <span>서비스 인사이트</span>
                 </a>
+                <a th:href="@{/users}" class="app-sidebar__link"
+                   th:classappend="${activeMenu}=='users' ? ' is-active fw-semibold'">
+                    <i class="bi bi-people"></i>
+                    <span>사용자 목록</span>
+                </a>
                 <span class="app-sidebar__link is-disabled upcoming-feature" role="button" tabindex="-1" aria-disabled="true"
                       data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="추후 제공 예정인 기능">
                     <i class="bi bi-journal-richtext"></i>
@@ -99,6 +113,11 @@
                     <i class="bi bi-megaphone"></i>
                     <span>공지사항 관리</span>
                 </a>
+                <a th:href="@{/notifications/compose}" class="app-sidebar__link"
+                   th:classappend="${activeMenu}=='notifications' ? ' is-active fw-semibold'">
+                    <i class="bi bi-send"></i>
+                    <span>대상 공지 발송</span>
+                </a>
                 <a th:href="@{/admin/audit-logs}" class="app-sidebar__link"
                    th:classappend="${activeMenu}=='adminAuditLogs' ? ' is-active fw-semibold'">
                     <i class="bi bi-clipboard-check"></i>
@@ -115,5 +134,3 @@
 </div>
 </body>
 </html>
-
-

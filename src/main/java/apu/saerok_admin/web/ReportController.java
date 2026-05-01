@@ -223,7 +223,7 @@ public class ReportController {
 
         return performAction(() -> adminReportClient.deleteCollectionByReport(reportId, trimmedReason),
                 reportId,
-                "신고 대상 새록을 삭제했습니다.",
+                "신고 대상 새록을 삭제하고 작성자에게 사유 알림을 요청했습니다.",
                 "신고 대상 새록 삭제에 실패했습니다.",
                 redirect,
                 returnTypes,
@@ -261,7 +261,7 @@ public class ReportController {
 
         return performAction(() -> adminReportClient.deleteCommentByReport(reportId, trimmedReason),
                 reportId,
-                "신고 대상 댓글을 삭제했습니다.",
+                "신고 대상 댓글을 삭제하고 작성자에게 사유 알림을 요청했습니다.",
                 "신고 대상 댓글 삭제에 실패했습니다.",
                 redirect,
                 returnTypes,
