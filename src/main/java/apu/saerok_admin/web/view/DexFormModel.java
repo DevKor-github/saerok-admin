@@ -2,6 +2,11 @@ package apu.saerok_admin.web.view;
 
 import java.util.List;
 
-public record DexFormModel(DexDetail detail, List<String> habitatOptions, List<String> stayOptions,
-                           List<String> rarityOptions) {
+public record DexFormModel(
+        List<DexOption> habitatOptions,
+        List<DexOption> residencyOptions,
+        List<DexOption> rarityOptions,
+        List<DexOption> conservationGradeOptions,
+        List<Integer> months
+) {
 }
