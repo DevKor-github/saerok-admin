@@ -47,7 +47,7 @@
                                 <span class="si-range__label">기간</span>
                                 <div class="si-range__quick" role="group" aria-label="빠른 조회 기간">
                                     <a th:each="option : ${rangeQuickOptions}"
-                                       th:href="@{/service-insight(range=${option.paramValue()})}"
+                                       th:href="@{/service-insight/time-series(range=${option.paramValue()})}"
                                        th:text="${option.displayLabel()}"
                                        th:class="'btn btn-sm si-range__btn ' + (${option.paramValue()} == ${selectedRange} ? 'btn-primary' : 'btn-outline-primary')"
                                        th:data-range="${option.paramValue()}"
@@ -143,7 +143,7 @@
 
     <!-- 서버에서 내려주는 전체 페이로드 -->
     <script type="application/json" id="serviceInsightData"
-            th:data-endpoint="@{/service-insight}"
+            th:data-endpoint="@{/service-insight/time-series}"
             th:utext="${chartDataJson}">{"metricOptions":[],"series":[],"componentLabels":{}}</script>
 
     <!-- Chart.js & Adapter -->

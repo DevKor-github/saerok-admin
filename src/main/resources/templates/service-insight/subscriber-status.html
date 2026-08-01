@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+    <link th:href="@{/css/service-insight.css(v=${#dates.createNow().getTime()})}" rel="stylesheet">
+
+    <section class="service-insight subscriber-status">
+        <section class="si-current-user-stats"
+                 th:if="${currentUserStats != null}"
+                 aria-labelledby="current-user-stats-title">
+            <div class="si-current-user-stats__heading">
+                <div>
+                    <p class="si-current-user-stats__eyebrow">현재 현황</p>
+                    <h1 id="current-user-stats-title">가입자 현황</h1>
+                </div>
+                <p>조회 시점 기준이며, 기간 설정과 무관합니다.</p>
+            </div>
+            <div class="si-current-user-stats__grid">
+                <article class="si-current-stat si-current-stat--total">
+                    <span>현재 가입 완료 사용자</span>
+                    <strong th:text="${#numbers.formatInteger(currentUserStats.completedUserCount(), 1, 'COMMA')}">0</strong>
+                    <small>탈퇴·가입 미완료 사용자는 제외</small>
+                </article>
+                <article class="si-current-stat">
+                    <span>가입 경로별 사용자</span>
+                    <dl class="si-current-stat__list">
+                        <div th:each="item : ${currentUserStats.signupSources()}">
+                            <dt th:text="${item.label()}">인스타그램</dt>
+                            <dd th:text="${#numbers.formatInteger(item.count(), 1, 'COMMA')}">0</dd>
+                        </div>
+                    </dl>
+                </article>
+                <article class="si-current-stat">
+                    <span>플랫폼별 활성 푸시 사용자</span>
+                    <dl class="si-current-stat__list">
+                        <div th:each="item : ${currentUserStats.activePushPlatforms()}">
+                            <dt th:text="${item.label()}">iOS</dt>
+                            <dd th:text="${#numbers.formatInteger(item.count(), 1, 'COMMA')}">0</dd>
+                        </div>
+                    </dl>
+                    <small>활성 푸시 토큰 기준 · 복수 플랫폼은 중복 포함</small>
+                </article>
+            </div>
+        </section>
+
+        <div class="card card-elevated" th:if="${currentUserStats == null}">
+            <div class="card-body card-body-comfy text-center text-muted py-5">
+                가입자 현황을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.
+            </div>
+        </div>
+    </section>
+</th:block>
+</html>

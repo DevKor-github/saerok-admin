@@ -3,7 +3,7 @@
 <th:block th:fragment="layout(pageTitle, activeMenu, breadcrumbs, content)">
     <head th:replace="~{fragments/_head :: head(${pageTitle})}"></head>
     <body class="app-shell">
-    <div class="d-flex">
+    <div class="app-layout d-flex">
         <div th:replace="~{fragments/_sidebar :: sidebar(${activeMenu})}"></div>
         <div class="app-content">
             <div th:replace="~{fragments/_navbar :: navbar(${pageTitle})}"></div>
