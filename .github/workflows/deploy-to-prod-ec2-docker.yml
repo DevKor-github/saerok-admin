@@ -119,5 +119,7 @@ jobs:
             done
             
             echo "❌ admin health check failed"
-            docker logs saerok-admin-prod --tail=200 || true
+            # 세션이나 인증정보가 포함될 수 있는 원문 로그는 공개 Actions에 출력하지 않는다.
+            # 상세 원인은 EC2에 접속해 권한이 있는 운영자가 직접 확인한다.
+            docker inspect --format 'admin status={{.State.Status}} health={{.State.Health.Status}} restart={{.RestartCount}}' saerok-admin-prod || true
             exit 1

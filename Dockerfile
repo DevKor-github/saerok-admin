@@ -1,5 +1,7 @@
-# ===== Build stage =====
-FROM gradle:8.8-jdk21 AS builder
+# syntax=docker/dockerfile:1
+
+# Spring Boot JAR는 CPU 아키텍처에 종속되지 않으므로 빌드는 CI 러너에서 수행한다.
+FROM --platform=$BUILDPLATFORM gradle:8.8-jdk21 AS builder
 WORKDIR /app
 
 COPY build.gradle settings.gradle gradlew ./
@@ -11,7 +13,7 @@ COPY . .
 RUN chmod +x gradlew
 RUN ./gradlew --no-daemon clean bootJar
 
-# ===== Runtime stage =====
+# 실행 이미지는 Buildx가 요청한 대상 아키텍처(개발 arm64, 운영 amd64)를 따른다.
 FROM eclipse-temurin:21-jre
 ENV TZ=Asia/Seoul
 WORKDIR /app

@@ -1,18 +1,22 @@
 services:
   app:
-    image: ghcr.io/devkor-github/saerok-admin:dev-latest
+    image: ${IMAGE_REF:-ghcr.io/devkor-github/saerok-admin:dev-latest}
     container_name: saerok-admin-dev
     restart: unless-stopped
+    init: true
     stop_grace_period: 15s
-    ports: ["8081:8081"]
+    ports:
+      # 외부에서는 Nginx의 80/443 포트로만 접근한다.
+      - "127.0.0.1:8081:8081"
 
-    # t2.micro 안전 제한 (BE와 합쳐도 1GiB 넘지 않게)
-    cpus: "0.10"
+    # t4g.micro에서 BE, PostgreSQL, Redis와 함께 실행할 수 있게 제한한다.
+    cpus: "0.25"
     mem_limit: "256m"
+    mem_reservation: "64m"
 
     # 런타임에 만드는 RAM env 파일
     env_file:
-      - /run/saerok-admin/env.dev
+      - ${ENV_FILE:-/run/saerok-admin/env.dev}
 
     environment:
       # dev 오버레이에서 명시적으로 고정
@@ -28,3 +32,16 @@ services:
         -XX:ReservedCodeCacheSize=32m
         -XX:+UseSerialGC
         -XX:+ExitOnOutOfMemoryError
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSI http://localhost:8081/login >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
