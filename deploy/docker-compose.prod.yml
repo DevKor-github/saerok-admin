@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/devkor-github/saerok-admin:prod-latest
+    image: ${IMAGE_REF}
     container_name: saerok-admin-prod
     restart: unless-stopped
     stop_grace_period: 15s
