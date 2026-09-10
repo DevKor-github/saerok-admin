@@ -2,86 +2,215 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
       th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
 <th:block th:fragment="content">
-        <div class="row g-4">
-            <div class="col-12 col-lg-8">
-                <div class="card card-elevated mb-4">
-                    <div class="card-body p-0">
-                        <div class="ratio ratio-21x9 rounded-top" th:style="${'background:url(' + detail.imageUrl() + ') center/cover no-repeat'}"></div>
-                        <div class="p-4 p-lg-5">
-                            <div class="d-flex align-items-center mb-3">
-                                <span class="badge bg-primary-subtle text-primary me-2" th:text="${detail.rarity()}">RARE</span>
-                                <span class="badge text-bg-light" th:each="tag : ${detail.tags()}" th:text="${tag}">태그</span>
-                            </div>
-                            <h2 class="h3 fw-bold" th:text="${detail.koreanName()}">해오라기</h2>
-                            <p class="text-muted mb-1" th:text="${detail.englishName()}">Striated Heron</p>
-                            <p class="text-muted fst-italic" th:text="${detail.scientificName()}">Butorides striata</p>
-                            <p class="fs-6 lh-lg" th:text="${detail.description()}">설명</p>
+    <div th:if="${flashMessage}" class="alert alert-elevated d-flex align-items-center"
+         th:classappend="${flashStatus} == 'success' ? ' alert-success' : ' alert-danger'">
+        <i class="bi"
+           th:classappend="${flashStatus} == 'success' ? ' bi-check-circle-fill me-2' : ' bi-exclamation-triangle-fill me-2'"></i>
+        <span th:text="${flashMessage}">처리가 완료되었습니다.</span>
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 fw-semibold mb-1" th:text="${detail.koreanName()}">해오라기</h1>
+            <p class="text-muted fst-italic mb-0" th:text="${detail.scientificName()}">Butorides striata</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a th:href="@{/dex/{id}/edit(id=${detail.id()})}" class="btn btn-primary">
+                <i class="bi bi-pencil-square me-1"></i>수정
+            </a>
+            <a th:href="@{/dex}" class="btn btn-outline-secondary">
+                <i class="bi bi-list-ul me-1"></i>목록
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4" th:with="primaryImage=${detail.primaryImage()}">
+        <div class="col-12 col-lg-8">
+            <div class="card card-elevated mb-4">
+                <div class="card-body p-0">
+                    <div th:if="${primaryImage != null && !#strings.isEmpty(primaryImage.imageUrl())}"
+                         class="ratio ratio-21x9 rounded-top overflow-hidden">
+                        <img th:src="${primaryImage.imageUrl()}" alt="대표 이미지" class="w-100 h-100 object-fit-cover">
+                    </div>
+                    <div th:if="${primaryImage == null || #strings.isEmpty(primaryImage.imageUrl())}"
+                         class="ratio ratio-21x9 rounded-top bg-light">
+                        <div class="d-flex align-items-center justify-content-center text-muted">
+                            <i class="bi bi-image me-2"></i>이미지 없음
                         </div>
                     </div>
-                </div>
-                <div class="card card-elevated">
-                    <div class="card-header bg-white border-0">
-                        <h3 class="h6 mb-0 fw-semibold">최근 업데이트</h3>
-                    </div>
-                    <div class="card-body">
-                        <dl class="row mb-0">
-                            <dt class="col-sm-3 text-muted">ID</dt>
-                            <dd class="col-sm-9" th:text="${'#' + detail.id()}">#401</dd>
-                            <dt class="col-sm-3 text-muted">업데이트</dt>
-                            <dd class="col-sm-9" th:text="${#temporals.format(detail.updatedAt(), 'yyyy.MM.dd HH:mm')}">2024.06.01 12:00</dd>
-                            <dt class="col-sm-3 text-muted">태그</dt>
+                    <div class="p-4 p-lg-5">
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                            <span class="badge text-bg-secondary" th:text="${detail.conservationGrade()}">해당 없음</span>
+                            <span class="badge text-bg-light" th:each="habitat : ${detail.habitats()}"
+                                  th:text="${habitat}">하천/호수</span>
+                        </div>
+                        <dl class="row mb-4">
+                            <dt class="col-sm-3 text-muted">학명 저자</dt>
+                            <dd class="col-sm-9" th:text="${#strings.isEmpty(detail.scientificAuthor()) ? '-' : detail.scientificAuthor()}">-</dd>
+                            <dt class="col-sm-3 text-muted">명명년도</dt>
+                            <dd class="col-sm-9" th:text="${detail.scientificYear() == null ? '-' : detail.scientificYear()}">1758</dd>
+                            <dt class="col-sm-3 text-muted">체장</dt>
                             <dd class="col-sm-9">
-                                <span class="badge text-bg-light me-1" th:each="tag : ${detail.tags()}" th:text="${tag}">태그</span>
+                                <span th:if="${detail.bodyLengthCm() != null}" th:text="${detail.bodyLengthCm() + ' cm'}">45 cm</span>
+                                <span th:if="${detail.bodyLengthCm() == null}">-</span>
+                            </dd>
+                            <dt class="col-sm-3 text-muted">NIBR URL</dt>
+                            <dd class="col-sm-9">
+                                <a th:if="${!#strings.isEmpty(detail.nibrUrl())}" th:href="${detail.nibrUrl()}"
+                                   th:text="${detail.nibrUrl()}" target="_blank" rel="noopener" class="text-break">NIBR</a>
+                                <span th:if="${#strings.isEmpty(detail.nibrUrl())}">-</span>
                             </dd>
                         </dl>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-lg-4">
-                <div class="card card-elevated mb-4">
-                    <div class="card-body">
-                        <h3 class="h6 fw-semibold mb-3">서식 정보</h3>
-                        <ul class="list-unstyled mb-0 small text-muted">
-                            <li class="mb-2"><i class="bi bi-geo-alt me-2 text-primary"></i>
-                                <span th:each="habitat : ${detail.habitats()}" th:text="${habitat}"
-                                      th:append="${!#lists.isLast(habitat, detail.habitats()) ? ', ' : ''}">하천</span>
-                            </li>
-                            <li class="mb-2"><i class="bi bi-shield-check me-2 text-success"></i>보호 등급 <strong th:text="${detail.rarity()}">RARE</strong></li>
-                        </ul>
-                        <div class="d-grid gap-2 mt-4">
-                            <a th:href="@{'/dex/' + ${detail.id()} + '/edit'}" class="btn btn-primary">도감 수정</a>
-                            <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteDexModal" data-entry="상세 #" th:data-entry="${'#' + detail.id() + ' ' + detail.koreanName()}">삭제</button>
+                        <h2 class="h6 fw-semibold mb-3">설명</h2>
+                        <p class="lh-lg mb-3" th:text="${#strings.isEmpty(detail.description()) ? '등록된 설명이 없습니다.' : detail.description()}">설명</p>
+                        <div class="d-flex flex-wrap gap-2 text-muted small">
+                            <span th:if="${!#strings.isEmpty(detail.descriptionSource())}">
+                                출처: <span th:text="${detail.descriptionSource()}">출처</span>
+                            </span>
+                            <span th:if="${detail.descriptionAiGenerated() != null && detail.descriptionAiGenerated()}"
+                                  class="badge text-bg-light">AI 생성</span>
                         </div>
                     </div>
                 </div>
-                <div class="card card-elevated">
-                    <div class="card-body">
-                        <h3 class="h6 fw-semibold mb-3">관련 링크</h3>
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-2"><a href="#" class="text-decoration-none"><i class="bi bi-link-45deg me-2"></i>현장 사진 아카이브</a></li>
-                            <li class="mb-2"><a href="#" class="text-decoration-none"><i class="bi bi-link-45deg me-2"></i>관찰 데이터 다운로드</a></li>
-                            <li><a href="#" class="text-decoration-none"><i class="bi bi-link-45deg me-2"></i>관련 새록 모음</a></li>
-                        </ul>
-                    </div>
+            </div>
+
+            <div class="card card-elevated">
+                <div class="card-header card-header-tight bg-white">
+                    <h2 class="h6 mb-0 fw-semibold">분류 정보</h2>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-modern mb-0 align-middle">
+                        <thead>
+                        <tr>
+                            <th scope="col">분류</th>
+                            <th scope="col">영문</th>
+                            <th scope="col">국문</th>
+                        </tr>
+                        </thead>
+                        <tbody th:if="${detail.taxonomy() != null}">
+                        <tr>
+                            <th scope="row">문</th>
+                            <td th:text="${detail.taxonomy().phylumEng()}">Chordata</td>
+                            <td th:text="${detail.taxonomy().phylumKor()}">척삭동물문</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">강</th>
+                            <td th:text="${detail.taxonomy().classEng()}">Aves</td>
+                            <td th:text="${detail.taxonomy().classKor()}">조강</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">목</th>
+                            <td th:text="${detail.taxonomy().orderEng()}">Pelecaniformes</td>
+                            <td th:text="${detail.taxonomy().orderKor()}">사다새목</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">과</th>
+                            <td th:text="${detail.taxonomy().familyEng()}">Ardeidae</td>
+                            <td th:text="${detail.taxonomy().familyKor()}">왜가리과</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">속</th>
+                            <td th:text="${detail.taxonomy().genusEng()}">Butorides</td>
+                            <td th:text="${detail.taxonomy().genusKor()}">해오라기속</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">종</th>
+                            <td th:text="${detail.taxonomy().speciesEng()}">striata</td>
+                            <td th:text="${detail.taxonomy().speciesKor()}">해오라기</td>
+                        </tr>
+                        </tbody>
+                        <tbody th:if="${detail.taxonomy() == null}">
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-4">분류 정보가 없습니다.</td>
+                        </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-        <div class="modal fade" id="deleteDexModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">도감 삭제</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+        <div class="col-12 col-lg-4">
+            <div class="card card-elevated mb-4">
+                <div class="card-body">
+                    <h2 class="h6 fw-semibold mb-3">체류/희귀도</h2>
+                    <div class="d-grid gap-2" th:if="${!#lists.isEmpty(detail.residencies())}">
+                        <div class="border rounded-3 p-3" th:each="residency : ${detail.residencies()}">
+                            <div class="d-flex justify-content-between gap-2">
+                                <span class="fw-semibold" th:text="${residency.residencyType()}">텃새</span>
+                                <span class="badge text-bg-light" th:text="${residency.rarity()}">흔함</span>
+                            </div>
+                            <div class="text-muted small mt-2">
+                                <span th:text="${residency.monthLabel()}">1월, 2월</span>
+                                <span th:if="${residency.usesDefaultMonths()}" class="badge text-bg-secondary ms-1">기본 월</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="modal-body">
-                        <p><strong th:text="${detail.koreanName()}">해오라기</strong> 도감 항목을 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.</p>
+                    <p class="text-muted mb-0" th:if="${#lists.isEmpty(detail.residencies())}">체류 정보가 없습니다.</p>
+
+                    <hr class="my-4">
+                    <h3 class="h6 fw-semibold mb-3">계절 요약</h3>
+                    <div class="d-grid gap-2" th:if="${!#lists.isEmpty(detail.seasonsWithRarity())}">
+                        <div class="border rounded-3 p-3" th:each="season : ${detail.seasonsWithRarity()}">
+                            <div class="d-flex justify-content-between gap-2">
+                                <span class="fw-semibold" th:text="${season.season()}">봄</span>
+                                <span class="badge text-bg-light" th:text="${season.rarity()}">흔함</span>
+                            </div>
+                            <div class="text-muted small mt-2">우선순위 <span th:text="${season.priority()}">0</span></div>
+                        </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
-                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-toast-target="toastDexDeleted">삭제</button>
+                    <p class="text-muted mb-0" th:if="${#lists.isEmpty(detail.seasonsWithRarity())}">계절 요약이 없습니다.</p>
+                </div>
+            </div>
+
+            <div class="card card-elevated mb-4">
+                <div class="card-body">
+                    <h2 class="h6 fw-semibold mb-3">이미지</h2>
+                    <div class="d-grid gap-3" th:if="${!#lists.isEmpty(detail.images())}">
+                        <div class="border rounded-3 p-3" th:each="image : ${detail.images()}">
+                            <div class="d-flex align-items-center gap-3">
+                                <img th:if="${!#strings.isEmpty(image.imageUrl())}" th:src="${image.imageUrl()}"
+                                     alt="도감 이미지" class="media-thumb media-thumb--square-lg flex-shrink-0">
+                                <div th:if="${#strings.isEmpty(image.imageUrl())}"
+                                     class="media-thumb media-thumb--square-lg bg-light d-flex align-items-center justify-content-center text-muted flex-shrink-0">
+                                    <i class="bi bi-image"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <div>
+                                        <span class="badge text-bg-primary" th:if="${image.isThumb() != null && image.isThumb()}">대표</span>
+                                        <span class="text-muted small">순서 <span th:text="${image.orderIndex()}">0</span></span>
+                                    </div>
+                                    <a th:if="${!#strings.isEmpty(image.originalUrl())}" th:href="${image.originalUrl()}"
+                                       target="_blank" rel="noopener" class="small text-break">원본 출처</a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+                    <p class="text-muted mb-0" th:if="${#lists.isEmpty(detail.images())}">이미지가 없습니다.</p>
+                </div>
+            </div>
+
+            <div class="card card-elevated">
+                <div class="card-body">
+                    <h2 class="h6 fw-semibold mb-3">등록 정보</h2>
+                    <dl class="row mb-0">
+                        <dt class="col-4 text-muted">ID</dt>
+                        <dd class="col-8" th:text="${'#' + detail.id()}">#401</dd>
+                        <dt class="col-4 text-muted">등록일</dt>
+                        <dd class="col-8">
+                            <span th:if="${detail.createdAt() != null}"
+                                  th:text="${#temporals.format(detail.createdAt(), 'yyyy.MM.dd HH:mm')}">2024.06.01 12:00</span>
+                            <span th:if="${detail.createdAt() == null}">-</span>
+                        </dd>
+                        <dt class="col-4 text-muted">수정일</dt>
+                        <dd class="col-8">
+                            <span th:if="${detail.updatedAt() != null}"
+                                  th:text="${#temporals.format(detail.updatedAt(), 'yyyy.MM.dd HH:mm')}">2024.06.01 12:00</span>
+                            <span th:if="${detail.updatedAt() == null}">-</span>
+                        </dd>
+                    </dl>
                 </div>
             </div>
         </div>
-    </th:block>
+    </div>
+</th:block>
 </html>

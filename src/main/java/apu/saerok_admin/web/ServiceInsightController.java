@@ -6,6 +6,7 @@ import apu.saerok_admin.web.serviceinsight.ServiceInsightRangePreset;
 import apu.saerok_admin.web.serviceinsight.ServiceInsightService;
 import apu.saerok_admin.web.view.Breadcrumb;
 import apu.saerok_admin.web.view.ServiceInsightViewModel;
+import apu.saerok_admin.web.view.ServiceInsightViewModel.CurrentUserStats;
 import apu.saerok_admin.web.view.ToastMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,7 +47,7 @@ public class ServiceInsightController {
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
-    @GetMapping(value = "/service-insight", produces = MediaType.TEXT_HTML_VALUE)
+    @GetMapping(value = {"/service-insight", "/service-insight/time-series"}, produces = MediaType.TEXT_HTML_VALUE)
     public String serviceInsight(
             Model model,
             @RequestParam(value = "range", required = false) String rangeParam,
@@ -55,11 +56,12 @@ public class ServiceInsightController {
             @RequestParam(value = "endDate", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
-        model.addAttribute("pageTitle", "서비스 인사이트");
-        model.addAttribute("activeMenu", "serviceInsight");
+        model.addAttribute("pageTitle", "서비스 인사이트 · 시계열");
+        model.addAttribute("activeMenu", "serviceInsightTimeSeries");
         model.addAttribute("breadcrumbs", List.of(
                 Breadcrumb.of("대시보드", "/"),
-                Breadcrumb.active("서비스 인사이트")
+                Breadcrumb.of("서비스 인사이트", "/service-insight/time-series"),
+                Breadcrumb.active("시계열")
         ));
         ensureToastMessages(model);
 
@@ -84,7 +86,24 @@ public class ServiceInsightController {
         return "service-insight/index";
     }
 
-    @GetMapping(value = "/service-insight", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/service-insight/subscriber-status", produces = MediaType.TEXT_HTML_VALUE)
+    public String subscriberStatus(Model model) {
+        model.addAttribute("pageTitle", "서비스 인사이트 · 가입자 현황");
+        model.addAttribute("activeMenu", "serviceInsightSubscriberStatus");
+        model.addAttribute("breadcrumbs", List.of(
+                Breadcrumb.of("대시보드", "/"),
+                Breadcrumb.of("서비스 인사이트", "/service-insight/time-series"),
+                Breadcrumb.active("가입자 현황")
+        ));
+        ensureToastMessages(model);
+
+        CurrentUserStats currentUserStats = serviceInsightService.loadCurrentUserStats();
+        model.addAttribute("currentUserStats", currentUserStats);
+
+        return "service-insight/subscriber-status";
+    }
+
+    @GetMapping(value = {"/service-insight", "/service-insight/time-series"}, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ServiceInsightAjaxResponse> serviceInsightData(
             @RequestParam(value = "range", required = false) String rangeParam,
             @RequestParam(value = "startDate", required = false)

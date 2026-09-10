@@ -3,6 +3,50 @@
 <body>
 <th:block th:fragment="scripts">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            const storageKey = 'saerok-admin.sidebar-collapsed';
+            const toggle = document.getElementById('sidebarDesktopToggle');
+            const sidebar = document.getElementById('appSidebarDesktop');
+
+            if (!toggle || !sidebar) {
+                return;
+            }
+
+            function applyState(collapsed) {
+                document.body.classList.toggle('app-sidebar-is-collapsed', collapsed);
+                sidebar.toggleAttribute('inert', collapsed);
+                sidebar.setAttribute('aria-hidden', collapsed ? 'true' : 'false');
+                toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+                toggle.setAttribute('aria-label', collapsed ? '메뉴 패널 펼치기' : '메뉴 패널 접기');
+                toggle.setAttribute('title', collapsed ? '메뉴 패널 펼치기' : '메뉴 패널 접기');
+
+                const icon = toggle.querySelector('i');
+                if (icon) {
+                    icon.classList.toggle('bi-layout-sidebar-inset', collapsed);
+                    icon.classList.toggle('bi-layout-sidebar-inset-reverse', !collapsed);
+                }
+            }
+
+            let collapsed = false;
+            try {
+                collapsed = window.localStorage.getItem(storageKey) === 'true';
+            } catch (error) {
+                // 저장소 접근이 제한된 환경에서도 메뉴 토글은 동작한다.
+            }
+            applyState(collapsed);
+
+            toggle.addEventListener('click', function () {
+                collapsed = !document.body.classList.contains('app-sidebar-is-collapsed');
+                applyState(collapsed);
+                try {
+                    window.localStorage.setItem(storageKey, String(collapsed));
+                } catch (error) {
+                    // 저장하지 못해도 현재 페이지에서는 변경된 상태를 유지한다.
+                }
+            });
+        }());
+    </script>
 </th:block>
 </body>
 </html>

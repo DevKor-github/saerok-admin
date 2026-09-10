@@ -1,7 +1,5 @@
 package apu.saerok_admin.infra.stat;
 
-import apu.saerok_admin.infra.SaerokApiProps;
-import apu.saerok_admin.infra.stat.dto.StatSeriesResponse;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -11,10 +9,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriBuilder;
 
+import apu.saerok_admin.infra.SaerokApiProps;
+import apu.saerok_admin.infra.stat.dto.CurrentUserStatResponse;
+import apu.saerok_admin.infra.stat.dto.StatSeriesResponse;
+
 @Component
 public class AdminStatClient {
 
     private static final String[] ADMIN_STATS_SEGMENTS = {"admin", "stats"};
+    private static final String CURRENT_USERS_SEGMENT = "current-users";
     private static final String SERIES_SEGMENT = "series";
 
     private final RestClient saerokRestClient;
@@ -44,6 +47,19 @@ public class AdminStatClient {
         return response;
     }
 
+    public CurrentUserStatResponse fetchCurrentUserStats() {
+        CurrentUserStatResponse response = saerokRestClient.get()
+                .uri(this::buildCurrentUserStatsUri)
+                .retrieve()
+                .body(CurrentUserStatResponse.class);
+
+        if (response == null) {
+            throw new IllegalStateException("Empty response from current user stats API");
+        }
+
+        return response;
+    }
+
     private URI buildSeriesUri(UriBuilder builder, Collection<StatMetric> metrics, LocalDate startDate, LocalDate endDate) {
         if (missingPrefixSegments.length > 0) {
             builder.pathSegment(missingPrefixSegments);
@@ -60,6 +76,15 @@ public class AdminStatClient {
             builder.queryParam("period", buildPeriodQuery(startDate, endDate));
         }
 
+        return builder.build();
+    }
+
+    private URI buildCurrentUserStatsUri(UriBuilder builder) {
+        if (missingPrefixSegments.length > 0) {
+            builder.pathSegment(missingPrefixSegments);
+        }
+        builder.pathSegment(ADMIN_STATS_SEGMENTS);
+        builder.pathSegment(CURRENT_USERS_SEGMENT);
         return builder.build();
     }
 

@@ -97,20 +97,12 @@ public enum StatMetric {
             Map.of(),
             false
     ),
-    USER_SIGNUP_SOURCE_TOTAL(
-            "가입 경로별 누적 사용자",
-            "가입 경로(소셜 로그인 종류)별 누적 가입자 수",
+    USER_DEVICE_PLATFORM_SIGNUP_CUMULATIVE(
+            "플랫폼별 가입자 증가 추이",
+            "최초 집계일의 기존 가입자를 기준값으로 두고, 이후 가입 완료와 첫 기기 등록이 모두 충족된 사용자를 누적합니다. 복수 플랫폼은 중복 포함됩니다.",
             MetricUnit.COUNT,
             true,
-            Map.of(),
-            false
-    ),
-    USER_DEVICE_PLATFORM_TOTAL(
-            "기기 플랫폼별 누적 사용자",
-            "기기 플랫폼(iOS/Android/Web 등)별 누적 사용자 수",
-            MetricUnit.COUNT,
-            true,
-            Map.of(),
+            platformComponentLabels(),
             false
     );
 
@@ -150,6 +142,13 @@ public enum StatMetric {
         labels.put("max_hours", "최대");
         labels.put("avg_hours", "평균");
         labels.put("stddev_hours", "표준편차");
+        return Collections.unmodifiableMap(labels);
+    }
+
+    private static Map<String, String> platformComponentLabels() {
+        Map<String, String> labels = new LinkedHashMap<>();
+        labels.put("IOS", "iOS");
+        labels.put("ANDROID", "Android");
         return Collections.unmodifiableMap(labels);
     }
 

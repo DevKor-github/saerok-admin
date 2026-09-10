@@ -22,6 +22,87 @@
 
 /* 플롯 영역 여백 + 포커스 그림자 */
 .service-insight .service-insight__chart { margin-left: 16px; }
+.service-insight .si-current-user-stats {
+    margin: 0 0 1rem;
+    padding: 1rem;
+    border: 1px solid rgba(148, 163, 184, .35);
+    border-radius: .9rem;
+    background: linear-gradient(135deg, #f8fbff, #ffffff 60%);
+}
+.service-insight .si-current-user-stats__heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: .9rem;
+}
+.service-insight .si-current-user-stats__heading h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.1rem;
+}
+.service-insight .si-current-user-stats__heading p {
+    margin: 0;
+    color: #64748b;
+    font-size: .82rem;
+}
+.service-insight .si-current-user-stats__eyebrow {
+    margin-bottom: .18rem !important;
+    color: #2563eb !important;
+    font-size: .72rem !important;
+    font-weight: 700;
+    letter-spacing: .06em;
+}
+.service-insight .si-current-user-stats__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .75rem;
+}
+.service-insight .si-current-stat {
+    min-width: 0;
+    padding: .85rem;
+    border: 1px solid rgba(148, 163, 184, .28);
+    border-radius: .7rem;
+    background: #fff;
+}
+.service-insight .si-current-stat > span {
+    display: block;
+    color: #475569;
+    font-size: .82rem;
+    font-weight: 600;
+}
+.service-insight .si-current-stat--total strong {
+    display: block;
+    margin: .28rem 0;
+    color: #1d4ed8;
+    font-size: 1.8rem;
+    line-height: 1.1;
+}
+.service-insight .si-current-stat small {
+    display: block;
+    margin-top: .45rem;
+    color: #64748b;
+    font-size: .72rem;
+    line-height: 1.35;
+}
+.service-insight .si-current-stat__list {
+    margin: .45rem 0 0;
+}
+.service-insight .si-current-stat__list > div {
+    display: flex;
+    justify-content: space-between;
+    gap: .5rem;
+    padding: .18rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: .8rem;
+}
+.service-insight .si-current-stat__list > div:last-child { border-bottom: 0; }
+.service-insight .si-current-stat__list dt { color: #64748b; font-weight: 500; }
+.service-insight .si-current-stat__list dd { margin: 0; color: #0f172a; font-weight: 700; }
+@media (max-width: 991.98px) {
+    .service-insight .si-current-user-stats__grid { grid-template-columns: 1fr; }
+    .service-insight .si-current-user-stats__heading { flex-direction: column; gap: .35rem; }
+}
 .service-insight .si-plots__toolbar {
     display: flex;
     align-items: flex-start;

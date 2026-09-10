@@ -1,13 +1,5 @@
 package apu.saerok_admin.web.serviceinsight;
 
-import apu.saerok_admin.infra.stat.AdminStatClient;
-import apu.saerok_admin.infra.stat.StatMetric;
-import apu.saerok_admin.infra.stat.dto.StatSeriesResponse;
-import apu.saerok_admin.web.view.ServiceInsightViewModel;
-import apu.saerok_admin.web.view.ServiceInsightViewModel.ComponentSeries;
-import apu.saerok_admin.web.view.ServiceInsightViewModel.MetricOption;
-import apu.saerok_admin.web.view.ServiceInsightViewModel.Point;
-import apu.saerok_admin.web.view.ServiceInsightViewModel.Series;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -17,9 +9,35 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
+
+import apu.saerok_admin.infra.stat.AdminStatClient;
+import apu.saerok_admin.infra.stat.StatMetric;
+import apu.saerok_admin.infra.stat.dto.CurrentUserStatResponse;
+import apu.saerok_admin.infra.stat.dto.StatSeriesResponse;
+import apu.saerok_admin.web.view.ServiceInsightViewModel;
+import apu.saerok_admin.web.view.ServiceInsightViewModel.CategoryCount;
+import apu.saerok_admin.web.view.ServiceInsightViewModel.ComponentSeries;
+import apu.saerok_admin.web.view.ServiceInsightViewModel.CurrentUserStats;
+import apu.saerok_admin.web.view.ServiceInsightViewModel.MetricOption;
+import apu.saerok_admin.web.view.ServiceInsightViewModel.Point;
+import apu.saerok_admin.web.view.ServiceInsightViewModel.Series;
 
 @Service
 public class ServiceInsightService {
+
+    private static final Map<String, String> SIGNUP_SOURCE_LABELS = Map.of(
+            "INSTAGRAM", "인스타그램",
+            "OTHER_SNS", "기타 SNS",
+            "FRIEND", "지인 추천",
+            "COMMUNITY", "커뮤니티",
+            "ETC", "기타",
+            "UNKNOWN", "미기록"
+    );
+    private static final Map<String, String> PLATFORM_LABELS = Map.of(
+            "IOS", "iOS",
+            "ANDROID", "Android"
+    );
 
     private final AdminStatClient adminStatClient;
 
@@ -35,14 +53,28 @@ public class ServiceInsightService {
         LocalDate startDate = query != null ? query.startDate() : null;
         LocalDate endDate = query != null ? query.endDate() : null;
         StatSeriesResponse response = adminStatClient.fetchSeries(List.of(StatMetric.values()), startDate, endDate);
-        return buildViewModel(response);
+        CurrentUserStatResponse currentUserStats = fetchCurrentUserStatsIfAvailable();
+        return buildViewModel(response, currentUserStats);
     }
 
     public ServiceInsightViewModel defaultViewModel() {
-        return buildViewModel(null);
+        return buildViewModel(null, null);
     }
 
-    private ServiceInsightViewModel buildViewModel(StatSeriesResponse response) {
+    public CurrentUserStats loadCurrentUserStats() {
+        return toCurrentUserStats(fetchCurrentUserStatsIfAvailable());
+    }
+
+    private CurrentUserStatResponse fetchCurrentUserStatsIfAvailable() {
+        try {
+            return adminStatClient.fetchCurrentUserStats();
+        } catch (RestClientException | IllegalStateException ignored) {
+            // 새 현황 API가 아직 배포되지 않은 백엔드와의 순차 배포를 지원한다.
+            return null;
+        }
+    }
+
+    private ServiceInsightViewModel buildViewModel(StatSeriesResponse response, CurrentUserStatResponse currentUserStats) {
         Map<String, StatSeriesResponse.Series> responseMap = Optional.ofNullable(response)
                 .map(StatSeriesResponse::series)
                 .orElseGet(List::of)
@@ -67,7 +99,36 @@ public class ServiceInsightService {
             }
         }
 
-        return new ServiceInsightViewModel(metricOptions, chartSeries, componentLabels);
+        return new ServiceInsightViewModel(
+                metricOptions,
+                chartSeries,
+                componentLabels,
+                toCurrentUserStats(currentUserStats)
+        );
+    }
+
+    private CurrentUserStats toCurrentUserStats(CurrentUserStatResponse source) {
+        if (source == null) {
+            return null;
+        }
+        return new CurrentUserStats(
+                source.completedUserCount(),
+                toCategoryCounts(source.signupSourceCounts(), SIGNUP_SOURCE_LABELS),
+                toCategoryCounts(source.activePushUserCountsByPlatform(), PLATFORM_LABELS)
+        );
+    }
+
+    private List<CategoryCount> toCategoryCounts(Map<String, Long> source, Map<String, String> labels) {
+        if (source == null || source.isEmpty()) {
+            return List.of();
+        }
+        return source.entrySet().stream()
+                .map(entry -> new CategoryCount(
+                        entry.getKey(),
+                        labels.getOrDefault(entry.getKey(), entry.getKey()),
+                        entry.getValue() != null ? entry.getValue() : 0L
+                ))
+                .toList();
     }
 
     private MetricOption toMetricOption(StatMetric metric) {

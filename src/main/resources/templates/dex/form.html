@@ -2,118 +2,265 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
       th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
 <th:block th:fragment="content">
-        <form class="row g-4" novalidate>
-            <div class="col-12 col-xl-8">
-                <div class="card card-elevated mb-4">
-                    <div class="card-body">
-                        <h2 class="h6 fw-semibold mb-4">기본 정보</h2>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">국문명</label>
-                                <input type="text" class="form-control" name="koreanName" placeholder="예) 해오라기"
-                                       th:value="${form.detail() != null ? form.detail().koreanName() : ''}">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">영문명</label>
-                                <input type="text" class="form-control" name="englishName" placeholder="예) Striated Heron"
-                                       th:value="${form.detail() != null ? form.detail().englishName() : ''}">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">학명</label>
-                                <input type="text" class="form-control" name="scientificName" placeholder="Butorides striata"
-                                       th:value="${form.detail() != null ? form.detail().scientificName() : ''}">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">대표 이미지 URL</label>
-                                <input type="url" class="form-control" name="imageUrl" placeholder="https://"
-                                       th:value="${form.detail() != null ? form.detail().imageUrl() : ''}">
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">설명</label>
-                                <textarea class="form-control" name="description" rows="6" placeholder="도감 설명을 입력하세요">[[${form.detail() != null ? form.detail().description() : ''}]]</textarea>
-                            </div>
+    <div th:if="${flashMessage}" class="alert alert-elevated d-flex align-items-center alert-danger">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span th:text="${flashMessage}">입력 정보를 확인해 주세요.</span>
+    </div>
+
+    <form id="dexForm" class="row g-4" method="post" th:action="@{${formAction}}" th:object="${form}">
+        <div class="col-12 col-xl-8">
+            <div class="card card-elevated mb-4">
+                <div class="card-body">
+                    <h2 class="h6 fw-semibold mb-4">기본 정보</h2>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="koreanName" class="form-label">국문명 <span class="text-danger">*</span></label>
+                            <input id="koreanName" type="text" class="form-control" th:field="*{koreanName}"
+                                   placeholder="예) 해오라기" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="scientificName" class="form-label">학명 <span class="text-danger">*</span></label>
+                            <input id="scientificName" type="text" class="form-control" th:field="*{scientificName}"
+                                   placeholder="Butorides striata" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="scientificAuthor" class="form-label">학명 저자</label>
+                            <input id="scientificAuthor" type="text" class="form-control" th:field="*{scientificAuthor}"
+                                   placeholder="Linnaeus">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="scientificYear" class="form-label">명명년도</label>
+                            <input id="scientificYear" type="number" class="form-control" th:field="*{scientificYear}"
+                                   min="0" max="2100" placeholder="1758">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="bodyLengthCm" class="form-label">체장(cm)</label>
+                            <input id="bodyLengthCm" type="number" step="0.1" min="0" class="form-control"
+                                   th:field="*{bodyLengthCm}" placeholder="45.0">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="conservationGrade" class="form-label">보호등급 <span class="text-danger">*</span></label>
+                            <select id="conservationGrade" class="form-select" th:field="*{conservationGrade}" required>
+                                <option th:each="option : ${dexOptions.conservationGradeOptions()}"
+                                        th:value="${option.value()}" th:text="${option.label()}">해당 없음</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="nibrUrl" class="form-label">NIBR URL</label>
+                            <input id="nibrUrl" type="url" class="form-control" th:field="*{nibrUrl}"
+                                   placeholder="https://species.nibr.go.kr">
                         </div>
                     </div>
                 </div>
-                <div class="card card-elevated">
-                    <div class="card-body">
-                        <h2 class="h6 fw-semibold mb-3">태그 설정</h2>
-                        <div class="mb-3">
-                            <label class="form-label">태그</label>
-                            <input type="text" class="form-control" name="tags" placeholder="쉼표(,)로 구분"
-                                   th:value="${form.detail() != null ? #strings.arrayJoin(form.detail().tags(), ', ') : ''}">
-                            <div class="form-text">예시: 야행성, 대형, 빠른반응</div>
+            </div>
+
+            <div class="card card-elevated mb-4">
+                <div class="card-body">
+                    <h2 class="h6 fw-semibold mb-4">분류 정보</h2>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="phylumEng">문(영문) <span class="text-danger">*</span></label>
+                            <input id="phylumEng" type="text" class="form-control" th:field="*{phylumEng}" required>
                         </div>
-                        <div class="border rounded-4 p-3 bg-light">
-                            <div class="text-muted small mb-2">현재 태그 미리보기</div>
-                            <div class="d-flex flex-wrap gap-2">
-                                <span class="badge text-bg-light" th:each="tag : ${form.detail() != null ? form.detail().tags() : {}}" th:text="${tag}">태그</span>
-                                <span class="text-muted" th:if="${form.detail() == null || #lists.isEmpty(form.detail().tags())}">등록된 태그가 없습니다.</span>
+                        <div class="col-md-6">
+                            <label class="form-label" for="phylumKor">문(국문) <span class="text-danger">*</span></label>
+                            <input id="phylumKor" type="text" class="form-control" th:field="*{phylumKor}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="classEng">강(영문) <span class="text-danger">*</span></label>
+                            <input id="classEng" type="text" class="form-control" th:field="*{classEng}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="classKor">강(국문) <span class="text-danger">*</span></label>
+                            <input id="classKor" type="text" class="form-control" th:field="*{classKor}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="orderEng">목(영문) <span class="text-danger">*</span></label>
+                            <input id="orderEng" type="text" class="form-control" th:field="*{orderEng}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="orderKor">목(국문) <span class="text-danger">*</span></label>
+                            <input id="orderKor" type="text" class="form-control" th:field="*{orderKor}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="familyEng">과(영문) <span class="text-danger">*</span></label>
+                            <input id="familyEng" type="text" class="form-control" th:field="*{familyEng}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="familyKor">과(국문) <span class="text-danger">*</span></label>
+                            <input id="familyKor" type="text" class="form-control" th:field="*{familyKor}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="genusEng">속(영문) <span class="text-danger">*</span></label>
+                            <input id="genusEng" type="text" class="form-control" th:field="*{genusEng}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="genusKor">속(국문) <span class="text-danger">*</span></label>
+                            <input id="genusKor" type="text" class="form-control" th:field="*{genusKor}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="speciesEng">종(영문) <span class="text-danger">*</span></label>
+                            <input id="speciesEng" type="text" class="form-control" th:field="*{speciesEng}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="speciesKor">종(국문) <span class="text-danger">*</span></label>
+                            <input id="speciesKor" type="text" class="form-control" th:field="*{speciesKor}" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-elevated mb-4">
+                <div class="card-body">
+                    <h2 class="h6 fw-semibold mb-4">이미지</h2>
+                    <div class="row g-3 align-items-start">
+                        <div class="col-md-6">
+                            <label for="dexImageFile" class="form-label">대표 이미지 <span class="text-danger">*</span></label>
+                            <input id="dexImageFile" type="file" class="form-control"
+                                   accept="image/png,image/jpeg,image/webp,image/gif"
+                                   th:attr="required=${#strings.isEmpty(form.objectKey)}">
+                            <input id="dexObjectKey" type="hidden" th:field="*{objectKey}">
+                            <input id="dexContentType" type="hidden" th:field="*{contentType}">
+                            <div id="dexImageUploadStatus" class="form-text"
+                                 th:classappend="${#strings.isEmpty(form.objectKey)} ? ' text-muted' : ' text-success'"
+                                 th:text="${#strings.isEmpty(form.objectKey)} ? '이미지 파일을 선택하면 업로드됩니다.' : '업로드된 이미지가 유지되었습니다.'">
+                                이미지 파일을 선택하면 업로드됩니다.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="originalUrl" class="form-label">원본 출처 URL <span class="text-danger">*</span></label>
+                            <input id="originalUrl" type="url" class="form-control" th:field="*{originalUrl}"
+                                   placeholder="https://example.com/source" required>
+                        </div>
+                        <div class="col-12">
+                            <div class="ratio ratio-21x9 bg-light rounded overflow-hidden">
+                                <img id="dexImagePreview" alt="대표 이미지 미리보기" class="w-100 h-100 object-fit-cover d-none">
+                                <div id="dexImagePreviewEmpty" class="d-flex align-items-center justify-content-center text-muted">
+                                    <i class="bi bi-image me-2"></i>미리보기
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-12 col-xl-4">
-                <div class="card card-elevated mb-4">
-                    <div class="card-body">
-                        <h2 class="h6 fw-semibold mb-3">분류 정보</h2>
-                        <div class="mb-3">
-                            <label class="form-label">서식지</label>
-                            <select class="form-select" name="habitats" multiple size="4">
-                                <option th:each="option : ${form.habitatOptions()}" th:value="${option}"
-                                        th:selected="${form.detail() != null ? form.detail().habitats().contains(option) : false}"
-                                        th:text="${option}">하천</option>
-                            </select>
-                            <div class="form-text">여러 개 선택 가능합니다.</div>
+
+            <div class="card card-elevated">
+                <div class="card-body">
+                    <h2 class="h6 fw-semibold mb-4">설명</h2>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="description" class="form-label">설명</label>
+                            <textarea id="description" class="form-control" th:field="*{description}" rows="6"></textarea>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">체류 형태</label>
-                            <select class="form-select" name="stayType">
-                                <option value="">선택하세요</option>
-                                <option th:each="option : ${form.stayOptions()}" th:value="${option}"
-                                        th:selected="${form.detail() != null ? option == form.detail().stayType() : false}"
-                                        th:text="${option}">철새</option>
-                            </select>
+                        <div class="col-md-8">
+                            <label for="descriptionSource" class="form-label">설명 출처</label>
+                            <input id="descriptionSource" type="text" class="form-control" th:field="*{descriptionSource}">
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">희귀도</label>
-                            <div class="btn-group w-100" role="group">
-                                <th:block th:each="option, iterStat : ${form.rarityOptions()}">
-                                    <input type="radio" class="btn-check" name="rarity"
-                                           th:id="${'rarity-' + iterStat.index}" th:value="${option}"
-                                           th:checked="${form.detail() != null ? form.detail().rarity() == option : option == 'COMMON'}">
-                                    <label class="btn btn-outline-primary" th:for="${'rarity-' + iterStat.index}" th:text="${option}">COMMON</label>
-                                </th:block>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <div class="form-check">
+                                <input id="descriptionAiGenerated" class="form-check-input" type="checkbox"
+                                       th:field="*{descriptionAiGenerated}">
+                                <label class="form-check-label" for="descriptionAiGenerated">AI 생성 설명</label>
                             </div>
                         </div>
-                        <div class="small text-muted">
-                            마지막 저장: <strong th:text="${form.detail() != null ? #temporals.format(form.detail().updatedAt(), 'yyyy.MM.dd HH:mm') : '미저장'}">2024.06.01 12:00</strong>
-                        </div>
-                    </div>
-                </div>
-                <div class="card card-elevated">
-                    <div class="card-body d-grid gap-2">
-                        <button type="button" class="btn btn-outline-secondary">미리보기</button>
-                        <button type="button" class="btn btn-primary" data-toast-target="toastDexSaved">변경사항 저장</button>
-                        <a th:href="@{/dex}" class="btn btn-link text-decoration-none">목록으로 돌아가기</a>
                     </div>
                 </div>
             </div>
-        </form>
-    <script>
-    function syncRarityButtons() {
-        document.querySelectorAll('.btn-check').forEach(function (radio) {
-            const label = document.querySelector('label[for="' + radio.id + '"]');
-            if (label) {
-                label.classList.toggle('active', radio.checked);
-            }
-        });
-    }
-    document.querySelectorAll('.btn-check').forEach(function (input) {
-        input.addEventListener('change', syncRarityButtons);
-    });
-    syncRarityButtons();
-    </script>
+        </div>
+
+        <div class="col-12 col-xl-4">
+            <div class="card card-elevated mb-4">
+                <div class="card-body">
+                    <h2 class="h6 fw-semibold mb-3">서식지 <span class="text-danger">*</span></h2>
+                    <div class="row g-2">
+                        <div class="col-6" th:each="option : ${dexOptions.habitatOptions()}">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" th:field="*{habitats}"
+                                       th:value="${option.value()}">
+                                <label class="form-check-label" th:for="${#ids.prev('habitats')}"
+                                       th:text="${option.label()}">하천/호수</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-elevated mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                        <h2 class="h6 fw-semibold mb-0">체류/희귀도 <span class="text-danger">*</span></h2>
+                        <button id="addResidencyRow" type="button" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-plus-lg me-1"></i>행 추가
+                        </button>
+                    </div>
+                    <div id="residencyRows" class="d-grid gap-3">
+                        <div class="border rounded-3 p-3 residency-row"
+                             th:each="row, rowStat : ${form.residencies}">
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <label class="form-label" th:for="|residency-${rowStat.index}-type|">체류 형태</label>
+                                    <select class="form-select" data-field="residencyType"
+                                            th:id="|residency-${rowStat.index}-type|"
+                                            th:name="|residencies[${rowStat.index}].residencyType|" required>
+                                        <option value="">선택</option>
+                                        <option th:each="option : ${dexOptions.residencyOptions()}"
+                                                th:value="${option.value()}"
+                                                th:selected="${option.value() == row.residencyType}"
+                                                th:text="${option.label()}">텃새</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" th:for="|residency-${rowStat.index}-rarity|">희귀도</label>
+                                    <select class="form-select" data-field="rarity"
+                                            th:id="|residency-${rowStat.index}-rarity|"
+                                            th:name="|residencies[${rowStat.index}].rarity|" required>
+                                        <option value="">선택</option>
+                                        <option th:each="option : ${dexOptions.rarityOptions()}"
+                                                th:value="${option.value()}"
+                                                th:selected="${option.value() == row.rarity}"
+                                                th:text="${option.label()}">흔함</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-label">관찰 월</div>
+                                    <div class="row g-1">
+                                        <div class="col-3" th:each="month : ${dexOptions.months()}">
+                                            <div class="form-check">
+                                                <input class="form-check-input residency-month" type="checkbox" data-field="months"
+                                                       th:id="|residency-${rowStat.index}-month-${month}|"
+                                                       th:name="|residencies[${rowStat.index}].months|"
+                                                       th:value="${month}"
+                                                       th:checked="${row.months != null && #lists.contains(row.months, month)}">
+                                                <label class="form-check-label"
+                                                       th:for="|residency-${rowStat.index}-month-${month}|"
+                                                       th:text="|${month}월|">1월</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-text">선택하지 않으면 체류 형태의 기본 월 범위를 사용합니다.</div>
+                                </div>
+                                <div class="col-12 text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary residency-row-remove">
+                                        <i class="bi bi-trash me-1"></i>삭제
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-elevated">
+                <div class="card-body d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-2"></i><span th:text="${submitLabel}">도감 등록</span>
+                    </button>
+                    <a th:href="@{/dex}" class="btn btn-link text-decoration-none">목록으로 돌아가기</a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <script th:src="@{/js/dex-image-upload.js(v=${#dates.createNow().getTime()})}"></script>
 </th:block>
 </html>

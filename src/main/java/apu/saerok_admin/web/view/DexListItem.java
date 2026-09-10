@@ -1,8 +1,16 @@
 package apu.saerok_admin.web.view;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
-public record DexListItem(long id, String koreanName, String englishName, String scientificName,
-                          String habitat, String stayType, String rarity, LocalDateTime updatedAt, List<String> tags) {
+public record DexListItem(
+        long id,
+        String koreanName,
+        String scientificName,
+        String conservationGrade,
+        Double bodyLengthCm,
+        List<String> habitats,
+        String thumbImageUrl,
+        OffsetDateTime updatedAt
+) {
 }

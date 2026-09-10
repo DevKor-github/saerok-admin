@@ -73,8 +73,7 @@
         USER_DAU:             'USER_DAU',
         USER_WAU:             'USER_WAU',
         USER_MAU:             'USER_MAU',
-        USER_SIGNUP_SOURCE_TOTAL:   'USER_SIGNUP_SOURCE_TOTAL',
-        USER_DEVICE_PLATFORM_TOTAL: 'USER_DEVICE_PLATFORM_TOTAL',
+        USER_DEVICE_PLATFORM_SIGNUP_CUMULATIVE: 'USER_DEVICE_PLATFORM_SIGNUP_CUMULATIVE',
     };
 
     // (아래부터는 기존 로직 그대로입니다. 색상/그룹/플롯/툴팁/박스플롯 렌더링 등 전체 원본 유지)
@@ -170,7 +169,7 @@
         { key:'user',       name:'유저', metrics:[
                 METRICS.USER_COMPLETED_TOTAL, METRICS.USER_SIGNUP_DAILY, METRICS.USER_WITHDRAWAL_DAILY,
                 METRICS.USER_DAU, METRICS.USER_WAU, METRICS.USER_MAU,
-                METRICS.USER_SIGNUP_SOURCE_TOTAL, METRICS.USER_DEVICE_PLATFORM_TOTAL
+                METRICS.USER_DEVICE_PLATFORM_SIGNUP_CUMULATIVE
             ] },
         { key:'id',         name:'동정 요청', metrics:[METRICS.PENDING_COUNT, METRICS.RESOLVED_COUNT, METRICS.RESOLUTION_STATS] },
     ];
