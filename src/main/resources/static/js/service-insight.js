@@ -168,7 +168,7 @@
         { key:'collection', name:'새록', metrics:[METRICS.TOTAL_COUNT, METRICS.PRIVATE_RATIO] },
         { key:'user',       name:'유저', metrics:[
                 METRICS.USER_COMPLETED_TOTAL, METRICS.USER_SIGNUP_DAILY, METRICS.USER_WITHDRAWAL_DAILY,
-                METRICS.USER_DAU, METRICS.USER_WAU, METRICS.USER_MAU,
+                // DAU/WAU/MAU는 집계 단위가 달라서 '활성 사용자수' 탭에서 따로 보여준다.
                 METRICS.USER_DEVICE_PLATFORM_SIGNUP_CUMULATIVE
             ] },
         { key:'id',         name:'동정 요청', metrics:[METRICS.PENDING_COUNT, METRICS.RESOLVED_COUNT, METRICS.RESOLUTION_STATS] },
