@@ -19,7 +19,7 @@
                 <span>대시보드</span>
             </a>
             <div class="app-sidebar__group"
-                 th:classappend="${activeMenu == 'serviceInsightTimeSeries' or activeMenu == 'serviceInsightSubscriberStatus'} ? ' is-active'">
+                 th:classappend="${activeMenu == 'serviceInsightTimeSeries' or activeMenu == 'serviceInsightActiveUsers' or activeMenu == 'serviceInsightSubscriberStatus'} ? ' is-active'">
                 <div class="app-sidebar__group-label">
                     <i class="bi bi-graph-up-arrow"></i>
                     <span>서비스 인사이트</span>
@@ -28,6 +28,10 @@
                     <a th:href="@{/service-insight/time-series}" class="app-sidebar__sublink"
                        th:classappend="${activeMenu} == 'serviceInsightTimeSeries' ? ' is-active'">
                         <span>시계열</span>
+                    </a>
+                    <a th:href="@{/service-insight/active-users}" class="app-sidebar__sublink"
+                       th:classappend="${activeMenu} == 'serviceInsightActiveUsers' ? ' is-active'">
+                        <span>활성 사용자수</span>
                     </a>
                     <a th:href="@{/service-insight/subscriber-status}" class="app-sidebar__sublink"
                        th:classappend="${activeMenu} == 'serviceInsightSubscriberStatus' ? ' is-active'">
@@ -97,7 +101,7 @@
                     <span>대시보드</span>
                 </a>
                 <div class="app-sidebar__group"
-                     th:classappend="${activeMenu == 'serviceInsightTimeSeries' or activeMenu == 'serviceInsightSubscriberStatus'} ? ' is-active'">
+                     th:classappend="${activeMenu == 'serviceInsightTimeSeries' or activeMenu == 'serviceInsightActiveUsers' or activeMenu == 'serviceInsightSubscriberStatus'} ? ' is-active'">
                     <div class="app-sidebar__group-label">
                         <i class="bi bi-graph-up-arrow"></i>
                         <span>서비스 인사이트</span>
@@ -106,6 +110,10 @@
                         <a th:href="@{/service-insight/time-series}" class="app-sidebar__sublink"
                            th:classappend="${activeMenu} == 'serviceInsightTimeSeries' ? ' is-active fw-semibold'">
                             <span>시계열</span>
+                        </a>
+                        <a th:href="@{/service-insight/active-users}" class="app-sidebar__sublink"
+                           th:classappend="${activeMenu} == 'serviceInsightActiveUsers' ? ' is-active fw-semibold'">
+                            <span>활성 사용자수</span>
                         </a>
                         <a th:href="@{/service-insight/subscriber-status}" class="app-sidebar__sublink"
                            th:classappend="${activeMenu} == 'serviceInsightSubscriberStatus' ? ' is-active fw-semibold'">

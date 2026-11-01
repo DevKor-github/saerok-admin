@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(${pageTitle}, ${activeMenu}, ${breadcrumbs}, ~{::content})}">
+<th:block th:fragment="content">
+
+    <!-- 공통 인사이트 스타일 -->
+    <link th:href="@{/css/service-insight.css(v=${#dates.createNow().getTime()})}" rel="stylesheet">
+    <!-- 활성 사용자수 전용 스타일 -->
+    <link th:href="@{/css/active-users.css(v=${#dates.createNow().getTime()})}" rel="stylesheet">
+
+    <section class="service-insight active-users">
+        <header class="au-header">
+            <div>
+                <p class="au-header__eyebrow">활성 사용자</p>
+                <h1>활성 사용자수</h1>
+            </div>
+            <p>DAU·WAU·MAU를 각각의 집계 단위로 항상 함께 보여줍니다. 조회 기간은 지표마다 따로 설정합니다.</p>
+        </header>
+
+        <div class="au-grid">
+            <article class="au-card"
+                     th:each="panel : ${activeUsers.panels()}"
+                     th:data-panel="${panel.key()}">
+                <header class="au-card__head">
+                    <div class="au-card__title">
+                        <h2 th:text="${panel.label()}">DAU</h2>
+                        <span class="au-card__bucket" th:switch="${panel.bucket().name()}">
+                            <span th:case="'WEEKLY'">주별</span>
+                            <span th:case="'MONTHLY'">월별</span>
+                            <span th:case="*">일별</span>
+                        </span>
+                    </div>
+                    <p class="au-card__note" th:switch="${panel.bucket().name()}">
+                        <span th:case="'WEEKLY'">각 주의 마지막 날 기준 최근 7일 집계값입니다. 한 달은 최대 5주로 끊어 표시합니다.</span>
+                        <span th:case="'MONTHLY'">각 달의 마지막 날 기준 최근 30일 집계값입니다.</span>
+                        <span th:case="*">그 날 서비스에 접속한 사용자 수입니다.</span>
+                    </p>
+                </header>
+
+                <div class="au-filter">
+                    <div class="au-filter__quick" role="group" aria-label="조회 기간 선택">
+                        <button type="button"
+                                th:each="option : ${panel.rangeOptions()}"
+                                class="btn btn-sm au-filter__btn btn-outline-primary"
+                                data-role="preset"
+                                th:data-range="${option.value()}"
+                                th:text="${option.label()}"
+                                aria-pressed="false">최근 2주</button>
+                    </div>
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary au-filter__toggle"
+                            data-role="custom-toggle"
+                            aria-expanded="false">
+                        <i class="bi bi-calendar-range me-1" aria-hidden="true"></i>직접 설정
+                    </button>
+                </div>
+
+                <div class="au-filter__custom" data-role="custom-form" hidden>
+                    <th:block th:if="${panel.bucket().name() == 'MONTHLY'}">
+                        <label class="visually-hidden" th:for="|au-start-${panel.key()}|">시작 월</label>
+                        <select class="form-select form-select-sm"
+                                th:id="|au-start-${panel.key()}|"
+                                data-role="start-month">
+                            <option th:each="month : ${monthOptions}"
+                                    th:value="${month.value()}"
+                                    th:text="${month.label()}">2026년 1월</option>
+                        </select>
+                        <span class="au-filter__dash" aria-hidden="true">~</span>
+                        <label class="visually-hidden" th:for="|au-end-${panel.key()}|">종료 월</label>
+                        <select class="form-select form-select-sm"
+                                th:id="|au-end-${panel.key()}|"
+                                data-role="end-month">
+                            <option th:each="month : ${monthOptions}"
+                                    th:value="${month.value()}"
+                                    th:text="${month.label()}">2026년 1월</option>
+                        </select>
+                    </th:block>
+                    <th:block th:if="${panel.bucket().name() != 'MONTHLY'}">
+                        <label class="visually-hidden" th:for="|au-start-${panel.key()}|">시작 날짜</label>
+                        <input type="date"
+                               class="form-control form-control-sm"
+                               th:id="|au-start-${panel.key()}|"
+                               data-role="start-date"
+                               autocomplete="off">
+                        <span class="au-filter__dash" aria-hidden="true">~</span>
+                        <label class="visually-hidden" th:for="|au-end-${panel.key()}|">종료 날짜</label>
+                        <input type="date"
+                               class="form-control form-control-sm"
+                               th:id="|au-end-${panel.key()}|"
+                               data-role="end-date"
+                               autocomplete="off">
+                    </th:block>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-role="apply">적용</button>
+                </div>
+
+                <p class="au-card__range" data-role="range-summary"></p>
+
+                <div class="au-card__canvas">
+                    <canvas th:id="|au-chart-${panel.key()}|" height="260"></canvas>
+                    <p class="au-card__empty" data-role="empty" hidden>표시할 데이터가 없습니다.</p>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- 서버에서 내려주는 패널 페이로드 -->
+    <script type="application/json" id="activeUserData"
+            th:data-endpoint="@{/service-insight/active-users/panel}"
+            th:utext="${activeUsersJson}">{"panels":[]}</script>
+
+    <!-- Chart.js & Adapter -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.5.0/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
+
+    <!-- 본 스크립트 -->
+    <script th:src="@{/js/active-users.js(v=${#dates.createNow().getTime()})}"></script>
+</th:block>
+</html>
