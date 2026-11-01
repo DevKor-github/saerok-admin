@@ -17,9 +17,10 @@
     const BUCKET_DAILY = 'DAILY';
     const BUCKET_WEEKLY = 'WEEKLY';
     const BUCKET_MONTHLY = 'MONTHLY';
-    // 한 달은 1~7 / 8~14 / 15~21 / 22~28 / 29~ 로 끊어 최대 5주가 된다.
-    const WEEK_ORDINALS = ['첫째', '둘째', '셋째', '넷째', '다섯째'];
-    const MAX_WEEKS_PER_MONTH = WEEK_ORDINALS.length;
+    // 주는 월요일 시작 7일 고정. 백엔드 WAU가 '그 날 포함 최근 7일'이라, 일요일 값이 곧 그 주 전체가 된다.
+    const WEEK_LENGTH = 7;
+    // 각 지표의 값 하나가 덮는 일수. (WAU 7일, MAU 30일 롤링)
+    const COVERAGE_DAYS = { WEEKLY: 7, MONTHLY: 30 };
     const PANEL_COLORS = {
         DAILY: '#2563eb',
         WEEKLY: '#0ea5e9',
@@ -61,6 +62,30 @@
         return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     }
 
+    function formatMonthDay(date) {
+        if (!date) return '';
+        const { month, day } = kstParts(date);
+        return `${month}/${day}`;
+    }
+
+    function addDays(date, amount) {
+        const next = new Date(date.getTime());
+        next.setDate(next.getDate() + amount);
+        return next;
+    }
+
+    /** 그 날짜가 속한 주의 월요일. */
+    function startOfWeekKST(date) {
+        const L = window.luxon;
+        if (L && L.DateTime) {
+            const dt = L.DateTime.fromJSDate(date, { zone: TZ }).startOf('week');
+            if (dt.isValid) return dt.toJSDate();
+        }
+        const copy = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        copy.setDate(copy.getDate() - ((copy.getDay() + 6) % 7));
+        return copy;
+    }
+
     function lastDayOfMonth(yearMonth) {
         const [year, month] = String(yearMonth || '').split('-').map(Number);
         if (!Number.isFinite(year) || !Number.isFinite(month)) return null;
@@ -70,30 +95,43 @@
 
     // ---------- 버킷 집계 ----------
     function bucketKeyOf(date, bucket) {
-        const { year, month, day } = kstParts(date);
-        const monthKey = `${year}-${String(month).padStart(2, '0')}`;
-        if (bucket === BUCKET_MONTHLY) return monthKey;
-        return `${monthKey}-W${Math.min(MAX_WEEKS_PER_MONTH, Math.ceil(day / 7))}`;
+        if (bucket === BUCKET_MONTHLY) {
+            const { year, month } = kstParts(date);
+            return `${year}-${String(month).padStart(2, '0')}`;
+        }
+        return formatDateKST(startOfWeekKST(date));
+    }
+
+    /** 버킷의 달력상 마지막 날. 주는 일요일, 월은 말일. */
+    function bucketEndDate(key, bucket) {
+        if (bucket === BUCKET_MONTHLY) {
+            const [year, month] = String(key || '').split('-').map(Number);
+            return new Date(year, month, 0);
+        }
+        return addDays(toDateKST(key), WEEK_LENGTH - 1);
+    }
+
+    /** 기준일 값이 실제로 덮는 구간. (기준일 포함 뒤로 N일) */
+    function coverageOf(refDate, bucket) {
+        const days = COVERAGE_DAYS[bucket] || 1;
+        return { from: addDays(refDate, -(days - 1)), to: refDate };
     }
 
     function bucketLabelOf(key, bucket, withYear) {
         const text = String(key || '');
-        const [yearPart, monthPart, weekPart] = text.split('-');
+        const [yearPart, monthPart, dayPart] = text.split('-');
         const year = Number(yearPart);
         const month = Number(monthPart);
         if (!Number.isFinite(month)) return text;
 
         const yearPrefix = withYear && Number.isFinite(year) ? `${String(year).slice(2)}년 ` : '';
         if (bucket === BUCKET_MONTHLY) return `${yearPrefix}${month}월`;
-
-        const weekIndex = Number(String(weekPart || '').replace('W', ''));
-        const ordinal = WEEK_ORDINALS[weekIndex - 1] || `${weekIndex}`;
-        return `${yearPrefix}${month}월 ${ordinal}주`;
+        return `${yearPrefix}${month}/${Number(dayPart)}`;
     }
 
     /**
      * 일별 포인트를 주/월 버킷으로 묶는다.
-     * WAU·MAU는 롤링 집계라서 버킷의 마지막 날 값이 그 기간 전체를 대표한다.
+     * 버킷 안에서 가장 늦은 날의 값을 대표로 쓴다. 주 버킷은 그 날이 일요일이면 주 전체와 정확히 일치한다.
      */
     function aggregateToBuckets(points, bucket) {
         const byKey = new Map();
@@ -167,7 +205,9 @@
                             const text = `${base}: ${formatCount(ctx.parsed.y)}`;
                             const meta = Array.isArray(dataset._bucketMeta) ? dataset._bucketMeta[ctx.dataIndex] : null;
                             if (meta && meta.refDate) {
-                                return `${text} (기준 ${formatDateKST(meta.refDate)})`;
+                                const coverage = coverageOf(meta.refDate, bucket);
+                                const span = `${formatMonthDay(coverage.from)}~${formatMonthDay(coverage.to)}`;
+                                return meta.complete ? `${text} · ${span}` : `${text} · ${span} (집계 중)`;
                             }
                             return text;
                         }
@@ -177,21 +217,11 @@
         };
     }
 
-    function weekIndexOf(day) {
-        return Math.min(MAX_WEEKS_PER_MONTH, Math.ceil(day / 7));
-    }
-
-    function weeksInMonth(year, month) {
-        const days = new Date(year, month, 0).getDate();
-        return Math.min(MAX_WEEKS_PER_MONTH, Math.ceil(days / 7));
-    }
-
     /** 버킷 키가 가리키는 첫 날짜. 키 범위를 다시 날짜로 펼칠 때 쓴다. */
     function keyAnchorDate(key, bucket) {
-        const [yearPart, monthPart, weekPart] = String(key || '').split('-');
-        if (bucket === BUCKET_MONTHLY) return `${yearPart}-${monthPart}-01`;
-        const weekIndex = Number(String(weekPart || '').replace('W', '')) || 1;
-        return `${yearPart}-${monthPart}-${String((weekIndex - 1) * 7 + 1).padStart(2, '0')}`;
+        if (bucket !== BUCKET_MONTHLY) return key;
+        const [yearPart, monthPart] = String(key || '').split('-');
+        return `${yearPart}-${monthPart}-01`;
     }
 
     /** 조회 구간에 해당하는 버킷 자리를, 데이터 유무와 상관없이 모두 만든다. */
@@ -200,22 +230,24 @@
         const end = toDateKST(endValue);
         if (!start || !end || start.getTime() > end.getTime()) return [];
 
+        const keys = [];
+
+        if (bucket !== BUCKET_MONTHLY) {
+            let cursor = startOfWeekKST(start);
+            const lastWeek = startOfWeekKST(end);
+            while (cursor.getTime() <= lastWeek.getTime()) {
+                keys.push(formatDateKST(cursor));
+                cursor = addDays(cursor, WEEK_LENGTH);
+            }
+            return keys;
+        }
+
         const from = kstParts(start);
         const to = kstParts(end);
-        const keys = [];
         let year = from.year;
         let month = from.month;
         while (year < to.year || (year === to.year && month <= to.month)) {
-            const monthKey = `${year}-${String(month).padStart(2, '0')}`;
-            if (bucket === BUCKET_MONTHLY) {
-                keys.push(monthKey);
-            } else {
-                const firstWeek = (year === from.year && month === from.month) ? weekIndexOf(from.day) : 1;
-                const lastWeek = (year === to.year && month === to.month) ? weekIndexOf(to.day) : weeksInMonth(year, month);
-                for (let week = firstWeek; week <= lastWeek; week++) {
-                    keys.push(`${monthKey}-W${week}`);
-                }
-            }
+            keys.push(`${year}-${String(month).padStart(2, '0')}`);
             month += 1;
             if (month > 12) {
                 month = 1;
@@ -266,7 +298,13 @@
             bucket,
             labels: orderedKeys.map(key => bucketLabelOf(key, bucket, withYear)),
             data: orderedKeys.map(key => (byKey.has(key) ? byKey.get(key).value : null)),
-            meta: orderedKeys.map(key => byKey.get(key) || null),
+            meta: orderedKeys.map(key => {
+                const item = byKey.get(key);
+                if (!item) return null;
+                // 버킷의 달력상 마지막 날까지 집계된 경우에만 라벨과 구간이 일치한다.
+                const complete = item.refDate.getTime() >= bucketEndDate(key, bucket).getTime();
+                return { ...item, complete };
+            }),
             slots: orderedKeys.length,
             withData: aggregated.length
         };
@@ -296,8 +334,8 @@
                 label: panel.label,
                 type: 'bar',
                 data: view.data,
-                borderColor: color,
-                backgroundColor: color,
+                borderColor: view.meta.map(meta => ((meta && !meta.complete) ? `${color}80` : color)),
+                backgroundColor: view.meta.map(meta => ((meta && !meta.complete) ? `${color}80` : color)),
                 borderRadius: 4,
                 maxBarThickness: 56,
                 categoryPercentage: 0.72,

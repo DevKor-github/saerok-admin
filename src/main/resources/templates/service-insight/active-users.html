@@ -31,8 +31,8 @@
                         </span>
                     </div>
                     <p class="au-card__note" th:switch="${panel.bucket().name()}">
-                        <span th:case="'WEEKLY'">각 주의 마지막 날 기준 최근 7일 집계값입니다. 한 달은 최대 5주로 끊어 표시합니다.</span>
-                        <span th:case="'MONTHLY'">각 달의 마지막 날 기준 최근 30일 집계값입니다.</span>
+                        <span th:case="'WEEKLY'">월요일부터 7일씩 끊어, 그 주 일요일 기준 최근 7일 집계값을 씁니다. 아직 끝나지 않은 주는 옅게 표시합니다.</span>
+                        <span th:case="'MONTHLY'">각 달의 마지막 날 기준 최근 30일 집계값입니다. 달력상 그 달 전체와는 다를 수 있어, 툴팁에 실제 구간을 표시합니다.</span>
                         <span th:case="*">그 날 서비스에 접속한 사용자 수입니다.</span>
                     </p>
                 </header>
